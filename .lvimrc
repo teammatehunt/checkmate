@@ -1,0 +1,4 @@
+set expandtab
+if &filetype == 'python'
+  set shiftwidth=4
+endif
