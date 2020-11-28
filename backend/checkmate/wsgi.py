@@ -11,6 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'checkmate.settings')
+build = os.environ.get('DJANGO_SERVER', 'dev')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'checkmate.settings.{build}')
 
 application = get_wsgi_application()

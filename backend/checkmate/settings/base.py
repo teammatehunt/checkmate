@@ -23,7 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'z2fz@_zi&qb2yy_9gv7955_(*pykz6qw=qdqhdy2e%0_500i68'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+]
 
 
 # Application definition
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -120,7 +123,7 @@ STATIC_URL = '/static/'
 
 FRONTEND_DIR = BASE_DIR.parent / 'frontend'
 STATICFILES_DIRS = [
-    os.path.join(FRONTEND_DIR, 'build/static'),
+    os.path.join(FRONTEND_DIR, 'build', 'static'),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'build/static')
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+STATIC_ROOT = os.path.join(BASE_DIR, 'build', 'static')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
