@@ -1,3 +1,6 @@
+/SECRETS.yaml
+
+
 *.py[cdo]
 
 .lvimrc

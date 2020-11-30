@@ -13,22 +13,36 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 
+import yaml
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+PROJECT_DIR = BASE_DIR.parent
+
+secrets_path = PROJECT_DIR / 'SECRETS.yaml'
+if secrets_path.is_file():
+    with open(secrets_path, 'rt') as f:
+        SECRETS = yaml.safe_load(f)
+else:
+    SECRETS = {}
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'z2fz@_zi&qb2yy_9gv7955_(*pykz6qw=qdqhdy2e%0_500i68'
+# Make sure this gets set to a non-default value.
+SECRET_KEY = SECRETS.get('SECRET_KEY', 'z2fz@_zi&qb2yy_9gv7955_(*pykz6qw=qdqhdy2e%0_500i68')
 
 ALLOWED_HOSTS = [
     'localhost',
 ]
 
-
 # Application definition
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,10 +51,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'checkmate',
     'django.contrib.postgres',
     'django_extensions',
     'django_admin_hstore_widget',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.discord',
 ]
 
 MIDDLEWARE = [
@@ -87,7 +106,23 @@ DATABASES = {
         'PASSWORD': 'postgres',
     }
 }
+DATABASES['default'].update(SECRETS.get('DATABASE', {}))
 
+
+# Auth
+
+LOGIN_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login'
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = None
+ACCOUNT_ADAPTER = 'checkmate.admin.AccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'checkmate.admin.SocialAccountAdapter'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'discord': {
+        'SCOPE': ['identify'],
+        'APP': SECRETS.get('DISCORD_CREDENTIALS', {}),
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -121,15 +156,15 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
 
-FRONTEND_DIR = BASE_DIR.parent / 'frontend'
+FRONTEND_DIR = PROJECT_DIR / 'frontend'
 STATICFILES_DIRS = [
     os.path.join(FRONTEND_DIR, 'build', 'static'),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'build', 'static')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+

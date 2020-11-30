@@ -1,6 +1,9 @@
 discord.py
 django
-django-extensions
 django-admin-hstore-widget
+django-allauth
+django-extensions
 psycopg2
+pyyaml
+wheel
 whitenoise

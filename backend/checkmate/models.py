@@ -13,7 +13,7 @@ class Tag(models.Model):
 
 class Entity(models.Model):
     name = CharField()
-    slug = CharField()
+    slug = CharField(primary_key=True)
     link = CharField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
     created_by = models.IntegerField(null=True, blank=True) # Discord user id
@@ -29,10 +29,12 @@ class Entity(models.Model):
         abstract = True
 
 class Round(Entity):
-    pass
+    # list of Puzzle slugs
+    puzzles = fields.ArrayField(CharField(), default=list, blank=True)
 
 class Puzzle(Entity):
     answer = CharField(blank=True)
     solved = models.DateTimeField(null=True, blank=True)
     solved_by = models.IntegerField(null=True, blank=True) # Discord user id
-    # feeds_into = models.ArrayReferenceField('Puzzle')
+    # list of Round slugs
+    feeds_into = fields.ArrayField(CharField(), default=list, blank=True)
