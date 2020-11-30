@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'checkmate',
-    'puzzles',
+    'structure',
     'accounts',
     'django.contrib.postgres',
     'django_extensions',
@@ -73,6 +73,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'crum.CurrentRequestUserMiddleware',
 ]
 
 ROOT_URLCONF = 'checkmate.urls'
@@ -118,6 +119,8 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login'
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = None
 ACCOUNT_ADAPTER = 'accounts.admin.AccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.admin.SocialAccountAdapter'
+
+SITE_ID = 1
 
 SOCIALACCOUNT_PROVIDERS = {
     'discord': {

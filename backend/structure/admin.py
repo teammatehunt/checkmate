@@ -8,11 +8,13 @@ class ModelAdmin(admin.ModelAdmin):
         models.fields.HStoreField: {'widget': HStoreFormWidget, 'required': False},
     }
 
+class EntityAdmin(ModelAdmin):
+    list_display = ('name', 'slug', 'created', 'created_by')
+
 @admin.register(models.Round)
-class RoundAdmin(ModelAdmin):
+class RoundAdmin(EntityAdmin):
     pass
 
-
 @admin.register(models.Puzzle)
-class PuzzleAdmin(ModelAdmin):
+class PuzzleAdmin(EntityAdmin):
     pass

@@ -17,10 +17,10 @@ from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include, url
 
-import puzzles.views
+import structure.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^accounts/', include('allauth.urls')),
-    path('', puzzles.views.home),
+    path('', structure.views.home),
 ]

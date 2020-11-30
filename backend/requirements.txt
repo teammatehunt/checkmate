@@ -2,6 +2,7 @@ discord.py
 django
 django-admin-hstore-widget
 django-allauth
+django-crum
 django-extensions
 psycopg2
 pyyaml
