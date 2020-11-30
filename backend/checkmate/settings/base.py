@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'checkmate',
+    'puzzles',
+    'accounts',
     'django.contrib.postgres',
     'django_extensions',
     'django_admin_hstore_widget',
@@ -114,8 +116,8 @@ DATABASES['default'].update(SECRETS.get('DATABASE', {}))
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login'
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = None
-ACCOUNT_ADAPTER = 'checkmate.admin.AccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'checkmate.admin.SocialAccountAdapter'
+ACCOUNT_ADAPTER = 'accounts.admin.AccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'accounts.admin.SocialAccountAdapter'
 
 SOCIALACCOUNT_PROVIDERS = {
     'discord': {
