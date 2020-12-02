@@ -5,6 +5,7 @@ django-allauth
 django-autoslug
 django-crum
 django-extensions
+djangorestframework
 psycopg2
 pyyaml
 unidecode

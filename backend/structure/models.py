@@ -27,7 +27,8 @@ class Entity(models.Model):
     modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                     null=True, editable=False,
                                     related_name='%(class)s_modified_set')
-    AUTO_FIELDS = ('modified', 'modified_by')
+    hidden = models.BooleanField(default=False, help_text='Hidden objects will not be shown.')
+    AUTO_FIELDS = ('modified', 'modified_by', 'hidden')
     tags = fields.HStoreField()
 
     discord_text_channel_id = models.IntegerField(null=True, blank=True)
