@@ -27,6 +27,7 @@ class Entity(models.Model):
     modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                     null=True, editable=False,
                                     related_name='%(class)s_modified_set')
+    AUTO_FIELDS = ('modified', 'modified_by')
     tags = fields.HStoreField()
 
     discord_text_channel_id = models.IntegerField(null=True, blank=True)
@@ -62,6 +63,7 @@ class Puzzle(Entity):
                                   related_name='%(class)s_solved_set')
     is_meta = models.BooleanField(
         default=False, help_text='Can only be edited directly when there are no feeder puzzles. Adding feeder puzzles will also set this field.')
+    AUTO_FIELDS = Entity.AUTO_FIELDS + ('is_meta',)
 
     def save(self, *args, **kwargs):
         if self.feeder_set.exists():
@@ -70,15 +72,6 @@ class Puzzle(Entity):
 
 
 class BasePuzzleRelation(models.Model):
-    @property
-    def KEY(self):
-        raise NotImplementedError()
-    def next_order(self):
-        try:
-            return self._meta.model.objects.filter(**{self.KEY: getattr(self, self.KEY)}).latest('order').order + 1
-        except models.ObjectDoesNotExist:
-            return 0
-
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     order = models.PositiveSmallIntegerField(
         blank=True,
@@ -92,14 +85,51 @@ class BasePuzzleRelation(models.Model):
             'supports_deferrable_unique_constraints',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_related_objects = self.related_objects
+
+    @property
+    def CONTAINER(self):
+        raise NotImplementedError()
+
+    @property
+    def ITEM(self):
+        raise NotImplementedError()
+
+    @property
+    def related_objects(self):
+        return {
+            key: None if getattr(self, f'{key}_id') is None else getattr(self, key)
+            for key in (self.CONTAINER, self.ITEM)
+        }
+
+    def next_order(self):
+        try:
+            return self._meta.model.objects.filter(**{self.CONTAINER: getattr(self, self.CONTAINER)}).latest('order').order + 1
+        except models.ObjectDoesNotExist:
+            return 0
+
     def save(self, *args, **kwargs):
         if self.order is None:
             self.order = self.next_order()
         super().save(*args, **kwargs)
 
+        relation_was_modified = False
+        saved_related_objects = self.related_objects
+        for key in self.original_related_objects:
+            if self.original_related_objects[key] != saved_related_objects[key]:
+                relation_was_modified = True
+        if relation_was_modified:
+            objs = set(self.original_related_objects.values()) | set(saved_related_objects.values())
+            for obj in objs:
+                if obj is not None:
+                    obj.save(update_fields=obj.AUTO_FIELDS)
+
 
 class RoundPuzzle(BasePuzzleRelation):
-    KEY = 'round'
+    CONTAINER = 'round'
+    ITEM = 'puzzle'
     round = models.ForeignKey('Round', on_delete=models.CASCADE)
     puzzle = models.ForeignKey('Puzzle', on_delete=models.CASCADE)
 
@@ -116,7 +146,8 @@ class RoundPuzzle(BasePuzzleRelation):
         ]
 
 class MetaFeeder(BasePuzzleRelation):
-    KEY = 'meta'
+    CONTAINER = 'meta'
+    ITEM = 'feeder'
     meta = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='feeder_set')
     feeder = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='meta_set')
 
@@ -137,11 +168,3 @@ class MetaFeeder(BasePuzzleRelation):
         if self.meta_id == self.feeder_id:
             raise ValidationError(_('Puzzle cannot feed itself.'), code='invalid')
         return super().clean(*args, **kwargs)
-
-@dispatch.receiver([models.signals.post_save, models.signals.post_delete], sender=RoundPuzzle)
-@dispatch.receiver([models.signals.post_save, models.signals.post_delete], sender=MetaFeeder)
-def puzzle_relation_changed(sender, **kwargs):
-    instance = kwargs['instance']
-    for field in instance._meta.get_fields():
-        if isinstance(field, models.ForeignKey):
-            getattr(instance, field.name).save()
