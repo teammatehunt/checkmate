@@ -2,9 +2,11 @@ discord.py
 django
 django-admin-hstore-widget
 django-allauth
+django-autoslug
 django-crum
 django-extensions
 psycopg2
 pyyaml
+unidecode
 wheel
 whitenoise
