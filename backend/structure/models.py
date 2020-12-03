@@ -1,8 +1,10 @@
+from collections import defaultdict
+
 from django import forms
 from django.conf import settings
 from django.contrib.postgres import fields
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import models
+from django.db import models, transaction
 from django import dispatch
 from django.utils.translation import gettext_lazy as _
 
@@ -14,11 +16,32 @@ MAX_LENGTH = 500
 def CharField(*args, **kwargs):
     return models.CharField(*args, max_length=MAX_LENGTH, **kwargs)
 
+class HuntConfig(models.Model):
+    auto_assign_puzzles_to_meta = models.BooleanField(
+        default=True, help_text='Should be true when the entire round corresponds to one meta.',
+    )
+    domain = CharField(blank=True, help_text='Include the protocol. (eg https://example.com)')
+
+    @classmethod
+    def get(cls):
+        obj = cls.objects.last()
+        if obj is None:
+            obj = cls()
+            for field in obj._meta.fields:
+                setattr(obj, field.name, field.get_default())
+        return obj
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            # Remove all previous configs
+            objs = self.__class__.objects.exclude(pk=self.pk).delete()
+
 class Entity(models.Model):
     name = CharField()
     slug = autoslug.AutoSlugField(max_length=MAX_LENGTH, primary_key=True,
                                   populate_from='name')
-    link = CharField(blank=True)
+    link = CharField(blank=True, help_text='path relative to domain root')
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                    null=True, editable=False,
@@ -53,10 +76,13 @@ class Entity(models.Model):
         return self.name
 
 class Round(Entity):
-    round_puzzles = models.ManyToManyField('Puzzle', through='RoundPuzzle')
+    puzzles = models.ManyToManyField('Puzzle', through='RoundPuzzle', related_name='rounds')
+    auto_assign_puzzles_to_meta = models.BooleanField(
+        default=True, help_text='Should be true when the entire round corresponds to one meta.',
+    )
 
 class Puzzle(Entity):
-    meta_feeders = models.ManyToManyField('Puzzle', through='MetaFeeder')
+    feeders = models.ManyToManyField('Puzzle', through='MetaFeeder', related_name='metas')
     answer = CharField(blank=True)
     solved = models.DateTimeField(null=True, blank=True, db_index=True)
     solved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -67,7 +93,7 @@ class Puzzle(Entity):
     AUTO_FIELDS = Entity.AUTO_FIELDS + ('is_meta',)
 
     def save(self, *args, **kwargs):
-        if self.feeder_set.exists():
+        if self.feeders.exists():
             self.is_meta = True
         super().save(*args, **kwargs)
 
@@ -114,10 +140,18 @@ class BasePuzzleRelation(models.Model):
     def save(self, *args, **kwargs):
         if self.order is None:
             self.order = self.next_order()
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            self.check_order()
 
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            super().delete(*args, **kwargs)
+            self.check_order(deleted=True)
+
+    def check_order(self, deleted=False):
         relation_was_modified = False
-        saved_related_objects = self.related_objects
+        saved_related_objects = defaultdict(lambda: None) if deleted else self.related_objects
         for key in self.original_related_objects:
             if self.original_related_objects[key] != saved_related_objects[key]:
                 relation_was_modified = True
@@ -131,8 +165,8 @@ class BasePuzzleRelation(models.Model):
 class RoundPuzzle(BasePuzzleRelation):
     CONTAINER = 'round'
     ITEM = 'puzzle'
-    round = models.ForeignKey('Round', on_delete=models.CASCADE)
-    puzzle = models.ForeignKey('Puzzle', on_delete=models.CASCADE)
+    round = models.ForeignKey('Round', on_delete=models.CASCADE, related_name='puzzle_relations')
+    puzzle = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='round_relations')
 
     class Meta(BasePuzzleRelation.Meta):
         constraints = [
@@ -149,8 +183,8 @@ class RoundPuzzle(BasePuzzleRelation):
 class MetaFeeder(BasePuzzleRelation):
     CONTAINER = 'meta'
     ITEM = 'feeder'
-    meta = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='feeder_set')
-    feeder = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='meta_set')
+    meta = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='feeder_relations')
+    feeder = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='meta_relations')
 
     class Meta(BasePuzzleRelation.Meta):
         constraints = [

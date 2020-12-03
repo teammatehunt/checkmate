@@ -44,6 +44,10 @@ class ModelAdmin(admin.ModelAdmin):
         models.fields.HStoreField: {'widget': HStoreFormWidget, 'required': False},
     }
 
+@admin.register(models.HuntConfig)
+class HuntConfigAdmin(ModelAdmin):
+    pass
+
 @admin.register(models.Round)
 class RoundAdmin(ModelAdmin):
     list_display = ('name', 'slug', 'created', 'created_by')
@@ -63,6 +67,6 @@ class PuzzleAdmin(ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         extra_readonly_fields = []
         if obj is not None:
-            if obj.feeder_set.exists():
+            if obj.feeders.exists():
                 extra_readonly_fields.append('is_meta')
         return (*self.readonly_fields, *extra_readonly_fields)

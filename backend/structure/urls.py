@@ -4,6 +4,7 @@ from . import api
 from . import views
 
 rest_router = rest_routers.DefaultRouter()
+rest_router.register('hunt_config', api.HuntConfigViewSet)
 rest_router.register('users', api.UserViewSet)
 rest_router.register('rounds', api.RoundViewSet)
 rest_router.register('puzzles', api.PuzzleViewSet)
