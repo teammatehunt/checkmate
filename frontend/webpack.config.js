@@ -6,7 +6,11 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 module.exports = {
   entry: Object.assign({}, ...glob.sync('./apps/**/*.tsx').map(filename => ({ [path.parse(filename).name]: filename}))),
   resolve: {
-    extensions: ['.ts', '.tsx', '.js']
+    extensions: ['.ts', '.tsx', '.js'],
+    modules: [
+      path.resolve(__dirname, 'node_modules'),
+      path.resolve(__dirname),
+    ],
   },
   output: {
     path: path.resolve(__dirname, "build/static"), // must be in Django STATICFILES_DIRS

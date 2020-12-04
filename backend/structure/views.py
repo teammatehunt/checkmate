@@ -5,6 +5,10 @@ from django.template import TemplateDoesNotExist
 from django.views.decorators.http import require_GET, require_POST
 from django.views.static import serve
 
+from rest_framework import renderers
+
+from . import api
+
 def render_app(request, page, props=None, **kwargs):
     template_name = 'app.html'
     context = kwargs.get('context', {})
@@ -14,9 +18,21 @@ def render_app(request, page, props=None, **kwargs):
     kwargs['context'] = context
     return render(request, template_name, **kwargs)
 
-def home(request):
-    page = 'index'
+def master(request):
+    page = 'main'
+    data = api.everything(request).data
     props = {
-        'page': 'home',
+        'page': 'master',
+        'data': data,
+    }
+    return render_app(request, page, props)
+
+def puzzle(request, slug):
+    page = 'puzzle'
+    data = api.everything(request).data
+    props = {
+        'page': 'main',
+        'slug': slug,
+        'data': data,
     }
     return render_app(request, page, props)

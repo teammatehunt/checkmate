@@ -21,6 +21,6 @@ import structure.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    url(r'^accounts/', include('allauth.urls')),
-    url('', include('structure.urls')),
+    path('accounts/', include('allauth.urls')),
+    path('', include('structure.urls')),
 ]

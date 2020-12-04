@@ -1,5 +1,7 @@
+from django.shortcuts import redirect
 from django.urls import include, path
 from rest_framework import routers as rest_routers
+
 from . import api
 from . import views
 
@@ -15,8 +17,10 @@ rest_router.register('rounds', api.RoundViewSet)
 rest_router.register('puzzles', api.PuzzleViewSet)
 
 urlpatterns = [
-    path('', views.home),
+    path('accounts/', include('rest_framework.urls', namespace='rest_framework')),
     path('api/', include(rest_router.urls)),
     path('api/everything', api.everything),
-    path('accounts/', include('rest_framework.urls', namespace='rest_framework')),
+    path('', views.master),
+    path('puzzles/', lambda req: redirect('/')),
+    path('puzzles/<slug:slug>', views.puzzle),
 ]

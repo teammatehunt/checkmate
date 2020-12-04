@@ -7,8 +7,9 @@
     <div id="__CONTENT__"></div>
     <script type="text/javascript" src="{% static '_app.js' %}"></script>
     <script type="text/javascript" src="{% static page|add:'.js' %}"></script>
+    {{ props | json_script:"__DATA__" }}
     <script type="module">
-      const props = {{ props | safe }};
+      const props = JSON.parse(document.getElementById("__DATA__").textContent);
       const mountElement = document.getElementById("__CONTENT__");
       _appModule.default({{ page }}Module.default, props, mountElement);
     </script>

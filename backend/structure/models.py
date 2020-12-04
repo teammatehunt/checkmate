@@ -38,10 +38,10 @@ class HuntConfig(models.Model):
             objs = self.__class__.objects.exclude(pk=self.pk).delete()
 
 class Entity(models.Model):
-    name = CharField()
     slug = autoslug.AutoSlugField(max_length=MAX_LENGTH, primary_key=True,
                                   populate_from='name')
-    link = CharField(blank=True, help_text='path relative to domain root')
+    name = CharField()
+    link = CharField(blank=True, help_text='path relative to hunt domain root')
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                    null=True, editable=False,
