@@ -2,7 +2,6 @@ import datetime
 
 from django.db import transaction
 from django.db.models import F
-from django.http import JsonResponse
 from django.contrib.auth.models import User
 from rest_framework import decorators, exceptions, permissions, response, serializers, viewsets
 from allauth.socialaccount.models import SocialAccount
@@ -12,14 +11,6 @@ from . import models
 def get_all_data(request):
     rounds = models.Round.objects.all()
     puzzles = models.Puzzle.objects.all()
-
-class GetExtraFields:
-    def get_field_names(self, *args, **kwargs):
-        direct_fields = super().get_field_names(*args, **kwargs)
-        expanded_fields = (*direct_fields, *getattr(self.Meta, 'extra_fields', ()))
-        mapping = getattr(self.Meta, 'field_names_map', {})
-        mapped_fields = tuple(mapping.get(field, field) for field in expanded_fields)
-        return mapped_fields
 
 class SocialAccountSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,26 +33,36 @@ class HuntConfigViewSet(viewsets.ModelViewSet):
     queryset = models.HuntConfig.objects.all()
     serializer_class = HuntConfigSerializer
 
+class GetExtraFields:
+    def get_field_names(self, *args, **kwargs):
+        direct_fields = super().get_field_names(*args, **kwargs)
+        expanded_fields = (*direct_fields, *getattr(self.Meta, 'extra_fields', ()))
+        mapping = getattr(self.Meta, 'field_names_map', {})
+        mapped_fields = tuple(mapping.get(field, field) for field in expanded_fields)
+        return mapped_fields
+
+class ContainerSpecialization:
+    def process_items(self, request, pk=None):
+        if request.method == 'POST':
+            return process_relation(self.relation_model, pk, request)
+        else: # GET
+            try:
+                items = [getattr(relation, self.relation_model.ITEM) for relation in getattr(self.model.objects.get(pk=pk), f'{self.relation_model.ITEM}_relations').prefetch_related(self.relation_model.ITEM)]
+            except self.model.DoesNotExist:
+                raise exceptions.NotFound()
+            return response.Response(self.item_serializer_class(items, many=True).data)
+
+    def perform_destroy(self, instance):
+        now = datetime.datetime.now()
+        instance.hidden = True
+        instance.save()
+
+
 class RoundSerializer(GetExtraFields, serializers.ModelSerializer):
     puzzles = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
         model = models.Round
         fields = '__all__'
-class RoundViewSet(viewsets.ModelViewSet):
-    queryset = models.Round.objects.all()
-    serializer_class = RoundSerializer
-
-    @decorators.action(methods=['GET', 'POST'], detail=True)
-    def puzzles(self, request, pk=None):
-        if request.method == 'POST':
-            return process_relation(models.RoundPuzzle, pk, request)
-        else: # GET
-            try:
-                puzzles = [relation.puzzle for relation in models.Round.objects.get(pk=pk).puzzle_relations.prefetch_related('puzzle')]
-            except models.Round.DoesNotExist:
-                raise exceptions.NotFound()
-            return response.Response(PuzzleSerializer(puzzles, many=True).data)
-
 class PuzzleSerializer(GetExtraFields, serializers.ModelSerializer):
     rounds = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     metas = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
@@ -70,20 +71,28 @@ class PuzzleSerializer(GetExtraFields, serializers.ModelSerializer):
         model = models.Puzzle
         fields = '__all__'
         extra_fields = ('rounds', 'metas')
-class PuzzleViewSet(viewsets.ModelViewSet):
-    queryset = models.Puzzle.objects.all()
-    serializer_class = PuzzleSerializer
+
+class RoundViewSet(ContainerSpecialization, viewsets.ModelViewSet):
+    model = models.Round
+    relation_model = models.RoundPuzzle
+    queryset = model.objects.all()
+    serializer_class = RoundSerializer
+    item_serializer_class = PuzzleSerializer
 
     @decorators.action(methods=['GET', 'POST'], detail=True)
-    def feeders(self, request, pk=None):
-        if request.method == 'POST':
-            return process_relation(models.MetaFeeder, pk, request)
-        else: # GET
-            try:
-                feeders = [relation.feeder for relation in models.Puzzle.objects.get(pk=pk).feeder_relations.prefetch_related('feeder')]
-            except models.Puzzle.DoesNotExist:
-                raise exceptions.NotFound()
-            return response.Response(PuzzleSerializer(feeders, many=True).data)
+    def puzzles(self, *args, **kwargs):
+        return self.process_items(*args, **kwargs)
+
+class PuzzleViewSet(ContainerSpecialization, viewsets.ModelViewSet):
+    model = models.Puzzle
+    relation_model = models.MetaFeeder
+    queryset = model.objects.all()
+    serializer_class = PuzzleSerializer
+    item_serializer_class = PuzzleSerializer
+
+    @decorators.action(methods=['GET', 'POST'], detail=True)
+    def feeders(self, *args, **kwargs):
+        return self.process_items(*args, **kwargs)
 
 def process_relation(cls, pk, request):
     '''
@@ -139,14 +148,14 @@ def process_relation(cls, pk, request):
         for slug in slugs:
             if slug not in existing_slugs:
                 cls(**{f'{cls.CONTAINER}_id': pk, f'{cls.ITEM}_id': slug}).save()
-        return response.Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     elif action == 'remove':
         slugs = set(slugs)
         existing_relations = list(existing_relations_query)
         for existing_relation in existing_relations:
             if getattr(existing_relation, f'{cls.ITEM}_id') in slugs:
                 existing_relation.delete()
-        return response.Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     elif action == 'set':
         new_relations = [
             cls(**{
@@ -162,7 +171,7 @@ def process_relation(cls, pk, request):
             cls.objects.bulk_create(new_relations)
             item_cls.objects.filter(pk__in=valid_slugs_query).update(modified=now, modified_by=request.user)
             container_cls.objects.filter(pk=pk).update(modified=now, modified_by=request.user)
-        return response.Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     elif action == 'move':
         slug = next(iter(slugs))
         try:
@@ -177,6 +186,6 @@ def process_relation(cls, pk, request):
                     cls.objects.filter(order__gt=valid_relation.order, order__lte=order).update(order=F('order')-1)
                 valid_relation.order = order
                 valid_relation.save()
-        return response.Response()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     else:
         raise NotImplementedError()
