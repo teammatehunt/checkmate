@@ -8,10 +8,6 @@ from allauth.socialaccount.models import SocialAccount
 
 from . import models
 
-def get_all_data(request):
-    rounds = models.Round.objects.all()
-    puzzles = models.Puzzle.objects.all()
-
 class SocialAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialAccount
@@ -22,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'first_name', 'last_name', 'socialaccounts')
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().prefetch_related('socialaccount_set')
     serializer_class = UserSerializer
 
 class HuntConfigSerializer(serializers.ModelSerializer):
@@ -33,7 +29,7 @@ class HuntConfigViewSet(viewsets.ModelViewSet):
     queryset = models.HuntConfig.objects.all()
     serializer_class = HuntConfigSerializer
 
-class GetExtraFields:
+class ExtraFieldsSerializer(serializers.ModelSerializer):
     def get_field_names(self, *args, **kwargs):
         direct_fields = super().get_field_names(*args, **kwargs)
         expanded_fields = (*direct_fields, *getattr(self.Meta, 'extra_fields', ()))
@@ -58,24 +54,26 @@ class ContainerSpecialization:
         instance.save()
 
 
-class RoundSerializer(GetExtraFields, serializers.ModelSerializer):
-    puzzles = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+class BaseRoundSerializer(ExtraFieldsSerializer):
     class Meta:
         model = models.Round
-        fields = '__all__'
-class PuzzleSerializer(GetExtraFields, serializers.ModelSerializer):
-    rounds = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    metas = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    feeders = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+        exclude = ['puzzles']
+class RoundSerializer(BaseRoundSerializer):
+    class Meta(BaseRoundSerializer.Meta):
+        extra_fields = ['puzzles']
+class BasePuzzleSerializer(ExtraFieldsSerializer):
     class Meta:
         model = models.Puzzle
-        fields = '__all__'
-        extra_fields = ('rounds', 'metas')
+        exclude = ['feeders']
+class PuzzleSerializer(BasePuzzleSerializer):
+    class Meta(BasePuzzleSerializer.Meta):
+        extra_fields = ['rounds', 'metas', 'feeders']
+        depth = 0
 
 class RoundViewSet(ContainerSpecialization, viewsets.ModelViewSet):
     model = models.Round
     relation_model = models.RoundPuzzle
-    queryset = model.objects.all()
+    queryset = model.objects.all().prefetch_related('puzzle_relations')
     serializer_class = RoundSerializer
     item_serializer_class = PuzzleSerializer
 
@@ -86,7 +84,7 @@ class RoundViewSet(ContainerSpecialization, viewsets.ModelViewSet):
 class PuzzleViewSet(ContainerSpecialization, viewsets.ModelViewSet):
     model = models.Puzzle
     relation_model = models.MetaFeeder
-    queryset = model.objects.all()
+    queryset = model.objects.all().prefetch_related('round_relations', 'meta_relations', 'feeder_relations')
     serializer_class = PuzzleSerializer
     item_serializer_class = PuzzleSerializer
 
@@ -148,14 +146,14 @@ def process_relation(cls, pk, request):
         for slug in slugs:
             if slug not in existing_slugs:
                 cls(**{f'{cls.CONTAINER}_id': pk, f'{cls.ITEM}_id': slug}).save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
     elif action == 'remove':
         slugs = set(slugs)
         existing_relations = list(existing_relations_query)
         for existing_relation in existing_relations:
             if getattr(existing_relation, f'{cls.ITEM}_id') in slugs:
                 existing_relation.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
     elif action == 'set':
         new_relations = [
             cls(**{
@@ -171,7 +169,7 @@ def process_relation(cls, pk, request):
             cls.objects.bulk_create(new_relations)
             item_cls.objects.filter(pk__in=valid_slugs_query).update(modified=now, modified_by=request.user)
             container_cls.objects.filter(pk=pk).update(modified=now, modified_by=request.user)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
     elif action == 'move':
         slug = next(iter(slugs))
         try:
@@ -186,6 +184,42 @@ def process_relation(cls, pk, request):
                     cls.objects.filter(order__gt=valid_relation.order, order__lte=order).update(order=F('order')-1)
                 valid_relation.order = order
                 valid_relation.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
     else:
         raise NotImplementedError()
+
+@decorators.api_view()
+def everything(request):
+    hunt_config = HuntConfigSerializer(models.HuntConfig.get()).data
+    users = UserSerializer(User.objects.all(), many=True).data
+    rounds = BaseRoundSerializer(models.Round.objects.all(), many=True).data
+    puzzles = BasePuzzleSerializer(models.Puzzle.objects.all(), many=True).data
+    round_puzzles = models.RoundPuzzle.objects.all()
+    meta_feeders = models.MetaFeeder.objects.all()
+    round_by_slug = {}
+    puzzle_by_slug = {}
+    for _round in rounds:
+        round_by_slug[_round['slug']] = _round
+        _round.setdefault('puzzles', [])
+    for puzzle in puzzles:
+        puzzle_by_slug[puzzle['slug']] = puzzle
+        puzzle.setdefault('rounds', [])
+        puzzle.setdefault('metas', [])
+        puzzle.setdefault('feeders', [])
+    for round_puzzle in round_puzzles:
+        if round_puzzle.puzzle_id in puzzle_by_slug:
+            puzzle_by_slug[round_puzzle.puzzle_id]['rounds'].append(round_puzzle.round_id)
+        if round_puzzle.round_id in round_by_slug:
+            round_by_slug[round_puzzle.round_id]['puzzles'].append(round_puzzle.puzzle_id)
+    for meta_feeder in meta_feeders:
+        if meta_feeder.feeder_id in puzzle_by_slug:
+            puzzle_by_slug[meta_feeder.feeder_id]['metas'].append(meta_feeder.meta_id)
+        if meta_feeder.meta_id in puzzle_by_slug:
+            puzzle_by_slug[meta_feeder.meta_id]['feeders'].append(meta_feeder.feeder_id)
+    data = {
+        'hunt': hunt_config,
+        'users': users,
+        'rounds': rounds,
+        'puzzles': puzzles,
+    }
+    return response.Response(data)
