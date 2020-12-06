@@ -1,21 +1,23 @@
 import React, {
-  FunctionComponent,
+  FC,
+  useReducer,
+  useState,
 } from 'react';
 
+import mountElement from 'utils/mount';
 import Base from 'components/base';
 import * as Model from 'components/model';
 
 interface Props {
   page: string;
-  data: any;
+  data: Model.Data;
   slug?: string;
 }
 
-const Main : FunctionComponent<Props> = ({
-  page,
-  data,
-  slug,
-}) => {
+export const Main : FC<Props> = props => {
+  const [page, setPage] = useState(props.page);
+  const [slug, setSlug] = useState(props.slug);
+  const [data, dataDispatch] = useReducer(Model.dataReducer, props.data);
   return (
     <Base>
       <h1>Main Page</h1>
@@ -23,4 +25,4 @@ const Main : FunctionComponent<Props> = ({
   );
 }
 
-export default Main;
+export default mountElement(Main);

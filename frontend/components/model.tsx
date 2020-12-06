@@ -1,3 +1,5 @@
+import produce, { Draft } from 'immer';
+
 export interface HuntConfig {
   domain: string;
   auto_assign_puzzles_to_meta: boolean;
@@ -61,7 +63,15 @@ export interface Puzzle extends Entity {
 
 export interface Data {
   hunt: HuntConfig;
-  users: User[];
-  rounds: Round[];
-  puzzles: Puzzle[];
+  users: {[id: number]: User};
+  rounds: {[slug: string]: Round};
+  round_order: string[];
+  puzzles: {[slug: string]: Puzzle};
+}
+
+export const dataReducer = (state : Data, action : any) : Data => {
+  return produce(state, (draft : Draft<Data>) => {
+    switch (action.type) {
+    }
+  });
 }

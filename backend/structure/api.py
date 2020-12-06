@@ -229,8 +229,9 @@ def everything(request):
             puzzle_by_slug[meta_feeder.meta_id]['feeders'].append(meta_feeder.feeder_id)
     data = {
         'hunt': hunt_config,
-        'users': users,
-        'rounds': rounds,
-        'puzzles': puzzles,
+        'users': {user['id']: user for user in users},
+        'rounds': {_round['slug']: _round for _round in rounds},
+        'round_order': [_round['slug'] for _round in rounds],
+        'puzzles': {puzzle['slug']: puzzle for puzzle in puzzles},
     }
     return response.Response(data)

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.template import TemplateDoesNotExist
@@ -9,6 +10,7 @@ from rest_framework import renderers
 
 from . import api
 
+@login_required
 def render_app(request, page, props=None, **kwargs):
     template_name = 'app.html'
     context = kwargs.get('context', {})
