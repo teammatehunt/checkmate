@@ -25,11 +25,18 @@ module.exports = {
   },
   module: {
     rules: [
-      { 
-        test: /\.tsx?$/, 
+      {
+        test: /\.tsx?$/,
         loader: 'ts-loader',
-      }
-    ]
+      },
+      {
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader',
+        ],
+      },
+    ],
   },
   plugins: [
     new CleanWebpackPlugin(),

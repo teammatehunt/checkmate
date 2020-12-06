@@ -5,6 +5,8 @@ import React, {
 
 import { useLocalStorage } from '@rehooks/local-storage';
 
+import * as Model from 'components/model';
+
 export interface LocalStorageObject<T> {
   value: T;
   set(value: T): void;
@@ -16,13 +18,32 @@ export function useLocalStorageObject<T>(key: string, defaultValue: T) : LocalSt
   return {value, set, delete: _delete};
 }
 
+export interface SiteContextType extends Model.HuntConfig {
+}
+
+export const SiteContext = createContext<SiteContextType>({
+  domain: '',
+  auto_assign_puzzles_to_meta: true,
+});
+
+export const SiteContextProvider = ({huntConfig, children}) => {
+  const ctxValue = {
+    ...huntConfig,
+  };
+  return (
+    <SiteContext.Provider value={ctxValue}>
+      {children}
+    </SiteContext.Provider>
+  )
+};
+
 export interface PuzzleContextType {
   vsplitter?: LocalStorageObject<number>,
   lhsplitter?: LocalStorageObject<number>,
   rhsplitter?: LocalStorageObject<number>,
 }
 
-const PuzzleContext = createContext({});
+export const PuzzleContext = createContext<PuzzleContextType>({});
 
 export const PuzzleContextProvider = ({children}) => {
   const ctxValue = {

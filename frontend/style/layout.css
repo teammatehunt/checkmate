@@ -1,0 +1,33 @@
+.root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.vflex {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  flex: 1;
+}
+
+.hflex {
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  flex: 1;
+}
+
+.flex {
+  position: relative;
+  flex: 1;
+}
+
+.pane {
+  position: relative;
+  flex: 1;
+}
+
+.nodisplay {
+  display: none;
+}

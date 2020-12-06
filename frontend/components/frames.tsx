@@ -1,8 +1,11 @@
 import React from 'react';
 
-export const HideIf = ({condition, children}) => {
+export const ShowIf = ({condition, children,  ...props}) => {
+  let classes = props.className ? [props.className] : [];
+  classes.push(condition ? 'active' : 'nodisplay');
+  const className = classes.join(' ');
   return (
-    <div className={condition ? 'nodisplay' : 'active'}>
+    <div {...props} className={className}>
       {children}
     </div>
   );
