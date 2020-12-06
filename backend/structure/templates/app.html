@@ -5,10 +5,11 @@
   </head>
   <body>
     <div id="__CONTENT__"></div>
+    <script type="text/javascript" src="{% static 'JSONbig.js' %}"></script>
     <script type="text/javascript" src="{% static page|add:'.js' %}"></script>
     {{ props | json_script:"__DATA__" }}
     <script type="module">
-      const props = JSON.parse(document.getElementById("__DATA__").textContent);
+      const props = JSONbigModule.parse(document.getElementById("__DATA__").textContent);
       const mountElement = document.getElementById("__CONTENT__");
       {{ page }}Module.default(props, mountElement);
     </script>

@@ -24,6 +24,7 @@ export interface SiteContextType extends Model.HuntConfig {
 export const SiteContext = createContext<SiteContextType>({
   domain: '',
   auto_assign_puzzles_to_meta: true,
+  discord_server_id: null,
 });
 
 export const SiteContextProvider = ({huntConfig, children}) => {

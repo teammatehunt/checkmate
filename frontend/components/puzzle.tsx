@@ -40,27 +40,45 @@ const Puzzle : React.FC<PuzzleProps> = ({
   const renderPuzzleAndSheet = renderPuzzle && renderSheet;
   const renderOnlyPuzzle = renderPuzzle && !renderSheet;
   const renderOnlySheet = !renderPuzzle && renderSheet;
-  const renderDiscord = Boolean(puzzleData?.discord_text_channel_id);
+  const renderDiscord = Boolean(siteCtx?.discord_server_id && puzzleData?.discord_text_channel_id);
 
   const puzzlePane = (
     <div key='puzzle-pane' className='puzzle pane'>
-      <iframe
-        width="100%"
-        height="100%"
-        title={puzzleData?.name}
-        src={puzzleData?.link}
-      />
+      <ShowIf condition={renderPuzzle}>
+        <iframe
+          width="100%"
+          height="100%"
+          title={puzzleData?.name}
+          src={puzzleData?.link}
+        />
+      </ShowIf>
     </div>
   );
 
   const sheetPane = (
     <div key='sheet-pane' className='sheet pane'>
-      <iframe
-        width="100%"
-        height="100%"
-        title={puzzleData?.name}
-        src={puzzleData?.sheet_link}
-      />
+      <ShowIf condition={renderSheet}>
+        <iframe
+          width="100%"
+          height="100%"
+          title={puzzleData?.name && `Spreadsheet for ${puzzleData?.name}`}
+          src={puzzleData?.sheet_link}
+        />
+      </ShowIf>
+    </div>
+  );
+
+  console.log(Model.discordLink(siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));
+  const discordPane = (
+    <div key='discord-pane' className='discord pane'>
+      <ShowIf condition={renderDiscord}>
+        <iframe
+          width="100%"
+          height="100%"
+          title={puzzleData?.name && `Discord for ${puzzleData?.name}`}
+          src={Model.discordLink(siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id)}
+        />
+      </ShowIf>
     </div>
   );
 
@@ -120,6 +138,7 @@ const Puzzle : React.FC<PuzzleProps> = ({
               <div className='puzzleinfo pane'>
               </div>
               <div className='chat pane'>
+                {discordPane}
               </div>
             </SplitPane>
           </SplitPane>

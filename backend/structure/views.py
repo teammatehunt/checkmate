@@ -10,7 +10,6 @@ from rest_framework import renderers
 
 from . import api
 
-@login_required
 def render_app(request, page, props=None, **kwargs):
     template_name = 'app.html'
     context = kwargs.get('context', {})
@@ -20,6 +19,7 @@ def render_app(request, page, props=None, **kwargs):
     kwargs['context'] = context
     return render(request, template_name, **kwargs)
 
+@login_required
 def master(request):
     page = 'main'
     data = api.everything(request).data
@@ -29,6 +29,7 @@ def master(request):
     }
     return render_app(request, page, props)
 
+@login_required
 def puzzle(request, slug):
     data = api.everything(request).data
     if slug not in data['puzzles']:

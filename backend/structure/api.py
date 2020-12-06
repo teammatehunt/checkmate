@@ -1,6 +1,7 @@
 import datetime
 
 from django import db
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import F
 from django.contrib.auth.models import User

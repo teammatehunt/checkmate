@@ -3,6 +3,7 @@ import produce, { Draft } from 'immer';
 export interface HuntConfig {
   domain: string;
   auto_assign_puzzles_to_meta: boolean;
+  discord_server_id: number;
 }
 
 export interface SocialAccount {
@@ -88,3 +89,5 @@ const dataMerge = (draft, data, roots) => {
     if (newData !== undefined) draft[key] = newData;
   }
 };
+
+export const discordLink = (server_id : number, channel_id : number) => `https://discord.com/channels/${server_id}/${channel_id}`;

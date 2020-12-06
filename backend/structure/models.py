@@ -21,6 +21,9 @@ class HuntConfig(models.Model):
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
     domain = CharField(blank=True, help_text='Include the protocol. (eg https://example.com)')
+    discord_server_id = models.BigIntegerField(
+        null=True, blank=True,
+        default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))
 
     @classmethod
     def get(cls):
@@ -54,8 +57,8 @@ class Entity(models.Model):
     AUTO_FIELDS = ('modified', 'modified_by', 'hidden')
     tags = fields.HStoreField()
 
-    discord_text_channel_id = models.IntegerField(null=True, blank=True)
-    discord_voice_channel_id = models.IntegerField(null=True, blank=True)
+    discord_text_channel_id = models.BigIntegerField(null=True, blank=True)
+    discord_voice_channel_id = models.BigIntegerField(null=True, blank=True)
     sheet_link = CharField(blank=True)
 
     class Meta:
