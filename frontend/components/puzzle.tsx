@@ -1,17 +1,28 @@
 import React from 'react';
 
-import Base from 'components/base';
+import * as Model from 'components/model';
+import { HideIf } from 'components/frames';
 
-const Puzzle = ({
-  page,
+interface PuzzleProps {
+  isActive: boolean;
+  slug: string;
+  puzzleData: Model.Puzzle;
+}
+
+const Puzzle : React.FC<PuzzleProps> = ({
+  isActive,
   slug,
-  data,
+  puzzleData,
 }) => {
   return (
-    <Base>
-      <h1>Puzzle Page</h1>
-    </Base>
+    <HideIf condition={!isActive}>
+      {puzzleData ?
+        <h1>Puzzle Page</h1>
+        :
+        <p>This puzzle does not exist. Maybe it was deleted?</p>
+      }
+    </HideIf>
   );
-}
+};
 
 export default Puzzle;

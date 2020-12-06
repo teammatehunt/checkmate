@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Base = ({
+const Header = ({
   children,
 }) => {
   return (
@@ -10,4 +10,4 @@ const Base = ({
   );
 };
 
-export default Base;
+export default Header;

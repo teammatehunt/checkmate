@@ -30,10 +30,12 @@ def master(request):
     return render_app(request, page, props)
 
 def puzzle(request, slug):
-    page = 'puzzle'
     data = api.everything(request).data
+    if slug not in data['puzzles']:
+        return redirect('/')
+    page = 'main'
     props = {
-        'page': 'main',
+        'page': 'puzzle',
         'slug': slug,
         'data': data,
     }

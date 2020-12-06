@@ -72,6 +72,19 @@ export interface Data {
 export const dataReducer = (state : Data, action : any) : Data => {
   return produce(state, (draft : Draft<Data>) => {
     switch (action.type) {
+      case 'merge':
+        return dataMerge(draft, action.data, action.roots);
+        break;
+      default:
+        throw TypeError();
     }
   });
-}
+};
+
+const dataMerge = (draft, data, roots) => {
+  if (roots === true) return data;
+  for (const key in roots) {
+    const newData = dataMerge(draft[key], data[key], roots[key]);
+    if (newData !== undefined) draft[key] = newData;
+  }
+};
