@@ -28,6 +28,10 @@
   flex: 1;
 }
 
+.resizing iframe {
+  pointer-events: none;
+}
+
 .nodisplay {
   display: none;
 }

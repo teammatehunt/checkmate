@@ -33,6 +33,8 @@ const Puzzle : React.FC<PuzzleProps> = ({
   const siteCtx = useContext(Context.SiteContext);
   const puzzleCtx = useContext(Context.PuzzleContext);
 
+  const [resizingClass, setResizingClass] = useState('');
+
   const renderPuzzle = Boolean(puzzleData?.link)
   const renderSheet = Boolean(puzzleData?.sheet_link);
   const renderPuzzleAndSheet = renderPuzzle && renderSheet;
@@ -79,22 +81,30 @@ const Puzzle : React.FC<PuzzleProps> = ({
     },
   ];
 
+  const onDragStarted = () => setResizingClass('resizing');
+  const onDragFinishedSet = (set) => (x) => {
+    setResizingClass('');
+    return set(x);
+  };
+
   return (<>
     {(shouldRender || null) &&
     <ShowIf condition={isActive} className='hflex'>
       {puzzleData ?
-        <div className='puzzle page'>
+        <div className={`puzzle page ${resizingClass}`}>
           <SplitPane
             split='vertical'
             primary='second'
             defaultSize={puzzleCtx.vsplitter?.value || 240}
             minSize={50}
-            onDragFinished={puzzleCtx.vsplitter?.set}
+            onDragStarted={onDragStarted}
+            onDragFinished={onDragFinishedSet(puzzleCtx.vsplitter?.set)}
           >
             <SplitPane
               split='horizontal'
               defaultSize={puzzleCtx.lhsplitter?.value || window.innerHeight / 2}
-              onDragFinished={puzzleCtx.lhsplitter?.set}
+              onDragStarted={onDragStarted}
+              onDragFinished={onDragFinishedSet(puzzleCtx.lhsplitter?.set)}
               resizerClassName={renderPuzzleAndSheet ? 'Resizer' : 'nodisplay'}
               pane1Style={leftPanes[0].style}
               pane2Style={leftPanes[1].style}
@@ -104,7 +114,8 @@ const Puzzle : React.FC<PuzzleProps> = ({
             <SplitPane
               split='horizontal'
               defaultSize={puzzleCtx.rhsplitter?.value || window.innerHeight / 2}
-              onDragFinished={puzzleCtx.rhsplitter?.set}
+              onDragStarted={onDragStarted}
+              onDragFinished={onDragFinishedSet(puzzleCtx.rhsplitter?.set)}
             >
               <div className='puzzleinfo pane'>
               </div>
