@@ -1,6 +1,6 @@
 {
   "name": "checkmate-extension",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Helper for iframe management for puzzle solving.",
   "main": "index.js",
   "dependencies": {},

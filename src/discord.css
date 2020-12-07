@@ -1,0 +1,33 @@
+nav[class*='guilds-'] {
+  width: 12px;
+  transition: width 0.2s;
+}
+nav[class*='guilds-'] + div[class*='base-'] {
+  left: 12px;
+  transition: left 0.2s;
+}
+
+nav[class*='guilds-']:hover {
+  width: 72px;
+}
+nav[class*='guilds-']:hover + div[class*='base-'] {
+  left: 72px;
+}
+
+div[class^='message-'] {
+  padding-right: 0 ! important;
+  padding-left: 0.5rem ! important;
+}
+div[class^='contents-'][role='document'] {
+  margin-left: 0;
+  padding-left: 0;
+  text-indent: 0;
+}
+div[class*='timestamp-'] {
+  line-height: 1rem;
+  text-align: left;
+}
+
+a[href='https://support.discord.com'] {
+  display: none;
+}
