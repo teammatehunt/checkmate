@@ -42,6 +42,7 @@ const Puzzle : React.FC<PuzzleProps> = ({
   const renderOnlySheet = !renderPuzzle && renderSheet;
   const renderDiscord = Boolean(siteCtx?.discord_server_id && puzzleData?.discord_text_channel_id);
 
+  const puzzleUrl = puzzleData?.link ? new URL(puzzleData?.link, siteCtx?.domain || undefined).href : undefined;
   const puzzlePane = (
     <div key='puzzle-pane' className='puzzle pane'>
       <ShowIf condition={renderPuzzle}>
@@ -49,7 +50,7 @@ const Puzzle : React.FC<PuzzleProps> = ({
           width="100%"
           height="100%"
           title={puzzleData?.name}
-          src={puzzleData?.link}
+          src={puzzleUrl}
         />
       </ShowIf>
     </div>
