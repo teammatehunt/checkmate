@@ -61,7 +61,8 @@ chrome.webRequest.onHeadersReceived.addListener(
   ['blocking', 'responseHeaders'],
 );
 
-chrome.webNavigation.onCompleted.addListener(details => {
+// Add styles for matching embedded urls
+chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   if (details.tabId >= 0 && details.parentFrameId >= 0) {
     chrome.webNavigation.getFrame(
       {
@@ -69,9 +70,9 @@ chrome.webNavigation.onCompleted.addListener(details => {
         frameId: details.parentFrameId,
       },
       parentFrame => {
+        if (!parentFrame) return;
         if (parentFrame.url.match(PARENT_REGEX)) {
           if (details.url.match(DISCORD_REGEX)) {
-            console.log(details.url);
             chrome.tabs.insertCSS(
               details.tabId,
               {
