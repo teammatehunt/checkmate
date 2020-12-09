@@ -4,152 +4,80 @@ import React, {
   useState,
 } from 'react';
 
+import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane, { Pane } from 'react-split-pane';
 
 import * as Context from 'components/context';
-import { ShowIf } from 'components/frames';
+import {
+  ShowIf,
+  PuzzleFrame,
+  SheetFrame,
+} from 'components/frames';
 import * as Model from 'components/model';
 
-import 'style/split-pane.css';
-
-interface PuzzleProps {
+interface PuzzlesProps {
   isActive: boolean;
+  tabs: string[];
   slug: string;
-  puzzleData: Model.Puzzle;
+  puzzles: {[slug: string]: Model.Puzzle};
+  siteCtx: Context.SiteContextType;
+  onDragStarted: any;
+  onDragFinishedSet: any;
 }
 
-const Puzzle : React.FC<PuzzleProps> = ({
+const Puzzles : React.FC<PuzzlesProps> = ({
   isActive,
+  tabs,
   slug,
-  puzzleData,
+  puzzles,
+  siteCtx,
+  onDragStarted,
+  onDragFinishedSet,
 }) => {
-  const [cached, setCached] = useState(false);
+  const [lhsplitter, setLhsplitter] = useLocalStorage<number>('frames/lhsplitter', null);
 
-  useEffect(() => {
-    if (isActive) setCached(false);
-  }, [isActive]);
-
-  const shouldRender = isActive || cached;
-  const siteCtx = useContext(Context.SiteContext);
-  const puzzleCtx = useContext(Context.PuzzleContext);
-
-  const [resizingClass, setResizingClass] = useState('');
-
-  const renderPuzzle = Boolean(puzzleData?.link)
-  const renderSheet = Boolean(puzzleData?.sheet_link);
+  const renderPuzzle = true;
+  const renderSheet = true;
   const renderPuzzleAndSheet = renderPuzzle && renderSheet;
   const renderOnlyPuzzle = renderPuzzle && !renderSheet;
   const renderOnlySheet = !renderPuzzle && renderSheet;
-  const renderDiscord = Boolean(siteCtx?.discord_server_id && puzzleData?.discord_text_channel_id);
 
-  const puzzleUrl = puzzleData?.link ? new URL(puzzleData?.link, siteCtx?.domain || undefined).href : undefined;
-  const puzzlePane = (
-    <div key='puzzle-pane' className='puzzle pane'>
-      <ShowIf condition={renderPuzzle}>
-        <iframe
-          width="100%"
-          height="100%"
-          title={puzzleData?.name}
-          src={puzzleUrl}
-        />
-      </ShowIf>
-    </div>
+  const puzzlePaneStyle = renderOnlyPuzzle ? {height: '100%'} : renderOnlySheet ? {display: 'none'} : {};
+  const sheetPaneStyle = renderOnlySheet ? {height: '100%'} : renderOnlyPuzzle ? {display: 'none'} : {};
+
+  return (
+    <SplitPane
+      split='horizontal'
+      defaultSize={lhsplitter || window.innerHeight / 2}
+      onDragStarted={onDragStarted}
+      onDragFinished={onDragFinishedSet(setLhsplitter)}
+      resizerClassName={renderPuzzleAndSheet ? 'Resizer' : 'nodisplay'}
+      pane1Style={puzzlePaneStyle}
+      pane2Style={sheetPaneStyle}
+    >
+      <div className="puzzle pane">
+        {tabs.map(tab => (
+          <div key={tab}>
+            <PuzzleFrame
+              siteCtx={siteCtx}
+              isActive={isActive && tab === slug}
+              puzzleData={puzzles[tab]}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="sheet pane">
+        {tabs.map(tab => (
+          <div key={tab}>
+            <SheetFrame
+              isActive={isActive && tab === slug}
+              puzzleData={puzzles[tab]}
+            />
+          </div>
+        ))}
+      </div>
+    </SplitPane>
   );
-
-  const sheetPane = (
-    <div key='sheet-pane' className='sheet pane'>
-      <ShowIf condition={renderSheet}>
-        <iframe
-          width="100%"
-          height="100%"
-          title={puzzleData?.name && `Spreadsheet for ${puzzleData?.name}`}
-          src={puzzleData?.sheet_link}
-        />
-      </ShowIf>
-    </div>
-  );
-
-  console.log(Model.discordLink(siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));
-  const discordPane = (
-    <div key='discord-pane' className='discord pane'>
-      <ShowIf condition={renderDiscord}>
-        <iframe
-          width="100%"
-          height="100%"
-          title={puzzleData?.name && `Discord for ${puzzleData?.name}`}
-          src={Model.discordLink(siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id)}
-        />
-      </ShowIf>
-    </div>
-  );
-
-  const leftPanes : {
-    component: React.ReactNode,
-    render: boolean,
-    style,
-  }[] = [
-    {
-      component: puzzlePane,
-      render: renderPuzzle,
-      style: renderOnlyPuzzle ? {height: '100%'} : renderOnlySheet ? {display: 'none'} : {},
-    },
-    {
-      component: sheetPane,
-      render: renderSheet,
-      style: renderOnlySheet ? {height: '100%'} : renderOnlyPuzzle ? {display: 'none'} : {},
-    },
-  ];
-
-  const onDragStarted = () => setResizingClass('resizing');
-  const onDragFinishedSet = (set) => (x) => {
-    setResizingClass('');
-    return set(x);
-  };
-
-  return (<>
-    {(shouldRender || null) &&
-    <ShowIf condition={isActive} className='hflex'>
-      {puzzleData ?
-        <div className={`puzzle page ${resizingClass}`}>
-          <SplitPane
-            split='vertical'
-            primary='second'
-            defaultSize={puzzleCtx.vsplitter?.value || 240}
-            minSize={50}
-            onDragStarted={onDragStarted}
-            onDragFinished={onDragFinishedSet(puzzleCtx.vsplitter?.set)}
-          >
-            <SplitPane
-              split='horizontal'
-              defaultSize={puzzleCtx.lhsplitter?.value || window.innerHeight / 2}
-              onDragStarted={onDragStarted}
-              onDragFinished={onDragFinishedSet(puzzleCtx.lhsplitter?.set)}
-              resizerClassName={renderPuzzleAndSheet ? 'Resizer' : 'nodisplay'}
-              pane1Style={leftPanes[0].style}
-              pane2Style={leftPanes[1].style}
-            >
-              {leftPanes.map(({component}) => component)}
-            </SplitPane>
-            <SplitPane
-              split='horizontal'
-              defaultSize={puzzleCtx.rhsplitter?.value || window.innerHeight / 2}
-              onDragStarted={onDragStarted}
-              onDragFinished={onDragFinishedSet(puzzleCtx.rhsplitter?.set)}
-            >
-              <div className='puzzleinfo pane'>
-              </div>
-              <div className='chat pane'>
-                {discordPane}
-              </div>
-            </SplitPane>
-          </SplitPane>
-        </div>
-        :
-        <p>The puzzle under /puzzles/{slug} does not exist. Maybe it was deleted?</p>
-      }
-    </ShowIf>
-    }
-  </>);
 };
 
-export default Puzzle;
+export default Puzzles;

@@ -8,15 +8,19 @@ import React, {
 } from 'react';
 
 import { useLocalStorage } from '@rehooks/local-storage';
+import SplitPane from 'react-split-pane';
 
-import * as Context from 'components/context';
 import * as Model from 'components/model';
 import Base from 'components/base';
 import Master from 'components/master';
-import Puzzle from 'components/puzzle';
-import { ShowIf } from 'components/frames';
+import Puzzles from 'components/puzzle';
+import {
+  ShowIf,
+  DiscordFrame,
+} from 'components/frames';
 
 import 'style/layout.css';
+import 'style/split-pane.css';
 
 interface MainProps {
   page: 'master' | 'puzzle';
@@ -30,6 +34,13 @@ export const Main : React.FC<MainProps> = props => {
   const [data, dataDispatch] = useReducer(Model.dataReducer, props.data);
 
   const [tabs, setTabs, deleteTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
+  const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
+  const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
+
+  const siteCtx = data.hunt;
+  const puzzleData = data.puzzles[slug];
+  const [initialDiscordUrl] = useState(Model.discordLink(
+    siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));
 
   useEffect(() => {
     if (page === 'puzzle') {
@@ -39,33 +50,63 @@ export const Main : React.FC<MainProps> = props => {
     }
   }, [slug]);
 
+  const [resizingClass, setResizingClass] = useState('');
+  const onDragStarted = () => setResizingClass('resizing');
+  const onDragFinishedSet = (set) => (x) => {
+    setResizingClass('');
+    return set(x);
+  };
 
   return (
-    <Context.SiteContextProvider huntConfig={data.hunt}>
-      <Base>
-        <div className="root vflex">
-          <h1>Main Page</h1>
-          <ShowIf condition={page === 'master'} className="vflex">
-            <Master
-              isActive={page === 'master'}
-              data={data}
-            />
-          </ShowIf>
-          <ShowIf condition={page === 'puzzle'} className="vflex">
-            <Context.PuzzleContextProvider>
-              {tabs.map(tab => (
-                <Puzzle
-                  key={tab}
-                  isActive={page === 'puzzle' && tab === slug}
-                  slug={tab}
-                  puzzleData={data.puzzles[tab]}
+    <Base>
+      <div className={`root vflex ${resizingClass}`}>
+        <h1>Main Page</h1>
+        <div className="flex">
+          <SplitPane
+            split='vertical'
+            primary='second'
+            defaultSize={vsplitter || 240}
+            minSize={50}
+            onDragStarted={onDragStarted}
+            onDragFinished={onDragFinishedSet(setVsplitter)}
+          >
+            <div>
+              <ShowIf display={page === 'master'}>
+                <Master
+                  isActive={page === 'master'}
+                  data={data}
                 />
-              ))}
-            </Context.PuzzleContextProvider>
-          </ShowIf>
+              </ShowIf>
+              <ShowIf display={page === 'puzzle'}>
+                <Puzzles
+                  tabs={tabs}
+                  slug={slug}
+                  puzzles={data.puzzles}
+                  siteCtx={siteCtx}
+                  isActive={page === 'puzzle'}
+                  onDragStarted={onDragStarted}
+                  onDragFinishedSet={onDragFinishedSet}
+                />
+              </ShowIf>
+            </div>
+            <SplitPane
+              split='horizontal'
+              defaultSize={rhsplitter || window.innerHeight / 2}
+              onDragStarted={onDragStarted}
+              onDragFinished={onDragFinishedSet(setRhsplitter)}
+            >
+              <div className='puzzleinfo pane'>
+              </div>
+              <div className='chat pane'>
+                <DiscordFrame
+                  src={initialDiscordUrl}
+                />
+              </div>
+            </SplitPane>
+          </SplitPane>
         </div>
-      </Base>
-    </Context.SiteContextProvider>
+      </div>
+    </Base>
   );
 };
 

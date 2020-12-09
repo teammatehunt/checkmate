@@ -37,24 +37,3 @@ export const SiteContextProvider = ({huntConfig, children}) => {
     </SiteContext.Provider>
   )
 };
-
-export interface PuzzleContextType {
-  vsplitter?: LocalStorageObject<number>,
-  lhsplitter?: LocalStorageObject<number>,
-  rhsplitter?: LocalStorageObject<number>,
-}
-
-export const PuzzleContext = createContext<PuzzleContextType>({});
-
-export const PuzzleContextProvider = ({children}) => {
-  const ctxValue = {
-    vsplitter: useLocalStorageObject('puzzlecontext/vsplitter', null),
-    lhsplitter: useLocalStorageObject('puzzlecontext/lhsplitter', null),
-    rhsplitter: useLocalStorageObject('puzzlecontext/rhsplitter', null),
-  };
-  return (
-    <PuzzleContext.Provider value={ctxValue}>
-      {children}
-    </PuzzleContext.Provider>
-  )
-};
