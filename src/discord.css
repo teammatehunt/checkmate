@@ -6,6 +6,10 @@ section[class^='panels-'][aria-label='User area'] {
   right: 0;
   left: 102px;
 }
+/* One row higher on Home */
+div[class^='sidebar-'] > nav[class^='privateChannels-'] + section[class^='panels-'][aria-label='User area'] {
+  top: 48px;
+}
 
 /* Hide dock of servers */
 nav[class*='guilds-'] + div[class*='base-'] {
@@ -21,11 +25,13 @@ nav[class*='guilds-']:hover + div[class*='base-'] {
 div[class^='sidebar-'] {
   width: min-content;
 }
-div[class^='sidebar-'] > nav[class^='container-'] {
+div[class^='sidebar-'] > nav[class^='container-'],
+div[class^='sidebar-'] > nav[class^='privateChannels-'] {
   width: 90px;
   transition: width 0.2s;
 }
-nav[class*='guilds-']:hover + div[class*='base-'] nav[class^='container-'] {
+nav[class*='guilds-']:hover + div[class*='base-'] div[class^='sidebar-'] > nav[class^='container-'],
+nav[class*='guilds-']:hover + div[class*='base-'] div[class^='sidebar-'] > nav[class^='privateChannels-'] {
   width: 30px;
   transition-delay: 0.5s;
 }
@@ -44,7 +50,8 @@ div[class^='chat-'] > section[class^='title'] > * {
 div[class^='chat-'] > section[class^='title'] > div[class^='toolbar-'] {
   margin-left: auto;
 }
-div[class^='chat-'] > div[class^='content-'] {
+div[class^='chat-'] > div[class^='content-'],
+section[class^='container-'] + div[class^='tabBody-'] {
   margin-top: 50px;
 }
 
