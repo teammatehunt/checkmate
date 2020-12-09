@@ -62,12 +62,23 @@ export interface Puzzle extends Entity {
   feeders: string[]; // feeder puzzle slugs
 }
 
+export interface Users {
+  [id: number]: User;
+}
+export interface Rounds {
+  [slug: string]: Round;
+}
+export interface Puzzles {
+  [slug: string]: Puzzle;
+}
+
 export interface Data {
   hunt: HuntConfig;
-  users: {[id: number]: User};
-  rounds: {[slug: string]: Round};
+  users: Users;
+  rounds: Rounds;
   round_order: string[];
-  puzzles: {[slug: string]: Puzzle};
+  puzzles: Puzzles;
+  uid?: number;
 }
 
 export const dataReducer = (state : Data, action : any) : Data => {

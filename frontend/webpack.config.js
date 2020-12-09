@@ -4,7 +4,7 @@ const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
-  entry: Object.assign({}, ...glob.sync('./apps/*.tsx').map(filename => ({ [path.parse(filename).name]: filename}))),
+  entry: Object.assign({}, ...glob.sync('./apps/**/*.tsx').map(filename => ({ [path.parse(filename).name]: filename}))),
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
     modules: [
@@ -35,6 +35,10 @@ module.exports = {
           'style-loader',
           'css-loader',
         ],
+      },
+      {
+        test: /\.svg$/,
+        use: ['@svgr/webpack'],
       },
     ],
   },

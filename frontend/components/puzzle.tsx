@@ -19,7 +19,7 @@ interface PuzzlesProps {
   isActive: boolean;
   tabs: string[];
   slug: string;
-  puzzles: {[slug: string]: Model.Puzzle};
+  puzzles: Model.Puzzles;
   siteCtx: Context.SiteContextType;
   onDragStarted: any;
   onDragFinishedSet: any;
@@ -55,7 +55,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
       pane1Style={puzzlePaneStyle}
       pane2Style={sheetPaneStyle}
     >
-      <div className="puzzle pane">
+      <div className='puzzle pane'>
         {tabs.map(tab => (
           <div key={tab}>
             <PuzzleFrame
@@ -66,7 +66,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
           </div>
         ))}
       </div>
-      <div className="sheet pane">
+      <div className='sheet pane'>
         {tabs.map(tab => (
           <div key={tab}>
             <SheetFrame

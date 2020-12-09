@@ -22,7 +22,7 @@ def render_app(request, page, props=None, **kwargs):
 @login_required
 def master(request):
     page = 'main'
-    data = api.everything(request).data
+    data = api.data_everything_with_uid(request)
     props = {
         'page': 'master',
         'data': data,

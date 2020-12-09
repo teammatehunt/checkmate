@@ -200,8 +200,7 @@ def process_relation(cls, pk, request):
     except db.Error as e:
         raise exceptions.APIException(e)
 
-@decorators.api_view()
-def everything(request):
+def data_everything(request):
     hunt_config = HuntConfigSerializer(models.HuntConfig.get()).data
     users = UserSerializer(User.objects.all(), many=True).data
     rounds = BaseRoundSerializer(models.Round.objects.all(), many=True).data
@@ -235,4 +234,15 @@ def everything(request):
         'round_order': [_round['slug'] for _round in rounds],
         'puzzles': {puzzle['slug']: puzzle for puzzle in puzzles},
     }
+    return data
+
+@decorators.api_view()
+def everything(request):
+    data = data_everything(request)
     return response.Response(data)
+
+@login_required
+def data_everything_with_uid(request):
+    data = data_everything(request)
+    data['uid'] = request.user.id
+    return data

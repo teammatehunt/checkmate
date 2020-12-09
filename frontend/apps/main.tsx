@@ -14,6 +14,7 @@ import * as Model from 'components/model';
 import Base from 'components/base';
 import Master from 'components/master';
 import Puzzles from 'components/puzzle';
+import Header from 'components/tabbar';
 import {
   ShowIf,
   DiscordFrame,
@@ -29,26 +30,59 @@ interface MainProps {
 }
 
 export const Main : React.FC<MainProps> = props => {
-  const [page, setPage] = useState(props.page);
-  const [slug, setSlug] = useState(props.slug);
+  const [slug, setSlug] = useState(props.page === 'puzzle' ? props.slug : undefined);
+  const page = slug === undefined ? 'master' : 'puzzle';
   const [data, dataDispatch] = useReducer(Model.dataReducer, props.data);
 
-  const [tabs, setTabs, deleteTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
+  const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
   const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
 
+  const uid = data.uid;
   const siteCtx = data.hunt;
-  const puzzleData = data.puzzles[slug];
-  const [initialDiscordUrl] = useState(Model.discordLink(
-    siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));
+  const puzzles = data.puzzles;
+  const puzzleData = puzzles[slug];
+
+  useEffect(() => {
+    const handler = (e) => setSlug(e.state.slug);
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, []);
 
   useEffect(() => {
     if (page === 'puzzle') {
-      if (slug in data.puzzles && !tabs.includes(slug)) {
+      if (slug in puzzles && !tabs.includes(slug)) {
         setTabs([slug, ...tabs]);
       }
     }
   }, [slug]);
+  const activateTab = (_slug) => {
+    if (_slug !== undefined && !tabs.includes(_slug)) {
+      setTabs([_slug, ...tabs]);
+    }
+    if (_slug !== slug) {
+      setSlug(_slug);
+      const url = _slug === undefined ? '/' : `/puzzles/${_slug}`;
+      history.pushState({slug: _slug}, '', url);
+    }
+  };
+  const removeTab = (_slug) => {
+    const index = tabs.indexOf(_slug);
+    if (index !== -1) {
+      const newTabs = tabs.filter(x => x !== _slug);
+      setTabs(newTabs);
+      if (_slug === slug) {
+        const newIndex = Math.min(index, newTabs.length - 1);
+        const newSlug = newTabs[newIndex];
+        setSlug(newSlug);
+        const url = newSlug === undefined ? '/' : `/puzzles/${newSlug}`;
+        history.pushState({slug: _slug}, '', url);
+      }
+    }
+  }
+
+  const [initialDiscordUrl] = useState(Model.discordLink(
+    siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));
 
   const [resizingClass, setResizingClass] = useState('');
   const onDragStarted = () => setResizingClass('resizing');
@@ -60,8 +94,16 @@ export const Main : React.FC<MainProps> = props => {
   return (
     <Base>
       <div className={`root vflex ${resizingClass}`}>
-        <h1>Main Page</h1>
-        <div className="flex">
+        <Header {...{
+          tabs,
+          slug,
+          activateTab,
+          removeTab,
+          siteCtx,
+          puzzles,
+          uid,
+        }}/>
+        <div className='flex'>
           <SplitPane
             split='vertical'
             primary='second'
@@ -81,7 +123,7 @@ export const Main : React.FC<MainProps> = props => {
                 <Puzzles
                   tabs={tabs}
                   slug={slug}
-                  puzzles={data.puzzles}
+                  puzzles={puzzles}
                   siteCtx={siteCtx}
                   isActive={page === 'puzzle'}
                   onDragStarted={onDragStarted}
