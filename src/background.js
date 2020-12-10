@@ -12,6 +12,7 @@ const STRIPPED_HEADERS = [
 ];
 
 let matchedRequestsCache = {};
+let frameNames = {};
 
 chrome.webRequest.onBeforeRequest.addListener(
   details => {
@@ -72,6 +73,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
       parentFrame => {
         if (!parentFrame) return;
         if (parentFrame.url.match(PARENT_REGEX)) {
+          // set site-specific CSS
           if (details.url.match(DISCORD_REGEX)) {
             chrome.tabs.insertCSS(
               details.tabId,
@@ -89,6 +91,38 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
                 file: 'drive.css',
               },
             );
+          }
+          // tell parent that url loaded / changed
+          const sendUrl = (name) => {
+            chrome.tabs.sendMessage(
+              details.tabId,
+              {
+                action: 'loaded-subframe',
+                frameId: details.frameId,
+                url: details.url,
+                name: name,
+              },
+              {
+                frameId: details.parentFrameId,
+              },
+            );
+          };
+          if (!frameNames[details.tabId]) frameNames[details.tabId] = {};
+          const name = frameNames[details.tabId][details.frameId];
+          if (name === undefined) {
+            chrome.tabs.executeScript(
+              details.tabId,
+              {
+                frameId: details.frameId,
+                code: 'window.name',
+              },
+              ([result]) => {
+                frameNames[details.tabId][details.frameId] === result;
+                sendUrl(result);
+              },
+            );
+          } else {
+            sendUrl(name);
           }
         }
       },
