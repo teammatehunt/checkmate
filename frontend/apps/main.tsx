@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 
+import produce from 'immer';
 import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
 
@@ -33,6 +34,8 @@ export const Main : React.FC<MainProps> = props => {
   const [slug, setSlug] = useState(props.page === 'puzzle' ? props.slug : undefined);
   const page = slug === undefined ? 'master' : 'puzzle';
   const [data, dataDispatch] = useReducer(Model.dataReducer, props.data);
+  const iframeUrlsReducer = (state, action) => Object.assign({}, state, action);
+  const [iframeUrls, iframeUrlsDispatch] = useReducer(iframeUrlsReducer, {});
 
   const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
@@ -48,15 +51,16 @@ export const Main : React.FC<MainProps> = props => {
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, []);
-
+  // custom event for listening to url changes in iframes
   useEffect(() => {
-    if (page === 'puzzle') {
-      if (slug in puzzles && !tabs.includes(slug)) {
-        setTabs([slug, ...tabs]);
-      }
+    const handler = (e) => {
+      iframeUrlsDispatch({[e.detail.name]: e.detail.url});
     }
-  }, [slug]);
-  const activateTab = (_slug) => {
+    window.addEventListener('loaded-subframe', handler);
+    return () => window.removeEventListener('loaded-subframe', handler);
+  }, []);
+
+  const loadSlug = _slug => {
     if (_slug !== undefined && !tabs.includes(_slug)) {
       setTabs([_slug, ...tabs]);
     }
@@ -66,6 +70,15 @@ export const Main : React.FC<MainProps> = props => {
       history.pushState({slug: _slug}, '', url);
     }
   };
+
+  useEffect(() => {
+    if (page === 'puzzle') {
+      if (slug in puzzles && !tabs.includes(slug)) {
+        setTabs([slug, ...tabs]);
+      }
+    }
+  }, [slug]);
+  const activateTab = loadSlug;
   const removeTab = (_slug) => {
     const index = tabs.indexOf(_slug);
     if (index !== -1) {
@@ -74,9 +87,7 @@ export const Main : React.FC<MainProps> = props => {
       if (_slug === slug) {
         const newIndex = Math.min(index, newTabs.length - 1);
         const newSlug = newTabs[newIndex];
-        setSlug(newSlug);
-        const url = newSlug === undefined ? '/' : `/puzzles/${newSlug}`;
-        history.pushState({slug: _slug}, '', url);
+        loadSlug(newSlug);
       }
     }
   }
@@ -121,11 +132,12 @@ export const Main : React.FC<MainProps> = props => {
               </ShowIf>
               <ShowIf display={page === 'puzzle'}>
                 <Puzzles
+                  isActive={page === 'puzzle'}
                   tabs={tabs}
                   slug={slug}
                   puzzles={puzzles}
                   siteCtx={siteCtx}
-                  isActive={page === 'puzzle'}
+                  iframeUrls={iframeUrls}
                   onDragStarted={onDragStarted}
                   onDragFinishedSet={onDragFinishedSet}
                 />
@@ -141,6 +153,7 @@ export const Main : React.FC<MainProps> = props => {
               </div>
               <div className='chat pane'>
                 <DiscordFrame
+                  id="discord"
                   src={initialDiscordUrl}
                 />
               </div>

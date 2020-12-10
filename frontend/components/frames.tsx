@@ -24,26 +24,29 @@ export const ShowIf = ({display, children,  ...props}) => {
 };
 
 interface IFrameProps {
-  name: string;
+  id: string,
+  kind: string;
   src: string;
   title: string;
   display?: DisplayType;
 };
 
 export const IFrame : React.FC<IFrameProps> = ({
-  name,
+  id,
+  kind,
   src,
   title,
   display=DisplayType.DISPLAY,
 }) => {
   if (!src) {
     return (
-        <p>This puzzle does not have a URL set for the {name}.</p>
+        <p>This puzzle does not have a URL set for the {kind}.</p>
     );
   }
   return (
     <ShowIf display={display}>
       <iframe
+        name={id}
         width="100%"
         height="100%"
         title={title}
@@ -53,17 +56,29 @@ export const IFrame : React.FC<IFrameProps> = ({
   );
 };
 
+const canonicalPath = (url: string) => {
+  if (!url) return null;
+  const _url = new URL(url);
+  return (_url.origin + _url.pathname).replace(/\/+$/, '');
+};
+
 interface CachedIFrameProps {
-  name: string;
+  id: string;
+  kind: string;
   src: string;
   title: string;
   isActive: boolean;
+  currentUrl: string;
 }
 
-export const CachedIFrame : React.FC<CachedIFrameProps> = ({isActive, ...props}) => {
+export const CachedIFrame : React.FC<CachedIFrameProps> = ({isActive, currentUrl, ...props}) => {
   const [cached, setCached] = useState(DisplayType.NO_RENDER);
   useEffect(() => {
-    if (isActive) setCached(DisplayType.HIDE);
+    if (canonicalPath(currentUrl) !== canonicalPath(props.src)) {
+      setCached(DisplayType.NO_RENDER);
+    } else {
+      if (isActive) setCached(DisplayType.HIDE);
+    }
   }, [isActive]);
 
   const display = isActive ? DisplayType.DISPLAY : cached;
@@ -72,33 +87,38 @@ export const CachedIFrame : React.FC<CachedIFrameProps> = ({isActive, ...props})
   );
 };
 
-export const PuzzleFrame = ({siteCtx, isActive, puzzleData}) => {
+export const PuzzleFrame = ({id, siteCtx, isActive, puzzleData, currentUrl}) => {
   const puzzleUrl = puzzleData?.link ? new URL(puzzleData?.link, siteCtx?.domain || undefined).href : undefined;
   return (
     <CachedIFrame
-      name="puzzle"
+      id={id}
+      kind="puzzle"
       src={puzzleUrl}
       title={puzzleData?.name}
       isActive={isActive}
+      currentUrl={currentUrl}
     />
   );
 };
 
-export const SheetFrame = ({isActive, puzzleData}) => {
+export const SheetFrame = ({id, isActive, puzzleData, currentUrl}) => {
   return (
     <CachedIFrame
-      name="sheet"
+      id={id}
+      kind="sheet"
       src={puzzleData?.sheet_link}
       title={puzzleData?.name && `Spreadsheet for ${puzzleData?.name}`}
       isActive={isActive}
+      currentUrl={currentUrl}
     />
   );
 }
 
-export const DiscordFrame = ({src}) => {
+export const DiscordFrame = ({id, src}) => {
   return (
     <IFrame
-      name="discord"
+      id={id}
+      kind="discord"
       src={src}
       title="Discord"
       display={DisplayType.DISPLAY}

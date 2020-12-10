@@ -21,6 +21,7 @@ interface PuzzlesProps {
   slug: string;
   puzzles: Model.Puzzles;
   siteCtx: Context.SiteContextType;
+  iframeUrls: {[name: string]: string};
   onDragStarted: any;
   onDragFinishedSet: any;
 }
@@ -31,6 +32,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
   slug,
   puzzles,
   siteCtx,
+  iframeUrls,
   onDragStarted,
   onDragFinishedSet,
 }) => {
@@ -59,9 +61,11 @@ const Puzzles : React.FC<PuzzlesProps> = ({
         {tabs.map(tab => (
           <div key={tab}>
             <PuzzleFrame
+              id={`puzzle/${tab}`}
               siteCtx={siteCtx}
               isActive={isActive && tab === slug}
               puzzleData={puzzles[tab]}
+              currentUrl={iframeUrls[`puzzle/${tab}`]}
             />
           </div>
         ))}
@@ -70,8 +74,10 @@ const Puzzles : React.FC<PuzzlesProps> = ({
         {tabs.map(tab => (
           <div key={tab}>
             <SheetFrame
+              id={`sheet/${tab}`}
               isActive={isActive && tab === slug}
               puzzleData={puzzles[tab]}
+              currentUrl={iframeUrls[`sheet/${tab}`]}
             />
           </div>
         ))}

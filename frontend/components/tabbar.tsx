@@ -4,6 +4,8 @@ import * as Model from 'components/model';
 import * as Context from 'components/context';
 import Icon from 'assets/icon.svg';
 
+import 'style/header.css';
+
 const Logo = ({slug, activateTab}) => {
   const activateThisTab = (e) => {
     e.stopPropagation();
@@ -17,22 +19,6 @@ const Logo = ({slug, activateTab}) => {
     >
       <Icon className='icon'/>
       <span className='logo-text'>Checkmate</span>
-      <style jsx>{`
-        .logo {
-          display: flex;
-          width: min-content;
-          align-items: center;
-          font-size: 20px;
-          padding: 8px 8px 8px 0;
-          cursor: pointer;
-        }
-        .icon {
-          height: 32px;
-          width: 32px;
-        }
-        .logo-text {
-        }
-      `}</style>
     </div>
   );
 };
@@ -75,49 +61,6 @@ const Tab = ({
       >
         x
       </div>
-      <style jsx>{`
-        .tab {
-          position: relative;
-          display: flex;
-          height: 32px;
-          width: 180px;
-        }
-        .tab-content {
-          height: 100%;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          padding: 0 4px;
-          overflow: hidden;
-          border: 1px solid black;
-          border-bottom: none;
-          border-radius: 8px 8px 0 0;
-          background-color: silver;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-          cursor: pointer;
-        }
-        .tab.active > .tab-content {
-          background-color: plum;
-        }
-        .tab-content:hover {
-          filter: brightness(90%);
-          box-shadow: 0 0 3px black;
-        }
-        .tab-remove {
-          position: absolute;
-          top: 0;
-          right: 0;
-          margin: 0 2px;
-          padding: 0 2px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .tab-remove:hover {
-          background-color: rgba(255,0,0,127);
-          box-shadow: 0 0 3px black;
-        }
-      `}</style>
     </div>
   );
 }
@@ -157,12 +100,6 @@ const Header : React.FC<HeaderProps> = ({
         ))}
         <div className='flex'/>
       </div>
-      <style jsx>{`
-        .header {
-          display: flex;
-          align-items: flex-end;
-        }
-      `}</style>
     </>
   );
 };
