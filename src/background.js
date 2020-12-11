@@ -114,11 +114,15 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
               details.tabId,
               {
                 frameId: details.frameId,
-                code: 'window.name',
+                file: '/subframe.js',
+                runAt: 'document_start',
               },
-              ([result]) => {
-                frameNames[details.tabId][details.frameId] === result;
-                sendUrl(result);
+              (results) => {
+                if (results && results.length) {
+                  const [result] = results;
+                  frameNames[details.tabId][details.frameId] === result;
+                  sendUrl(result);
+                }
               },
             );
           } else {
@@ -127,5 +131,21 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
         }
       },
     );
+  }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender.id === chrome.runtime.id) {
+    switch (message.action) {
+    case 'load-discord':
+      chrome.tabs.sendMessage(
+        sender.tab.id,
+        message,
+        {
+          frameId: message.frameId,
+        },
+      );
+      break;
+    }
   }
 });

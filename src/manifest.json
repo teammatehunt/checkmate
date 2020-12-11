@@ -19,12 +19,8 @@
         "*://localhost/*",
         "*://checkmate.teammatehunt.com/*"
       ],
-      "js": ["rootframe.js"]
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["subframe.js"],
-      "all_frames:": true
+      "js": ["rootframe.js"],
+      "run_at": "document_start"
     }
   ],
 

@@ -10,3 +10,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 });
+
+window.addEventListener('ping', () => window.dispatchEvent(new Event('pong')));
+window.addEventListener('load-discord', (e) => {
+  if (!e.detail.frameId) return;
+  if (!e.detail.serverId) return;
+  chrome.runtime.sendMessage({
+    ...e.detail,
+    action: 'load-discord',
+  });
+});
