@@ -38,20 +38,19 @@ export const IFrame : React.FC<IFrameProps> = ({
   title,
   display=DisplayType.DISPLAY,
 }) => {
-  if (!src) {
-    return (
-        <p>This puzzle does not have a URL set for the {kind}.</p>
-    );
-  }
   return (
     <ShowIf display={display}>
-      <iframe
-        name={id}
-        width="100%"
-        height="100%"
-        title={title}
-        src={src}
-      />
+      {src ?
+        <iframe
+          name={id}
+          width="100%"
+          height="100%"
+          title={title}
+          src={src}
+        />
+        :
+        <p>This puzzle does not have a URL set for the {kind}.</p>
+      }
     </ShowIf>
   );
 };

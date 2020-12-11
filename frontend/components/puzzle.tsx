@@ -15,13 +15,20 @@ import {
 } from 'components/frames';
 import * as Model from 'components/model';
 
+interface IframeDetails {
+  action: 'loaded-subframe';
+  frameId: number;
+  url: string;
+  name: string;
+}
+
 interface PuzzlesProps {
   isActive: boolean;
   tabs: string[];
   slug: string;
   puzzles: Model.Puzzles;
   siteCtx: Context.SiteContextType;
-  iframeUrls: {[name: string]: string};
+  iframeDetails: {[name: string]: IframeDetails};
   onDragStarted: any;
   onDragFinishedSet: any;
 }
@@ -32,7 +39,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
   slug,
   puzzles,
   siteCtx,
-  iframeUrls,
+  iframeDetails,
   onDragStarted,
   onDragFinishedSet,
 }) => {
@@ -65,7 +72,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
               siteCtx={siteCtx}
               isActive={isActive && tab === slug}
               puzzleData={puzzles[tab]}
-              currentUrl={iframeUrls[`puzzle/${tab}`]}
+              currentUrl={iframeDetails[`puzzle/${tab}`]?.url}
             />
           </div>
         ))}
@@ -77,7 +84,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
               id={`sheet/${tab}`}
               isActive={isActive && tab === slug}
               puzzleData={puzzles[tab]}
-              currentUrl={iframeUrls[`sheet/${tab}`]}
+              currentUrl={iframeDetails[`sheet/${tab}`]?.url}
             />
           </div>
         ))}

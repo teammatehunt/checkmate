@@ -30,12 +30,15 @@ interface MainProps {
   slug?: string;
 }
 
+const isBlank = x => x === undefined || x === null;
+
 export const Main : React.FC<MainProps> = props => {
   const [slug, setSlug] = useState(props.page === 'puzzle' ? props.slug : undefined);
-  const page = slug === undefined ? 'master' : 'puzzle';
+  const page = isBlank(slug) ? 'master' : 'puzzle';
   const [data, dataDispatch] = useReducer(Model.dataReducer, props.data);
-  const iframeUrlsReducer = (state, action) => Object.assign({}, state, action);
-  const [iframeUrls, iframeUrlsDispatch] = useReducer(iframeUrlsReducer, {});
+  const iframeDetailsReducer = (state, action) => Object.assign({}, state, action);
+  const [iframeDetails, iframeDetailsDispatch] = useReducer(iframeDetailsReducer, {});
+
 
   const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
@@ -51,6 +54,18 @@ export const Main : React.FC<MainProps> = props => {
   const siteCtx = data.hunt;
   const puzzles = data.puzzles;
   const puzzleData = puzzles[slug];
+
+  const loadDiscord = (_slug, frameId) => {
+    // BigInt doesn't fit in JSON types
+    const nullOrString = x => isBlank(x) ? null : x.toString();
+    const e = new CustomEvent('load-discord', {detail: {
+      frameId: frameId,
+      serverId: nullOrString(siteCtx.discord_server_id),
+      voiceChannelId: nullOrString(puzzles[_slug]?.discord_voice_channel_id),
+      textChannelId: nullOrString(puzzles[_slug]?.discord_text_channel_id),
+    }});
+    window.dispatchEvent(e);
+  };
 
   // Check for extension
   useEffect(() => {
@@ -68,7 +83,10 @@ export const Main : React.FC<MainProps> = props => {
   // custom event for listening to url changes in iframes
   useEffect(() => {
     const handler = (e) => {
-      iframeUrlsDispatch({[e.detail.name]: e.detail.url});
+      if (e.detail.name === 'discord' && !('discord' in iframeDetails)) {
+        loadDiscord(slug, e.detail.frameId);
+      }
+      iframeDetailsDispatch({[e.detail.name]: e.detail});
     }
     window.addEventListener('loaded-subframe', handler);
     return () => window.removeEventListener('loaded-subframe', handler);
@@ -93,24 +111,16 @@ export const Main : React.FC<MainProps> = props => {
       const _tabIndex = addTab(_slug);
       setSlug(_slug);
       setTabIndex(_tabIndex);
-      const url = _slug === undefined ? '/' : `/puzzles/${_slug}`;
+      const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
       history.pushState({slug: _slug}, '', url);
-      if (_slug !== undefined) {
-        const e = new CustomEvent('load-discord', {detail: {
-          frameId: iframeUrls.discord,
-          serverId: siteCtx.discord_server_id,
-          voiceChannelId: puzzles[_slug].discord_voice_channel_id,
-          textChannelId: puzzles[_slug].discord_text_channel_id,
-        }});
-        window.dispatchEvent(e);
-      }
+      if (_slug !== undefined) loadDiscord(_slug, iframeDetails.discord?.frameId);
     }
   };
 
   // validate slug in tabs
   useEffect(() => {
     if (initialLoad) return;
-    if (slug === undefined) return;
+    if (isBlank(slug)) return;
     const _tabIndex = tabs.indexOf(slug);
     if (_tabIndex === -1) {
       const newIndex = Math.min(tabIndex, tabs.length - 1);
@@ -176,7 +186,7 @@ export const Main : React.FC<MainProps> = props => {
                   slug={slug}
                   puzzles={puzzles}
                   siteCtx={siteCtx}
-                  iframeUrls={iframeUrls}
+                  iframeDetails={iframeDetails}
                   onDragStarted={onDragStarted}
                   onDragFinishedSet={onDragFinishedSet}
                 />
