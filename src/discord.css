@@ -75,15 +75,20 @@ div[class*='iconVisibility-'] > div[class^='content-'] {
   margin-left: 0px;
   padding-left: 0px;
 }
+/* Reduce voice channel group members padding */
+div[class^='list-'][role='group'] {
+  padding-left: 8px;
+}
 /* Shrink hash symbol */
-a[class^='mainContent-'][data-list-item-id^='channels__'] > svg {
+a[data-list-item-id^='channels___'] > svg {
   width: 16px ! important;
   height: 16px ! important;
   margin-right: 2px;
 }
 
 /* Add channel tooltip */
-a[class^='mainContent-'][data-list-item-id^='channels__']:hover::after {
+/* NB: ::before is used by the puzzle voice channel */
+a[data-list-item-id^='channels___']:hover::after {
   content: attr(aria-label);
   font-size: smaller;
   position: absolute;
@@ -115,4 +120,23 @@ div[class^='modal-'] > div[class^='inner-'] > div[class^='container-'] {
 }
 div[class^='quickswitcher-'] {
   max-width: 100vw;
+}
+/* Popup size */
+div[class^='modal-'][class*='fullscreenOnMobile'] {
+  max-width: 100vw;
+}
+@media (max-width: 485px) {
+  div[class*='fullscreenOnMobile'] {
+    position: fixed;
+  }
+}
+
+div#voice-chat-for-puzzle {
+  position: fixed;
+  height: 32px;
+  width: 32px;
+  top: 8px;
+  right: 8px;
+  z-index: 100;
+  background-color: blue;
 }

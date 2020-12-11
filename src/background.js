@@ -12,7 +12,18 @@ const STRIPPED_HEADERS = [
 ];
 
 let matchedRequestsCache = {};
-let frameNames = {};
+let frameNames = {}; // {[tabId]: {[frameId]: string}}
+let discordInfo = {}; // {[tabId]: {[parentFrameId]: {frameId, serverId, voiceChannelId, textChannelId}}}
+
+const sendLoadDiscord = (tabId, message) => {
+  chrome.tabs.sendMessage(
+    tabId,
+    message,
+    {
+      frameId: message.frameId,
+    },
+  );
+}
 
 chrome.webRequest.onBeforeRequest.addListener(
   details => {
@@ -107,27 +118,31 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
               },
             );
           };
-          if (!frameNames[details.tabId]) frameNames[details.tabId] = {};
+          if (!(details.tabId in frameNames)) frameNames[details.tabId] = {};
           const name = frameNames[details.tabId][details.frameId];
-          if (name === undefined) {
-            chrome.tabs.executeScript(
-              details.tabId,
-              {
-                frameId: details.frameId,
-                file: '/subframe.js',
-                runAt: 'document_start',
-              },
-              (results) => {
+          chrome.tabs.executeScript(
+            details.tabId,
+            {
+              frameId: details.frameId,
+              file: '/subframe.js',
+              runAt: 'document_start',
+            },
+            (results) => {
+              if (details.url.match(DISCORD_REGEX)) {
+                const message = (discordInfo[details.tabId]||{})[details.frameId];
+                if (message) sendLoadDiscord(details.tabId, message);
+              }
+              if (name === undefined) {
                 if (results && results.length) {
                   const [result] = results;
                   frameNames[details.tabId][details.frameId] === result;
                   sendUrl(result);
                 }
-              },
-            );
-          } else {
-            sendUrl(name);
-          }
+              } else {
+                sendUrl(name);
+              }
+            },
+          );
         }
       },
     );
@@ -138,13 +153,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'load-discord':
-      chrome.tabs.sendMessage(
-        sender.tab.id,
-        message,
-        {
-          frameId: message.frameId,
-        },
-      );
+      if (!(sender.tab.id in discordInfo)) discordInfo[sender.tab.id] = {};
+      discordInfo[sender.tab.id][sender.frameId] = message;
+      sendLoadDiscord(sender.tab.id, message);
       break;
     }
   }
