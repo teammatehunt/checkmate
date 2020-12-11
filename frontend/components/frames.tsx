@@ -114,15 +114,23 @@ export const SheetFrame = ({id, isActive, puzzleData, currentUrl}) => {
   );
 }
 
-export const DiscordFrame = ({id, src}) => {
-  return (
-    <IFrame
-      id={id}
-      kind="discord"
-      src={src}
-      title="Discord"
-      display={DisplayType.DISPLAY}
-    />
-  );
+export const DiscordFrame = ({id, src, hasExtension}) => {
+  if (hasExtension) {
+    return (
+      <IFrame
+        id={id}
+        kind="discord"
+        src={src}
+        title="Discord"
+        display={DisplayType.DISPLAY}
+      />
+    );
+  } else {
+    return (
+      <div className="no-extension">
+        <p>The Checkmate extension was not found.</p>
+      </div>
+    );
+  }
 }
 

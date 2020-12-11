@@ -41,11 +41,25 @@ export const Main : React.FC<MainProps> = props => {
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
   const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
 
+  // because tabs can update outside of this window
+  const [tabIndex, setTabIndex] = useState(null);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  const [hasExtension, setHasExtension] = useState(false);
+
   const uid = data.uid;
   const siteCtx = data.hunt;
   const puzzles = data.puzzles;
   const puzzleData = puzzles[slug];
 
+  // Check for extension
+  useEffect(() => {
+    const handler = (e) => setHasExtension(true);
+    window.addEventListener('pong', handler);
+    window.dispatchEvent(new Event('ping'));
+    return () => window.removeEventListener('pong', handler);
+  }, []);
+  // Reload history
   useEffect(() => {
     const handler = (e) => setSlug(e.state.slug);
     window.addEventListener('popstate', handler);
@@ -60,35 +74,60 @@ export const Main : React.FC<MainProps> = props => {
     return () => window.removeEventListener('loaded-subframe', handler);
   }, []);
 
-  const loadSlug = _slug => {
-    if (_slug !== undefined && !tabs.includes(_slug)) {
-      setTabs([_slug, ...tabs]);
+  const addTab = _slug => {
+    if (page === 'puzzle') {
+      if (_slug !== undefined && _slug in puzzles) {
+        const _tabIndex = tabs.indexOf(_slug);
+        if (_tabIndex === -1) {
+          setTabs([_slug, ...tabs]);
+          return 0;
+        } else {
+          return _tabIndex;
+        }
+      }
     }
+    return null;
+  }
+  const loadSlug = _slug => {
     if (_slug !== slug) {
+      const _tabIndex = addTab(_slug);
       setSlug(_slug);
+      setTabIndex(_tabIndex);
       const url = _slug === undefined ? '/' : `/puzzles/${_slug}`;
       history.pushState({slug: _slug}, '', url);
+      if (_slug !== undefined) {
+        const e = new CustomEvent('load-discord', {detail: {
+          frameId: iframeUrls.discord,
+          serverId: siteCtx.discord_server_id,
+          voiceChannelId: puzzles[_slug].discord_voice_channel_id,
+          textChannelId: puzzles[_slug].discord_text_channel_id,
+        }});
+        window.dispatchEvent(e);
+      }
     }
   };
 
+  // validate slug in tabs
   useEffect(() => {
-    if (page === 'puzzle') {
-      if (slug in puzzles && !tabs.includes(slug)) {
-        setTabs([slug, ...tabs]);
-      }
+    if (initialLoad) return;
+    if (slug === undefined) return;
+    const _tabIndex = tabs.indexOf(slug);
+    if (_tabIndex === -1) {
+      const newIndex = Math.min(tabIndex, tabs.length - 1);
+      const newSlug = tabs[newIndex];
+      loadSlug(newSlug);
     }
-  }, [slug]);
+  }, [tabs, slug]);
+  useEffect(() => {
+    addTab(slug);
+    setInitialLoad(false);
+  }, []);
+
   const activateTab = loadSlug;
   const removeTab = (_slug) => {
-    const index = tabs.indexOf(_slug);
-    if (index !== -1) {
+    if (tabs.includes(_slug)) {
       const newTabs = tabs.filter(x => x !== _slug);
       setTabs(newTabs);
-      if (_slug === slug) {
-        const newIndex = Math.min(index, newTabs.length - 1);
-        const newSlug = newTabs[newIndex];
-        loadSlug(newSlug);
-      }
     }
   }
 
@@ -155,6 +194,7 @@ export const Main : React.FC<MainProps> = props => {
                 <DiscordFrame
                   id="discord"
                   src={initialDiscordUrl}
+                  hasExtension={hasExtension}
                 />
               </div>
             </SplitPane>
