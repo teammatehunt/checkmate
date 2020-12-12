@@ -1,14 +1,17 @@
 /* Move Audio settings to right at top of chat window but below channel header bar */
 section[class^='panels-'][aria-label='User area'] {
   position: fixed;
-  z-index: 50;
-  top: 96px;
+  top: 0;
   right: 0;
   left: 102px;
 }
-/* One row higher on Home */
-div[class^='sidebar-'] > nav[class^='privateChannels-'] + section[class^='panels-'][aria-label='User area'] {
-  top: 48px;
+div[class^='chat-'],
+div[class^='content-'] > div[class^='sidebar-'] + div[class^='container-'] {
+  margin-top: 52px;
+}
+body[voice-state*='in-voice'] div[class^='chat-'],
+body[voice-state*='in-voice'] div[class^='content-'] > div[class^='sidebar-'] + div[class^='container-'] {
+  margin-top: 142px;
 }
 
 /* Hide dock of servers */
@@ -50,10 +53,6 @@ div[class^='chat-'] > section[class^='title'] > * {
 div[class^='chat-'] > section[class^='title'] > div[class^='toolbar-'] {
   margin-left: auto;
 }
-div[class^='chat-'] > div[class^='content-'],
-section[class^='container-'] + div[class^='tabBody-'] {
-  margin-top: 50px;
-}
 
 /* Reduce channel chat excess padding */
 div[class^='message-'] {
@@ -65,9 +64,12 @@ div[class^='contents-'][role='document'] {
   padding-left: 0;
   text-indent: 0;
 }
-div[class*='timestamp-'] {
-  line-height: 1rem;
-  text-align: left;
+span[class*='timestamp-'] {
+  float: right;
+  width: min-content ! important;
+  white-space: nowrap;
+  margin-left: 2px;
+  margin-right: 0 ! important;
 }
 
 /* Reduce channel list padding */
@@ -87,26 +89,22 @@ a[data-list-item-id^='channels___'] > svg {
 }
 
 /* Add channel tooltip */
-/* NB: ::before is used by the puzzle voice channel */
 a[data-list-item-id^='channels___']:hover::after {
   content: attr(aria-label);
   font-size: smaller;
   position: absolute;
-  /* margin-left: -4px; */
-  padding: 2px 2px;
+  padding: 4px 2px;
   pointer-events: none;
-  color: #333;
   left: 0;
   bottom: 100%;
-  /* white-space: nowrap;  */
+
+  color: #fff;
+  background: #000;
+  border: 1px solid transparent;
   border-radius: 3px;
-  box-shadow: 0px 0px 4px #222;
-  background-image: -moz-linear-gradient(top, #eeeeee, #cccccc);
-  background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #eeeeee),color-stop(1, #cccccc));
-  background-image: -webkit-linear-gradient(top, #eeeeee, #cccccc);
-  background-image: -moz-linear-gradient(top, #eeeeee, #cccccc);
-  background-image: -ms-linear-gradient(top, #eeeeee, #cccccc);
-  background-image: -o-linear-gradient(top, #eeeeee, #cccccc);
+  display: inline-block;
+  /* font-size: 13px; */
+  /* padding: 8px 21px; */
 }
 
 /* Hide help button */
@@ -131,12 +129,56 @@ div[class^='modal-'][class*='fullscreenOnMobile'] {
   }
 }
 
-div#voice-chat-for-puzzle {
+/* Puzzle voice chat button */
+button#voice-chat-for-puzzle {
   position: fixed;
   height: 32px;
   width: 32px;
-  top: 8px;
-  right: 8px;
-  z-index: 100;
-  background-color: blue;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  top: 0;
+  right: 106px;
+
+  cursor: pointer;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--interactive-normal);
+}
+button#voice-chat-for-puzzle:hover {
+  background: var(--background-modifier-selected);
+}
+button#voice-chat-for-puzzle:hover::after {
+  line-height: initial;
+  content: attr(aria-label);
+  position: absolute;
+  pointer-events: none;
+  margin-top: 6px;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-size: smaller;
+
+  color: #fff;
+  background: #000;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  display: inline-block;
+  font-size: 13px;
+  padding: 8px 21px;
+  white-space: nowrap;
+}
+body[voice-state*='in-voice'] button#voice-chat-for-puzzle {
+  top: 89px;
+}
+body[voice-state*='puzzle-not-given'] button#voice-chat-for-puzzle,
+body[voice-state*='in-puzzle-channel'] button#voice-chat-for-puzzle {
+  pointer-events: none;
+  opacity: 0.2;
+}
+div[class^='nameTag-'] {
+  margin-right: 36px;
 }
