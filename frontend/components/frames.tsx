@@ -3,6 +3,8 @@ import React, {
   useState,
 } from 'react';
 
+import { featureList } from 'utils/feature-policy';
+
 export enum DisplayType {
   HIDE = 0, // false
   DISPLAY = 1, // true
@@ -47,6 +49,7 @@ export const IFrame : React.FC<IFrameProps> = ({
           height="100%"
           title={title}
           src={src}
+          allow={featureList}
         />
         :
         <p>This puzzle does not have a URL set for the {kind}.</p>
