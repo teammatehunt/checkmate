@@ -147,16 +147,20 @@ def process_relation(cls, pk, request):
         existing_slugs_query = existing_relations_query.values_list(f'{cls.ITEM}_id', flat=True)
         if action == 'add':
             existing_slugs = set(existing_slugs_query)
-            for slug in slugs:
-                if slug not in existing_slugs:
-                    cls(**{f'{cls.CONTAINER}_id': pk, f'{cls.ITEM}_id': slug}).save()
+            new_slugs = [slug for slug in slugs if slug not in existing_slugs]
+            if new_slugs:
+                with transaction.atomic():
+                    for slug in new_slugs:
+                        cls(**{f'{cls.CONTAINER}_id': pk, f'{cls.ITEM}_id': slug}).save()
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         elif action == 'remove':
             slugs = set(slugs)
             existing_relations = list(existing_relations_query)
-            for existing_relation in existing_relations:
-                if getattr(existing_relation, f'{cls.ITEM}_id') in slugs:
-                    existing_relation.delete()
+            relations_to_remove = [relation for relation in existing_relations if getattr(relation, f'{cls.ITEM}_id') in slugs]
+            if relations_to_remove:
+                with transaction.atomic():
+                    for relation in relations_to_remove:
+                        relation.delete()
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         elif action == 'set':
             new_relations = [
@@ -200,7 +204,7 @@ def process_relation(cls, pk, request):
     except db.Error as e:
         raise exceptions.APIException(e)
 
-def data_everything(request):
+def data_everything():
     hunt_config = HuntConfigSerializer(models.HuntConfig.get()).data
     users = UserSerializer(User.objects.all(), many=True).data
     rounds = BaseRoundSerializer(models.Round.objects.all(), many=True).data
@@ -238,11 +242,11 @@ def data_everything(request):
 
 @decorators.api_view()
 def everything(request):
-    data = data_everything(request)
+    data = data_everything()
     return response.Response(data)
 
 @login_required
 def data_everything_with_uid(request):
-    data = data_everything(request)
+    data = data_everything()
     data['uid'] = request.user.id
     return data

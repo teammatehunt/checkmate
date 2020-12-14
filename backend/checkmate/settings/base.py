@@ -46,6 +46,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 INSTALLED_APPS = [
+    'channels',
+    'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -64,6 +66,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.discord',
     'rest_framework',
+    'cachalot',
 ]
 
 MIDDLEWARE = [
@@ -97,7 +100,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'checkmate.wsgi.application'
+
+# WSGI_APPLICATION = 'checkmate.wsgi.application'
+ASGI_APPLICATION = 'checkmate.asgi.application'
 
 
 # Database
@@ -113,6 +118,16 @@ DATABASES = {
     }
 }
 DATABASES['default'].update(SECRETS.get('DATABASE', {}))
+
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Auth

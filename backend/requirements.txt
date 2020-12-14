@@ -1,8 +1,11 @@
+channels
+channels-redis
 discord.py
 django
 django-admin-hstore-widget
 django-allauth
 django-autoslug
+django-cachalot
 django-crum
 django-extensions
 djangorestframework

@@ -3,6 +3,7 @@ After everything is set up, use the following to build the components and start 
 Ensure the database is setup:
 ```
 cd backend
+docker run -d --name checkmate-redis -p 6379:6379 redis
 docker run -d --name checkmate-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
 PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE checkmate_postgres'
 . ./.venv/bin/activate

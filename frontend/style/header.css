@@ -58,4 +58,5 @@
 .header {
   display: flex;
   align-items: flex-end;
+  user-select: none;
 }
