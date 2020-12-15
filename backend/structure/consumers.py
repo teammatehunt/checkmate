@@ -2,9 +2,13 @@ import datetime
 import json
 import time
 
+from asgiref.sync import async_to_sync
 import cachalot
+from channels.layers import get_channel_layer
 from channels.consumer import SyncConsumer
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django import dispatch
 
 from . import api
 
@@ -37,7 +41,8 @@ class ClientConsumer(AsyncWebsocketConsumer):
     async def client_update(self, event):
         if self.version < event['version']:
             self.version = event['version']
-        self.send(text_data=event['update'])
+            self.timestamp = event['timestamp']
+        await self.send(text_data=event['update'])
 
     async def receive(self, text_data=None):
         if self.timestamp is not None:
@@ -58,17 +63,23 @@ class ClientConsumer(AsyncWebsocketConsumer):
         )
 
 
-
 class FanConsumer(SyncConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.timestamp = cachalot.api.get_last_invalidation()
-        self.version = 1 # version 0 is empty set, version 1 is initial data
-        self.data = api.data_everything()
+        self.timestamp = None
+        self.version = None
+        self.data = None
+
+    def maybe_init(self):
+        if self.version is None:
+            self.timestamp = cachalot.api.get_last_invalidation()
+            self.version = 1 # version 0 is empty set, version 1 is initial data
+            self.data = api.data_everything()
 
     def client_fetch(self, event):
-        self.channel_layer.send(
-            event['channel_name'],
+        self.maybe_init()
+        async_to_sync(self.channel_layer.send)(
+            event['channel'],
             {
                 'type': 'client.update',
                 'version': self.version,
@@ -77,57 +88,55 @@ class FanConsumer(SyncConsumer):
                     'prev_version': None, # version None for any
                     'version': self.version,
                     'data': self.data,
-                    'update': True,
+                    'roots': True,
                 }),
             },
         )
 
-    def maybe_update(self):
+    def server_maybe_update(self, event):
+        self.maybe_init()
         timestamp = cachalot.api.get_last_invalidation()
         if self.timestamp < timestamp:
+            self.timestamp = timestamp
             version = self.version + 1
             data = api.data_everything()
-            diff, update = diff(self.data, data)
-            self.channel_layer.group_send(
-                CLIENT_GROUP_NAME,
-                {
-                    'type': 'client.update',
-                    'version': version,
-                    'timestamp': timestamp,
-                    'update': json.dumps({
-                        'prev_version': self.version,
+            delta, roots = diff(self.data, data)
+            if roots:
+                async_to_sync(self.channel_layer.group_send)(
+                    CLIENT_GROUP_NAME,
+                    {
+                        'type': 'client.update',
                         'version': version,
-                        'data': diff,
-                        'update': update,
-                    }),
-                },
-            )
-            self.version = version
-            self.data = data
+                        'timestamp': timestamp,
+                        'update': json.dumps({
+                            'prev_version': self.version,
+                            'version': version,
+                            'data': delta,
+                            'roots': roots,
+                        }),
+                    },
+                )
+                self.version = version
+                self.data = data
+
 
 VOID = lambda: None
 def diff(old, new):
     '''
-    Return (data, update) where `data` is the tree of updates and `update`
+    Return (data, roots) where `data` is the tree of updates and `roots`
     specifies which nodes should be replaced.
     '''
-    # a threshold which if surpassed will return the entire object as the
-    # update instead of individual subfields
-    REPLACE_THRESH = 0.5
     if isinstance(old, dict) and isinstance(new, dict):
         data = {}
-        update = {}
+        roots = {}
         for key in set(old.keys()) | set(new.keys()):
-            subdata, subupdate = diff(old.get(key, VOID), new.get(key, VOID))
-            if subupdate:
-                update[key] = subupdate
+            subdata, subroots = diff(old.get(key, VOID), new.get(key, VOID))
+            if subroots:
+                roots[key] = subroots
                 if subdata is not VOID:
                     data[key] = subdata
-        if update:
-            if len(update) > REPLACE_THRESH * len(new):
-                return new, True # old != new and REPLACE_THRESH is surpassed
-            else:
-                return data, update # old != new and REPLACE_THRESH is not surpassed
+        if roots:
+            return data, roots # old != new
         else:
             return None, False # old == new
     else:
@@ -135,3 +144,10 @@ def diff(old, new):
             return None, False # old == new
         else:
             return new, True # old != new
+
+@dispatch.receiver(cachalot.signals.post_invalidation)
+def update_cache(sender, **kwargs):
+    async_to_sync(get_channel_layer().send)(
+        MASTER_CHANNEL_NAME,
+        {'type': 'server.maybe_update'},
+    )

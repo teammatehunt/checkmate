@@ -81,23 +81,58 @@ export interface Data {
   uid?: number;
 }
 
-export const dataReducer = (state : Data, action : any) : Data => {
+export interface DataUpdate {
+  prev_version: number;
+  version: number;
+  reception_timestamp: number;
+  data: any;
+  roots: any;
+}
+
+export const dataReducer = (state : Data, {ws, cacheRef, update} : {ws, cacheRef, update: DataUpdate}) : Data => {
   return produce(state, (draft : Draft<Data>) => {
-    switch (action.type) {
-      case 'merge':
-        return dataMerge(draft, action.data, action.roots);
-        break;
-      default:
-        throw TypeError();
+    update.reception_timestamp = Date.now();
+    if (cacheRef.current === null) {
+      cacheRef.current = {
+        version: null,
+        reception_timestamp: null,
+        deltas: {},
+      };
+    }
+    if (update.prev_version === null || cacheRef.current.version === update.prev_version) {
+      // apply update
+      dataMerge(draft, update.data, update.roots, true);
+      cacheRef.current.version = update.version;
+      cacheRef.current.reception_timestamp = Date.now();
+      // look through cached updates
+      while (cacheRef.current.deltas[cacheRef.current.version]?.version > cacheRef.current.version) {
+        const delta = cacheRef.current.deltas[cacheRef.current.version];
+        dataMerge(draft, delta.data, delta.roots, true);
+        cacheRef.current.version = delta.version;
+      }
+      Object.keys(cacheRef.current.deltas).filter(version => Number(version) <= cacheRef.current.version).forEach(version => delete cacheRef.current.deltas[version]);
+    } else if (cacheRef.current.version === null || cacheRef.current.version < update.prev_version) {
+      // add to cache of updates
+      cacheRef.current.deltas[update.prev_version] = update;
+      setTimeout(() => {
+        if (cacheRef.current.version < update.prev_version) {
+          ws.send(JSON.stringify({
+            version: cacheRef.current.version,
+            force_fetch: true,
+          }));
+        }
+      }, 3000);
     }
   });
 };
 
-const dataMerge = (draft, data, roots) => {
+const dataMerge = (draft, data, roots, ignore_updates=false) => {
   if (roots === true) return data;
   for (const key in roots) {
-    const newData = dataMerge(draft[key], data[key], roots[key]);
-    if (newData !== undefined) draft[key] = newData;
+    if (!ignore_updates || key !== 'updates') {
+      const newData = dataMerge(draft[key], data[key], roots[key]);
+      if (newData !== undefined) draft[key] = newData;
+    }
   }
 };
 

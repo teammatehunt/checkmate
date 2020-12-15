@@ -8,6 +8,7 @@ django-autoslug
 django-cachalot
 django-crum
 django-extensions
+django-redis
 djangorestframework
 psycopg2
 pyyaml

@@ -4,9 +4,11 @@ import React, {
   useContext,
   useEffect,
   useReducer,
+  useRef,
   useState,
 } from 'react';
 
+import * as JSONbig from 'json-bigint';
 import produce from 'immer';
 import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
@@ -140,6 +142,40 @@ export const Main : React.FC<MainProps> = props => {
       setTabs(newTabs);
     }
   }
+
+  // connect to websocket for updates
+  const socketRef = useRef(null);
+  const reconnectDelayRef = useRef<number>(1);
+  const updateCacheRef = useRef(null);
+  useEffect(() => {
+    const closeWebsocket = () => {
+      try {
+        socketRef.current.close();
+      } catch (error) {}
+    };
+    const openWebsocket = () => {
+      const socket = new WebSocket(`ws://${window.location.host}/ws/`);
+      socket.addEventListener('message', (e) => {
+        const data = JSONbig.parse(e.data);
+        dataDispatch({
+          ws: socket,
+          cacheRef: updateCacheRef,
+          update: data,
+        });
+      });
+      socket.addEventListener('open', (e) => {
+        reconnectDelayRef.current = 1;
+      });
+      socket.addEventListener('close', (e) => {
+        setTimeout(openWebsocket, reconnectDelayRef.current * 1000);
+        reconnectDelayRef.current += 1;
+      });
+      closeWebsocket();
+      socketRef.current = socket;
+    };
+    openWebsocket();
+    return closeWebsocket;
+  }, []);
 
   const [initialDiscordUrl] = useState(Model.discordLink(
     siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));

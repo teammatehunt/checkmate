@@ -27,6 +27,6 @@ application = ProtocolTypeRouter({
         )
     ),
     'channel': ChannelNameRouter({
-        structure.consumers.MASTER_CHANNEL_NAME: structure.consumers.FanConsumer,
+        structure.consumers.MASTER_CHANNEL_NAME: structure.consumers.FanConsumer.as_asgi(),
     }),
 })
