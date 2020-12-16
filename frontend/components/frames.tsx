@@ -52,7 +52,7 @@ export const IFrame : React.FC<IFrameProps> = ({
           allow={featureList}
         />
         :
-        <p>This puzzle does not have a URL set for the {kind}.</p>
+        <p>This puzzle does not have {kind} link.</p>
       }
     </ShowIf>
   );

@@ -13,7 +13,7 @@ import {
   PuzzleFrame,
   SheetFrame,
 } from 'components/frames';
-import * as Model from 'components/model';
+import * as Model from 'utils/model';
 
 interface IframeDetails {
   action: 'loaded-subframe';

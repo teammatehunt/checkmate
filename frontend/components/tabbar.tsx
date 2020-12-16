@@ -1,6 +1,8 @@
 import React from 'react';
 
-import * as Model from 'components/model';
+import { X } from 'react-feather';
+
+import * as Model from 'utils/model';
 import * as Context from 'components/context';
 import Icon from 'assets/icon.svg';
 
@@ -59,7 +61,7 @@ const Tab = ({
         className='tab-remove'
         onClick={removeThisTab}
       >
-        x
+        <X size={16}/>
       </div>
     </div>
   );

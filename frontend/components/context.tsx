@@ -5,7 +5,7 @@ import React, {
 
 import { useLocalStorage } from '@rehooks/local-storage';
 
-import * as Model from 'components/model';
+import * as Model from 'utils/model';
 
 export interface LocalStorageObject<T> {
   value: T;

@@ -46,8 +46,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 INSTALLED_APPS = [
-    'channels',
     'whitenoise.runserver_nostatic',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

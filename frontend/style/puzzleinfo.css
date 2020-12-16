@@ -1,0 +1,12 @@
+.puzzleinfo.pane {
+  padding-right: 1em;
+  padding-left: 1em;
+}
+
+.puzzleinfo h2 {
+  margin: 0;
+}
+
+[class^=feeds-] {
+  font-size: smaller;
+}

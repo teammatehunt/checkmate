@@ -1,6 +1,6 @@
 import React from 'react';
 
-import * as Model from 'components/model';
+import * as Model from 'utils/model';
 
 interface MasterProps {
   isActive: boolean;

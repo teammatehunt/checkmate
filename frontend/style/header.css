@@ -6,53 +6,55 @@
   padding: 8px 8px 8px 0;
   cursor: pointer;
 }
+.logo:hover {
+  color: purple;
+}
 .icon {
   height: 32px;
   width: 32px;
+  fill: currentColor;
 }
 .logo-text {
 }
 
 .tab {
   position: relative;
-  display: flex;
   height: 32px;
   width: 180px;
-}
-.tab-content {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  padding: 0 4px;
-  overflow: hidden;
   border: 1px solid black;
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   background-color: silver;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.tab-content {
+  width: 100%;
+  margin: auto 4px;
+  overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  cursor: pointer;
 }
-.tab.active > .tab-content {
+.tab.active {
   background-color: plum;
 }
-.tab-content:hover {
+.tab:hover {
   filter: brightness(90%);
   box-shadow: 0 0 3px black;
 }
 .tab-remove {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin: 0 2px;
-  padding: 0 2px;
-  border-radius: 4px;
+  float: right;
+  margin-top: auto;
+  margin-bottom: auto;
+  margin-right: 4px;
+  padding: 2px;
+  border-radius: 50%;
   cursor: pointer;
+  color: #444;
 }
 .tab-remove:hover {
-  background-color: rgba(255,0,0,127);
-  box-shadow: 0 0 3px black;
+  background-color: rgba(0,0,0,0.15);
 }
 
 .header {

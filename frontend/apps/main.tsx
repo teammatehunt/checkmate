@@ -13,10 +13,11 @@ import produce from 'immer';
 import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
 
-import * as Model from 'components/model';
+import * as Model from 'utils/model';
 import Base from 'components/base';
 import Master from 'components/master';
 import Puzzles from 'components/puzzle';
+import PuzzleInfo from 'components/puzzle-info';
 import Header from 'components/tabbar';
 import {
   ShowIf,
@@ -235,6 +236,7 @@ export const Main : React.FC<MainProps> = props => {
               onDragFinished={onDragFinishedSet(setRhsplitter)}
             >
               <div className='puzzleinfo pane'>
+                <PuzzleInfo data={data} slug={slug} loadSlug={loadSlug}/>
               </div>
               <div className='chat pane'>
                 <DiscordFrame
