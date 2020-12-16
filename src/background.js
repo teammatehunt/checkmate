@@ -34,7 +34,7 @@ chrome.webRequest.onBeforeRequest.addListener(
           frameId: details.parentFrameId,
         },
         parentFrame => {
-          if (parentFrame.url.match(PARENT_REGEX)) {
+          if (parentFrame && parentFrame.url.match(PARENT_REGEX)) {
             matchedRequestsCache[details.requestId] = true;
           }
         },
@@ -58,7 +58,7 @@ chrome.webRequest.onHeadersReceived.addListener(
     // The webNavigation API should be faster than the request, but fallback on
     // parentUrl. Unfortunately, we can't just wait on the webNavigation result
     // becase the webRequest API must be synchronous.
-    if (matchedRequestsCache[details.requestId] || parentUrl.match(PARENT_REGEX)) {
+    if (matchedRequestsCache[details.requestId] || (parentUrl && parentUrl.match(PARENT_REGEX))) {
       details.responseHeaders = details.responseHeaders.filter(
         x => !STRIPPED_HEADERS.includes(x.name.toLowerCase())
       );
@@ -149,7 +149,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'load-discord':

@@ -1,4 +1,4 @@
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'loaded-subframe':
