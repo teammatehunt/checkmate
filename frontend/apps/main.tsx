@@ -240,7 +240,7 @@ export const Main : React.FC<MainProps> = props => {
               </div>
               <div className='chat pane'>
                 <DiscordFrame
-                  id="discord"
+                  id='discord'
                   src={initialDiscordUrl}
                   hasExtension={hasExtension}
                 />

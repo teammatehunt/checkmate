@@ -55,6 +55,7 @@ class Entity(models.Model):
                                     related_name='%(class)s_modified_set')
     hidden = models.BooleanField(default=False, help_text='Hidden objects will not be shown.')
     AUTO_FIELDS = ('modified', 'modified_by', 'hidden')
+    notes = models.TextField(blank=True)
     tags = fields.HStoreField()
 
     discord_text_channel_id = models.BigIntegerField(null=True, blank=True)
@@ -91,6 +92,7 @@ class Puzzle(Entity):
     solved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                   null=True, editable=False,
                                   related_name='%(class)s_solved_set')
+    status = CharField(blank=True)
     is_meta = models.BooleanField(
         default=False, help_text='Can only be edited directly when there are no feeder puzzles. Adding feeder puzzles will also set this field.')
     AUTO_FIELDS = Entity.AUTO_FIELDS + ('is_meta',)

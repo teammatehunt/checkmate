@@ -10,3 +10,7 @@
 [class^=feeds-] {
   font-size: smaller;
 }
+
+.puzzle-info-key {
+  text-transform: capitalize;
+}

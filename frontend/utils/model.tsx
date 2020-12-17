@@ -38,7 +38,8 @@ export interface Entity {
   modified: string; // timestamp
   modified_by: number; // User.id
   hidden: boolean; // should ignore this and all references to this if hidden
-  tags: any; // key value pairs
+  tags: {[key: string]: string}; // key value pairs
+  notes: string;
 
   discord_text_channel_id: number;
   discord_voice_channel_id: number;
@@ -57,6 +58,7 @@ export interface Puzzle extends Entity {
   is_meta: boolean;
 
   answer: string;
+  status: string;
   rounds: string[]; // round slugs
   metas: string[]; // meta slugs
   feeders: string[]; // feeder puzzle slugs
