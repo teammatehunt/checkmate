@@ -1,0 +1,61 @@
+export const statuses = new Map([
+  ['new', 'whitesmoke'],
+  ['working', 'lightgray'],
+  ['extraction', 'orange'],
+  ['stuck', 'red'],
+  ['solved', 'lime'],
+  ['abandoned', 'pink'],
+  ['event', '^magenta'],
+  ['claimed offline', 'khaki'],
+  ['backsolved', 'lime'],
+  ['bought', 'lime'],
+]);
+
+
+const colors = {
+  // statuses
+  ...Object.fromEntries(statuses),
+  // colors
+  red: 'red',
+  orange: 'orange',
+  yellow: 'yellow',
+  green: 'limegreen',
+  blue: '^blue',
+  purple: '^rebeccapurple',
+  indigo: '^indigo',
+  violet: '^darkviolet',
+  magenta: '^magenta',
+  cyan: 'cyan',
+  white: 'whitesmoke',
+  gray: '^gray',
+  grey: '^grey',
+  pink: 'pink',
+  brown: '^saddlebrown',
+  black: '^black',
+  // elements
+  fire: 'red',
+  water: 'aqua',
+  wind: 'lightgreen',
+  earth: '^peru',
+  air: 'whitesmoke',
+  // pokemon
+  normal: 'beige',
+  fighting: '^firebrick',
+  flying: '^mediumpurple',
+  poison: '^purple',
+  ground: '^peru',
+  rock: '^saddlebrown',
+  bug: 'limegreen',
+  ghost: '^darkviolet',
+  steel: '^slategray',
+  // fire
+  // water
+  grass: 'lime',
+  electric: 'yellow',
+  psychic: 'hotpink',
+  ice: 'lightblue',
+  dragon: '^indigo',
+  dark: '^darkslategray',
+  fairy: 'pink',
+};
+export default colors;

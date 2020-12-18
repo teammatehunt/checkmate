@@ -11,6 +11,35 @@
   font-size: smaller;
 }
 
-.puzzle-info-key {
+.puzzleinfo-key {
+  border: none;
+  vertical-align: middle;
+}
+.puzzleinfo-key:not(:focus) {
+  text-align: right;
+  font-size: smaller;
   text-transform: capitalize;
+}
+.puzzleinfo-key:after {
+  content: ': ';
+  white-space: pre;
+}
+.puzzleinfo-value {
+  position: relative;
+  width: 200px;
+}
+
+.puzzleinfo-input-value {
+  border: none;
+  position: relative;
+  height: 100%;
+  width: 100%;
+  padding: 5px;
+}
+.puzzleinfo-input-value:not(:focus):not(:disabled):hover {
+  background-color: lightblue;
+}
+
+.puzzleinfo-row-notes {
+
 }

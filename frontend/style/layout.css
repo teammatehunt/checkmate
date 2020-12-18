@@ -40,3 +40,19 @@ body {
 .nodisplay {
   display: none;
 }
+
+.table {
+  display: table;
+  border-collapse: collapse;
+}
+.tr { display: table-row; }
+.thead { display: table-header-group; }
+.tbody { display: table-row-group; }
+.tfoot { display: table-footer-group; }
+.col { display: table-column; }
+.colgroup { display: table-column-group; }
+.td, .th {
+  display: table-cell;
+  border: 1px dotted gray;
+}
+.caption { display: table-caption; }
