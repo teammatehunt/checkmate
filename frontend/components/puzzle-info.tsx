@@ -8,6 +8,7 @@ import React, {
 import produce from 'immer';
 import { CornerRightUp, Plus, X } from 'react-feather';
 
+import Twemoji from 'components/twemoji';
 import fetchJson from 'utils/fetch';
 import * as Model from 'utils/model';
 import colors, { statuses } from 'utils/colors';
@@ -32,7 +33,9 @@ const Feeds = ({title, slugs, data, prefix, loadSlug} : {title, slugs, data, pre
               }
             },
           })}>
-            {data[slug]?.name}
+            <Twemoji>
+              {data[slug]?.name}
+            </Twemoji>
           </a>
         </span>
       </React.Fragment>
@@ -187,7 +190,9 @@ const TextField : React.FC<TextFieldProps> = ({
           autoComplete='off'
         />
         <span className={keyIsInput ? 'hidden' : ''}>
-          {name}
+          <Twemoji>
+            {name}
+          </Twemoji>
         </span>
       </div>
       <div className='td puzzleinfo-value'>
@@ -290,7 +295,9 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
   return (
     <>
       <h2>
-        {puzzle?.name}
+        <Twemoji>
+          {puzzle?.name}
+        </Twemoji>
         {puzzle?.link &&
           <a target='_blank' href={puzzle.link}><sup><CornerRightUp size={16}/></sup></a>
         }

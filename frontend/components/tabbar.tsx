@@ -4,6 +4,7 @@ import { X } from 'react-feather';
 
 import * as Model from 'utils/model';
 import * as Context from 'components/context';
+import Twemoji from 'components/twemoji';
 import Icon from 'assets/icon.svg';
 
 import 'style/header.css';
@@ -55,7 +56,9 @@ const Tab = ({
       onClick={activateThisTab}
     >
       <div className='tab-content'>
-        {puzzleData.name}
+        <Twemoji>
+          {puzzleData.name}
+        </Twemoji>
       </div>
       <div
         className='tab-remove'
