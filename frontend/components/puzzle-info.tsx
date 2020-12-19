@@ -6,9 +6,9 @@ import React, {
 } from 'react';
 
 import produce from 'immer';
-import { CornerRightUp } from 'react-feather';
+import { CornerRightUp, Plus, X } from 'react-feather';
 
-import { getCookie } from 'utils/fetch';
+import fetchJson from 'utils/fetch';
 import * as Model from 'utils/model';
 import colors, { statuses } from 'utils/colors';
 
@@ -19,9 +19,9 @@ const Feeds = ({title, slugs, data, prefix, loadSlug} : {title, slugs, data, pre
   <div className={`feeds-${title}`}>
     <span className={`title-${title}`}>{title}:</span>{' '}
     {slugs?.map((slug, i) => (
-      <>
-        {i ? <span key={`delimiter-${i}`}>, </span> : null}
-        <span key={slug}>
+      <React.Fragment key={slug}>
+        {i ? <span>, </span> : null}
+        <span>
           <a {...(prefix === undefined ? {} : {
             href: `${prefix}${slug}`,
             onClick: function(e) {
@@ -35,7 +35,7 @@ const Feeds = ({title, slugs, data, prefix, loadSlug} : {title, slugs, data, pre
             {data[slug]?.name}
           </a>
         </span>
-      </>
+      </React.Fragment>
     ))}
   </div>
 );
@@ -51,9 +51,10 @@ interface TextFieldProps {
   value: string;
   textarea?: boolean;
   options?: string[];
-  patchValue: any;
+  patchValue?: any;
   patchKey?: any;
   remove?: any;
+  canReset?: boolean;
   colors?: {[value: string]: string};
 }
 
@@ -65,14 +66,19 @@ const TextField : React.FC<TextFieldProps> = ({
   patchValue,
   patchKey,
   remove,
+  canReset=true,
   colors,
 }) => {
+  const [prevKey, setPrevKey] = useState(name);
   const [prevValue, setPrevValue] = useState(value);
   const [editState, setEditState] = useState(EditState.DEFAULT);
+  const [keyIsInput, setKeyIsInput] = useState(false);
+  const keyRef = useRef(null);
   const valueRef = useRef(null);
   useEffect(() => {
     switch (editState) {
       case EditState.DEFAULT:
+        keyRef.current.value = name || '';
         valueRef.current.value = value;
         if (textarea) {
           valueRef.current.style.height = '';
@@ -80,29 +86,62 @@ const TextField : React.FC<TextFieldProps> = ({
         }
         break;
       case EditState.WAITING:
-        if (prevValue !== value) setEditState(EditState.DEFAULT);
+        if (prevKey !== name || prevValue !== value) {
+          setEditState(EditState.DEFAULT);
+          setKeyIsInput(false);
+        }
         break;
     }
+    setPrevKey(name);
     setPrevValue(value);
-  }, [value, prevValue, editState]);
+  }, [name, prevKey, value, prevValue, editState]);
   useEffect(() => {
     if (editState === EditState.WAITING) {
-      if (valueRef.current.value === value) setEditState(EditState.DEFAULT);
-      else {
+      if (keyRef.current.value === name && valueRef.current.value === value) {
+          setEditState(EditState.DEFAULT);
+          setKeyIsInput(false);
+      } else {
+        let promise = null;
+        if (valueRef.current.value === value) {
+          promise = patchKey(keyRef.current.value);
+        } else {
+          promise = patchValue(valueRef.current.value);
+        }
         const func = async () => {
-          const response = await patchValue(valueRef.current.value);
+          const response = await promise;
+          if (response === null) return;
           if (!response.ok) {
             // TODO: notify error
-            console.error(`PATCH request for {${name}: ${valueRef.current.value}} failed`);
+            console.error(`PATCH request for {${keyRef.current.value}: ${valueRef.current.value}} failed`);
             setEditState(EditState.DEFAULT);
+            setKeyIsInput(false);
           }
         }
         func();
       }
     }
   }, [editState]);
+
+  const keyOnClick = (e) => {
+    if (patchKey) setKeyIsInput(true);
+  };
+  useEffect(() => {
+    if (name === null) setKeyIsInput(true);
+  }, [name]);
+  useEffect(() => {
+    if (keyIsInput) keyRef.current.focus();
+  }, [keyIsInput]);
+  const resetValue = (e) => {
+    e.preventDefault();
+    valueRef.current.value = '';
+    if (document.activeElement !== valueRef.current) {
+      setEditState(EditState.WAITING);
+    }
+  };
+
   const onFocus = (e) => {
     setEditState(EditState.EDITING);
+    if (!textarea) e.target.select();
   };
   const onBlur = (e) => {
     setEditState(editState => {
@@ -113,7 +152,7 @@ const TextField : React.FC<TextFieldProps> = ({
   const onKeyDown = (e) => {
     switch (e.key) {
       case 'Enter':
-        if (!textarea) e.target.blur();
+        if (e.target.tagName.toLowerCase() !== 'textarea') e.target.blur();
         break;
       case 'Escape':
         // firefox doesn't blur on escape automatically
@@ -131,13 +170,32 @@ const TextField : React.FC<TextFieldProps> = ({
   } else {
     valueColorBackground = valueColor;
   }
-  const Element = textarea ? 'textarea' : 'input';
+  const ValueElement = textarea ? 'textarea' : 'input';
   return (
-    <div key={name} className={`tr puzzleinfo-row-${name}`}>
-      <div className='td puzzleinfo-key'>{name}</div>
+    <div className={`tr puzzleinfo-row-${name}`}>
+      <X size={16} className={`puzzleinfo-remove ${remove && editState !== EditState.WAITING ? '' : 'hidden'}`} onClick={remove}/>
+      <X size={16} className='hidden puzzleinfo-remove-ghost'/>
+      <div className={`td puzzleinfo-key ${patchKey ? 'key-can-be-input' : ''} ${keyIsInput ? 'key-is-input' : ''}`} onClick={keyOnClick}>
+        <input
+          className={`puzzleinfo-input ${keyIsInput ? '' : 'nodisplay'}`}
+          type='text'
+          ref={keyRef}
+          onFocus={onFocus}
+          onKeyDown={onKeyDown}
+          onBlur={onBlur}
+          disabled={editState === EditState.WAITING}
+          autoComplete='off'
+        />
+        <span className={keyIsInput ? 'hidden' : ''}>
+          {name}
+        </span>
+      </div>
       <div className='td puzzleinfo-value'>
-        <Element
-          className='puzzleinfo-input-value'
+        {(canReset && value && editState === EditState.DEFAULT || null) &&
+          <X size={12} className='puzzleinfo-reset' color={valueColorForeground} onClick={resetValue}/>
+        }
+        <ValueElement
+          className='puzzleinfo-input'
           type='text'
           ref={valueRef}
           onFocus={onFocus}
@@ -153,6 +211,9 @@ const TextField : React.FC<TextFieldProps> = ({
           {options.map(option => <option key={option} value={option}/>)}
         </datalist>
         }
+      </div>
+      <div className='td loader-container'>
+        <div className={`loader ${editState === EditState.WAITING ? 'loading' : ''}`}/>
       </div>
     </div>
   );
@@ -172,21 +233,57 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
   const puzzle = data.puzzles[slug];
   if (!puzzle) return null;
 
-  const patchValue = (key, isTags=false) => {
+  const [isAdding, setIsAdding] = useState(false);
+
+  const patch = async (_data) => {
     const url = `/api/puzzles/${slug}`;
+    return await fetchJson({
+      url: url,
+      method: 'PATCH',
+      data: _data,
+    });
+  };
+
+  const patchValue = (key, isTags=false) => {
     return async (value) => {
+      if (key === null) {
+        setIsAdding(false);
+        key = '';
+        if (!value) return null;
+      }
       const _data = !isTags ? {[key]: value} : {tags: produce(puzzle.tags, draft => {
         draft[key] = value;
       })};
-      const response = await fetch(url, {
-        method: 'PATCH',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(_data),
-      });
-      return response;
+      return await patch(_data);
+    };
+  };
+
+  const patchKey = (key) => {
+    return async (_key) => {
+      if (key === null) {
+        setIsAdding(false);
+        if (!_key) return null;
+      }
+      const _data = {tags: produce(puzzle.tags, draft => {
+        if (!(key === null && _key in draft)) {
+          draft[_key] = draft[key] || '';
+          delete draft[key];
+        }
+      })};
+      return await patch(_data);
+    };
+  };
+
+  const remove = (key) => {
+    return async () => {
+      if (key === null) {
+        setIsAdding(false);
+        return null;
+      }
+      const _data = {tags: produce(puzzle.tags, draft => {
+        delete draft[key];
+      })};
+      return await patch(_data);
     };
   };
 
@@ -204,12 +301,33 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
       }
       <div className='table'>
         <div className='tbody'>
-          <TextField name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} colors={colors}/>
+          <TextField name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>
           <TextField name='status' value={puzzle?.status} patchValue={patchValue('status')} options={[...statuses.keys()]} colors={colors}/>
           <TextField name='notes' textarea value={puzzle?.notes} patchValue={patchValue('notes')} colors={colors}/>
           {Object.keys(puzzle?.tags || {}).sort().map(tag => (
-            <TextField name={tag} value={puzzle.tags[tag]} patchValue={patchValue(tag, true)} colors={colors}/>
+            <TextField key={tag} name={tag} value={puzzle.tags[tag]}
+              patchKey={patchKey(tag)}
+              patchValue={patchValue(tag, true)}
+              remove={remove(tag)}
+              colors={colors}
+            />
           ))}
+          {isAdding ?
+            <TextField name={null} value=''
+              patchKey={patchKey(null)}
+              patchValue={patchValue(null, true)}
+              remove={remove(null)}
+              colors={colors}
+            />
+            :
+            <div className='tr'>
+              <div className='td'/>
+              <div className='td'/>
+              <div className='td'>
+                <Plus size={20} className='puzzleinfo-add' onClick={()=>setIsAdding(true)}/>
+              </div>
+            </div>
+          }
         </div>
       </div>
     </>

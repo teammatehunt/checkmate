@@ -41,11 +41,19 @@ body {
   display: none;
 }
 
+.hidden {
+  visibility: hidden;
+}
+
 .table {
   display: table;
   border-collapse: collapse;
+  position: relative;
 }
-.tr { display: table-row; }
+.tr {
+  display: table-row;
+  position: relative;
+}
 .thead { display: table-header-group; }
 .tbody { display: table-row-group; }
 .tfoot { display: table-footer-group; }
@@ -53,6 +61,6 @@ body {
 .colgroup { display: table-column-group; }
 .td, .th {
   display: table-cell;
-  border: 1px dotted gray;
+  position: relative;
 }
 .caption { display: table-caption; }
