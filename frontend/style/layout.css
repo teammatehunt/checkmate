@@ -45,6 +45,13 @@ body {
   visibility: hidden;
 }
 
+.capitalize {
+  text-transform: capitalize;
+}
+
+.h2 {
+}
+
 .table {
   display: table;
   border-collapse: collapse;

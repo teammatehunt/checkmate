@@ -112,7 +112,6 @@ class BasePuzzleRelation(models.Model):
     class Meta:
         abstract = True
         get_latest_by = 'created'
-        ordering = ['order']
         required_db_features = {
             'supports_deferrable_unique_constraints',
         }
@@ -174,6 +173,7 @@ class RoundPuzzle(BasePuzzleRelation):
     puzzle = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='round_relations')
 
     class Meta(BasePuzzleRelation.Meta):
+        ordering = ['round', 'order']
         constraints = [
             models.UniqueConstraint(
                 fields=['round', 'puzzle'], name='unique_puzzle',
@@ -192,6 +192,7 @@ class MetaFeeder(BasePuzzleRelation):
     feeder = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='meta_relations')
 
     class Meta(BasePuzzleRelation.Meta):
+        ordering = ['meta', 'order']
         constraints = [
             models.CheckConstraint(check=~models.Q(meta=models.F('feeder')), name='meta_ne_feeder'),
             models.UniqueConstraint(

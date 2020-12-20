@@ -6,7 +6,7 @@ import React, {
 } from 'react';
 
 import produce from 'immer';
-import { CornerRightUp, Plus, X } from 'react-feather';
+import { ExternalLink, Edit3, Plus, X } from 'react-feather';
 
 import Twemoji from 'components/twemoji';
 import fetchJson from 'utils/fetch';
@@ -16,38 +16,143 @@ import colors, { statuses } from 'utils/colors';
 import 'style/layout.css';
 import 'style/puzzleinfo.css';
 
-const Feeds = ({title, slugs, data, prefix, loadSlug} : {title, slugs, data, prefix?, loadSlug?}) => (
-  <div className={`feeds-${title}`}>
-    <span className={`title-${title}`}>{title}:</span>{' '}
-    {slugs?.map((slug, i) => (
-      <React.Fragment key={slug}>
-        {i ? <span>, </span> : null}
-        <span>
-          <a {...(prefix === undefined ? {} : {
-            href: `${prefix}${slug}`,
-            onClick: function(e) {
-              if (e.altKey || e.ctrlKey || e.shiftKey) return;
-              if (loadSlug) {
-                e.preventDefault();
-                loadSlug(slug);
-              }
-            },
-          })}>
-            <Twemoji>
-              {data[slug]?.name}
-            </Twemoji>
-          </a>
-        </span>
-      </React.Fragment>
-    ))}
-  </div>
-);
-
 enum EditState {
   DEFAULT,
   EDITING,
   WAITING,
 }
+
+interface FeedProps {
+  type: string;
+  slugs: string[];
+  data: {[slug: string]: Model.Round|Model.Puzzle};
+  prefix?: string;
+  loadSlug?: any;
+  options: string[];
+  changeFeeds: any;
+}
+
+const Feeds : React.FC<FeedProps>= ({
+  type,
+  slugs,
+  data,
+  prefix,
+  loadSlug,
+  options,
+  changeFeeds,
+}) => {
+  const [editState, setEditState] = useState(EditState.DEFAULT);
+  const ref = useRef(null);
+
+  const slugSet = new Set(slugs);
+  const optionsSlugs = options.filter(slug => !slugSet.has(slug));
+  const onBlur = async (e) => {
+    const optionsNames = optionsSlugs.map(slug => data[slug].name);
+    const index = optionsNames.indexOf(ref.current.value);
+    if (index !== -1) {
+      const feeds = optionsSlugs[index];
+      setEditState(EditState.WAITING);
+      const response = await changeFeeds({
+        action: 'add',
+        type: type,
+        feeds: feeds,
+      });
+      if (!response.ok) {
+        // TODO: notify error
+        console.error(`POST request for adding to ${type} ${feeds} failed`);
+        setEditState(EditState.DEFAULT);
+      }
+    } else {
+      setEditState(EditState.DEFAULT);
+    }
+  };
+  useEffect(() => {
+    if (editState === EditState.WAITING) {
+      setEditState(EditState.DEFAULT);
+    }
+  }, [slugs]);
+
+  const remove = (slug) => async (e) => {
+    setEditState(EditState.WAITING);
+    const response = await changeFeeds({
+      action: 'remove',
+      type: type,
+      feeds: slug,
+    });
+    if (!response.ok) {
+      // TODO: notify error
+      console.error(`POST request for removing from ${type} ${slug} failed`);
+      setEditState(EditState.DEFAULT);
+    }
+  };
+
+  const onKeyDown = (e) => {
+    switch (e.key) {
+      case 'Enter':
+        e.target.blur();
+        break;
+      case 'Escape':
+        // firefox doesn't blur on escape automatically
+        e.target.blur();
+        break;
+    }
+  };
+
+  return (
+    <div className={`feeds-${type}`}>
+      <span className={`capitalize title-${type}`}>{type}:</span>{' '}
+      {editState === EditState.DEFAULT ?
+        slugs?.map((slug, i) => (
+          <React.Fragment key={slug}>
+            {i ? <span>, </span> : null}
+            <span>
+              <a {...(prefix === undefined ? {} : {
+                href: `${prefix}${slug}`,
+                onClick: function(e) {
+                  if (e.altKey || e.ctrlKey || e.shiftKey) return;
+                  if (loadSlug) {
+                    e.preventDefault();
+                    loadSlug(slug);
+                  }
+                },
+              })}>
+                <Twemoji>
+                  {data[slug]?.name}
+                </Twemoji>
+              </a>
+            </span>
+          </React.Fragment>
+        ))
+        :
+        <div className='slug-list'>
+          {slugs?.map(slug => (
+          <div className='puzzleinfo-remove-entity-container' key={slug}>
+            <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
+            <Twemoji>
+              {data[slug]?.name}
+            </Twemoji>
+          </div>
+          ))}
+          <input
+            className='puzzleinfo-input-entity'
+            ref={ref}
+            type='text'
+            list={`puzzleinfo-datalist-${type}`}
+            onBlur={onBlur}
+            onKeyDown={onKeyDown}
+          />
+          <datalist id={`puzzleinfo-datalist-${type}`}>
+            {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
+          </datalist>
+        </div>
+      }
+      {(editState === EditState.DEFAULT || null) &&
+        <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
+      }
+      <div className={`loader ${editState === EditState.WAITING ? 'loading' : ''}`}/>
+    </div>
+  );
+};
 
 interface TextFieldProps {
   name: string;
@@ -176,20 +281,19 @@ const TextField : React.FC<TextFieldProps> = ({
   const ValueElement = textarea ? 'textarea' : 'input';
   return (
     <div className={`tr puzzleinfo-row-${name}`}>
-      <X size={16} className={`puzzleinfo-remove ${remove && editState !== EditState.WAITING ? '' : 'hidden'}`} onClick={remove}/>
-      <X size={16} className='hidden puzzleinfo-remove-ghost'/>
+      <X className={`puzzleinfo-remove-tag ${remove && editState !== EditState.WAITING ? '' : 'hidden'}`} onClick={remove}/>
+      <X className='hidden puzzleinfo-remove-tag-ghost'/>
       <div className={`td puzzleinfo-key ${patchKey ? 'key-can-be-input' : ''} ${keyIsInput ? 'key-is-input' : ''}`} onClick={keyOnClick}>
         <input
           className={`puzzleinfo-input ${keyIsInput ? '' : 'nodisplay'}`}
-          type='text'
           ref={keyRef}
+          type='text'
           onFocus={onFocus}
           onKeyDown={onKeyDown}
           onBlur={onBlur}
           disabled={editState === EditState.WAITING}
-          autoComplete='off'
         />
-        <span className={keyIsInput ? 'hidden' : ''}>
+        <span className={`capitalize ${keyIsInput ? 'hidden' : ''}`}>
           <Twemoji>
             {name}
           </Twemoji>
@@ -197,22 +301,21 @@ const TextField : React.FC<TextFieldProps> = ({
       </div>
       <div className='td puzzleinfo-value'>
         {(canReset && value && editState === EditState.DEFAULT || null) &&
-          <X size={12} className='puzzleinfo-reset' color={valueColorForeground} onClick={resetValue}/>
+          <X className='puzzleinfo-reset' color={valueColorForeground} onClick={resetValue}/>
         }
         <ValueElement
           className='puzzleinfo-input'
-          type='text'
           ref={valueRef}
+          type='text'
           onFocus={onFocus}
           onKeyDown={onKeyDown}
           onBlur={onBlur}
           disabled={editState === EditState.WAITING}
-          autoComplete='off'
-          {...(options ? {list: `puzzleinfo-options-${name}`} : {})}
+          {...(options ? {list: `puzzleinfo-datalist-tag-${name}`} : {})}
           {...(valueColor ? {style: {color: valueColorForeground, backgroundColor: valueColorBackground}} : {})}
         />
         {(options || null) &&
-        <datalist id={`puzzleinfo-options-${name}`}>
+        <datalist id={`puzzleinfo-datalist-tag-${name}`}>
           {options.map(option => <option key={option} value={option}/>)}
         </datalist>
         }
@@ -279,7 +382,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
     };
   };
 
-  const remove = (key) => {
+  const removeTag = (key) => {
     return async () => {
       if (key === null) {
         setIsAdding(false);
@@ -292,6 +395,27 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
     };
   };
 
+  const changeFeeds = async ({action, type, feeds}) => {
+    let url = null;
+    switch (type) {
+      case 'round':
+        url = `/api/rounds/${feeds}/puzzles`;
+        break;
+      case 'meta':
+        url = `/api/puzzles/${feeds}/feeders`;
+        break;
+    }
+    return await fetchJson({
+      url: url,
+      method: 'POST',
+      data: {
+        action: action,
+        puzzles: [slug],
+      },
+    });
+  };
+
+
   return (
     <>
       <h2>
@@ -299,12 +423,12 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
           {puzzle?.name}
         </Twemoji>
         {puzzle?.link &&
-          <a target='_blank' href={puzzle.link}><sup><CornerRightUp size={16}/></sup></a>
+          <a target='_blank' href={puzzle.link}><ExternalLink className='puzzleinfo-external-link'/></a>
         }
       </h2>
-      <Feeds title='Round' slugs={puzzle?.rounds} data={data.rounds}/>
+      <Feeds type='round' slugs={puzzle?.rounds} data={data.rounds} options={Object.keys(data.rounds)} changeFeeds={changeFeeds}/>
       {(puzzle?.metas?.length || !puzzle?.is_meta || null) &&
-      <Feeds title='Meta' slugs={puzzle?.metas} data={data.puzzles} prefix='/puzzles/' loadSlug={loadSlug}/>
+      <Feeds type='meta' slugs={puzzle?.metas} data={data.puzzles} prefix='/puzzles/' loadSlug={loadSlug} options={Object.keys(data.puzzles).filter(slug => data.puzzles[slug].is_meta)} changeFeeds={changeFeeds}/>
       }
       <div className='table'>
         <div className='tbody'>
@@ -315,7 +439,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
             <TextField key={tag} name={tag} value={puzzle.tags[tag]}
               patchKey={patchKey(tag)}
               patchValue={patchValue(tag, true)}
-              remove={remove(tag)}
+              remove={removeTag(tag)}
               colors={colors}
             />
           ))}
@@ -323,7 +447,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
             <TextField name={null} value=''
               patchKey={patchKey(null)}
               patchValue={patchValue(null, true)}
-              remove={remove(null)}
+              remove={removeTag(null)}
               colors={colors}
             />
             :
@@ -331,7 +455,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
               <div className='td'/>
               <div className='td'/>
               <div className='td'>
-                <Plus size={20} className='puzzleinfo-add' onClick={()=>setIsAdding(true)}/>
+                <Plus className='puzzleinfo-add' onClick={()=>setIsAdding(true)}/>
               </div>
             </div>
           }

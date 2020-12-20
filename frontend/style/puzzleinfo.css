@@ -5,10 +5,12 @@
 
 .puzzleinfo h2 {
   margin: 0;
+  display: flex;
 }
 
 [class^=feeds-] {
   font-size: smaller;
+  vertical-align: middle;
 }
 
 .puzzleinfo .table {
@@ -18,6 +20,50 @@
   vertical-align: middle;
 }
 
+.puzzleinfo .slug-list {
+  display: inline;
+}
+.puzzleinfo .slug-list > input {
+  display: inline;
+  border: 1px dotted gray;
+}
+.puzzleinfo .slug-list > input:not(:focus):not(:disabled):hover {
+  background-color: lightcyan;
+  filter: drop-shadow(0 0 3px gray);
+}
+
+.puzzleinfo-external-link {
+  height: 0.75em;
+  width: 0.75em;
+  align-self: start;
+}
+.puzzleinfo-edit {
+  height: 1em;
+  width: 1em;
+  margin-left: 5px;
+  color: darkblue;
+  cursor: pointer;
+}
+.puzzleinfo-remove-entity-container {
+  border: 1px solid gray;
+  border-radius: 0.33em;
+  background-color: lightgray;
+  margin: 0 2px;
+  padding: 0 2px;
+  display: inline-flex ! important;
+  align-items: center;
+}
+.puzzleinfo-remove-entity {
+  height: 1em;
+  width: 1em;
+  cursor: pointer;
+  color: red;
+  stroke-width: 4;
+}
+.puzzleinfo-remove-entity:hover ~ * {
+  text-decoration: line-through;
+}
+
 .puzzleinfo-key {
   position: relative;
   border: none;
@@ -25,7 +71,6 @@
 .puzzleinfo-key:not(:focus) {
   text-align: right;
   font-size: smaller;
-  text-transform: capitalize;
 }
 .puzzleinfo-key:after {
   content: ': ';
@@ -48,9 +93,9 @@
 
 .puzzleinfo-input {
   border: none;
+  padding: 5px;
   height: 100%;
   width: 100%;
-  padding: 5px;
 }
 .puzzleinfo-input:not(:focus):not(:disabled):hover {
   background-color: lightcyan;
@@ -62,28 +107,35 @@
   cursor: text;
 }
 
-.puzzleinfo-remove-ghost {
-  margin-right: 5px;
+.puzzleinfo-remove-tag-ghost {
+  position: relative;
+  height: 16px;
+  width: 16px;
 }
-.puzzleinfo-remove {
+/* need ghost because margins affect spacing */
+.puzzleinfo-remove-tag {
   cursor: pointer;
   position: absolute;
   margin-top: calc(5px + 0.5em);
   transform: translate(0, -50%);
+  height: 16px;
+  width: 16px;
 }
-.puzzleinfo-remove:hover {
+.puzzleinfo-remove-tag:hover {
   filter: drop-shadow(0 0 3px red);
 }
-.puzzleinfo-remove:hover ~ .puzzleinfo-key,
-.puzzleinfo-remove:hover ~ .puzzleinfo-key *,
-.puzzleinfo-remove:hover ~ .puzzleinfo-value,
-.puzzleinfo-remove:hover ~ .puzzleinfo-value * {
+.puzzleinfo-remove-tag:hover ~ .puzzleinfo-key,
+.puzzleinfo-remove-tag:hover ~ .puzzleinfo-key *,
+.puzzleinfo-remove-tag:hover ~ .puzzleinfo-value,
+.puzzleinfo-remove-tag:hover ~ .puzzleinfo-value * {
   text-decoration: line-through;
 }
 .puzzleinfo-reset {
   position: absolute;
   margin: 5px;
   padding: 2px;
+  height: 12px;
+  width: 12px;
   right: 0;
   bottom: 0.5em;
   transform: translate(0, 50%);
@@ -101,12 +153,19 @@
   border: none;
   padding-left: 5px;
 }
-.puzzleinfo .loader.loading {
-  border: 0.25em solid lightgray;
-  border-top: 0.25em solid dodgerblue;
+.puzzleinfo .loader {
   border-radius: 50%;
-  width: 0.75em;
-  height: 0.75em;
+  width: 0.75rem;
+  height: 0.75rem;
+  vertical-align: middle;
+}
+.puzzleinfo [class^=feeds-] .loader {
+  display: inline-block;
+  margin-left: 5px;
+}
+.puzzleinfo .loader.loading {
+  border: 0.25rem solid lightgray;
+  border-top: 0.25rem solid dodgerblue;
   animation: spin 0.5s linear infinite;
 }
 
@@ -118,4 +177,6 @@
 .puzzleinfo-add {
   color: green;
   cursor: pointer;
+  height: 20px;
+  width: 20px;
 }
