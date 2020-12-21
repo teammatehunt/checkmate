@@ -20,14 +20,14 @@
   vertical-align: middle;
 }
 
-.puzzleinfo .slug-list {
+.puzzleinfo .feeds-edit-list {
   display: inline;
 }
-.puzzleinfo .slug-list > input {
+.puzzleinfo .feeds-edit-list > input {
   display: inline;
   border: 1px dotted gray;
 }
-.puzzleinfo .slug-list > input:not(:focus):not(:disabled):hover {
+.puzzleinfo .feeds-edit-list > input:not(:focus):not(:disabled):hover {
   background-color: lightcyan;
   filter: drop-shadow(0 0 3px gray);
 }
@@ -42,6 +42,13 @@
   width: 1em;
   margin-left: 5px;
   color: darkblue;
+  cursor: pointer;
+}
+.puzzleinfo-done {
+  height: 1em;
+  width: 1em;
+  margin-left: 5px;
+  color: green;
   cursor: pointer;
 }
 .puzzleinfo-remove-entity-container {
@@ -72,10 +79,6 @@
   text-align: right;
   font-size: smaller;
 }
-.puzzleinfo-key:after {
-  content: ': ';
-  white-space: pre;
-}
 .puzzleinfo-value {
   position: relative;
   width: 200px;
@@ -105,6 +108,14 @@
   background-color: lightcyan;
   filter: drop-shadow(0 0 3px gray);
   cursor: text;
+}
+
+.puzzleinfo [class^=feeders-] {
+  display: flex;
+}
+.puzzleinfo .feeders-edit-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .puzzleinfo-remove-tag-ghost {

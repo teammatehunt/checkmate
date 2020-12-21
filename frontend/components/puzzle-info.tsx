@@ -1,4 +1,5 @@
 import React, {
+  forwardRef,
   useEffect,
   useMemo,
   useRef,
@@ -6,7 +7,8 @@ import React, {
 } from 'react';
 
 import produce from 'immer';
-import { ExternalLink, Edit3, Plus, X } from 'react-feather';
+import _ from 'lodash';
+import { Check, Edit3, ExternalLink, Plus, X } from 'react-feather';
 
 import Twemoji from 'components/twemoji';
 import fetchJson from 'utils/fetch';
@@ -22,7 +24,32 @@ enum EditState {
   WAITING,
 }
 
-interface FeedProps {
+const Input = forwardRef<any, any>((props, ref) => {
+  const {textarea, ...rest} = props;
+  const Element = textarea ? 'textarea' : 'input';
+  const onKeyDown = props.onKeyDown || ((e) => {
+    switch (e.key) {
+      case 'Enter':
+        e.target.blur();
+        break;
+      case 'Escape':
+        // firefox doesn't blur on escape automatically
+        e.target.blur();
+        break;
+    }
+  });
+
+  return (
+    <Element
+      ref={ref}
+      type='text'
+      onKeyDown={onKeyDown}
+      {...rest}
+    />
+  );
+});
+
+interface FeedsProps {
   type: string;
   slugs: string[];
   data: {[slug: string]: Model.Round|Model.Puzzle};
@@ -32,7 +59,7 @@ interface FeedProps {
   changeFeeds: any;
 }
 
-const Feeds : React.FC<FeedProps>= ({
+const Feeds : React.FC<FeedsProps>= ({
   type,
   slugs,
   data,
@@ -42,14 +69,25 @@ const Feeds : React.FC<FeedProps>= ({
   changeFeeds,
 }) => {
   const [editState, setEditState] = useState(EditState.DEFAULT);
-  const ref = useRef(null);
+  const [prevSlugs, setPrevSlugs] = useState(slugs);
 
   const slugSet = new Set(slugs);
   const optionsSlugs = options.filter(slug => !slugSet.has(slug));
+  useEffect(() => {
+    if (editState === EditState.WAITING) {
+      if (!_.eq(prevSlugs, slugs)) {
+        setEditState(EditState.DEFAULT);
+      }
+    }
+    setPrevSlugs(slugs);
+  }, [editState, prevSlugs, slugs]);
+
   const onBlur = async (e) => {
     const optionsNames = optionsSlugs.map(slug => data[slug].name);
-    const index = optionsNames.indexOf(ref.current.value);
-    if (index !== -1) {
+    const index = optionsNames.indexOf(e.target.value);
+    if (index === -1) {
+      setEditState(EditState.DEFAULT);
+    } else {
       const feeds = optionsSlugs[index];
       setEditState(EditState.WAITING);
       const response = await changeFeeds({
@@ -62,16 +100,8 @@ const Feeds : React.FC<FeedProps>= ({
         console.error(`POST request for adding to ${type} ${feeds} failed`);
         setEditState(EditState.DEFAULT);
       }
-    } else {
-      setEditState(EditState.DEFAULT);
     }
   };
-  useEffect(() => {
-    if (editState === EditState.WAITING) {
-      setEditState(EditState.DEFAULT);
-    }
-  }, [slugs]);
-
   const remove = (slug) => async (e) => {
     setEditState(EditState.WAITING);
     const response = await changeFeeds({
@@ -86,21 +116,9 @@ const Feeds : React.FC<FeedProps>= ({
     }
   };
 
-  const onKeyDown = (e) => {
-    switch (e.key) {
-      case 'Enter':
-        e.target.blur();
-        break;
-      case 'Escape':
-        // firefox doesn't blur on escape automatically
-        e.target.blur();
-        break;
-    }
-  };
-
   return (
     <div className={`feeds-${type}`}>
-      <span className={`capitalize title-${type}`}>{type}:</span>{' '}
+      <span className={`capitalize colon title-${type}`}>{type}</span>
       {editState === EditState.DEFAULT ?
         slugs?.map((slug, i) => (
           <React.Fragment key={slug}>
@@ -124,7 +142,7 @@ const Feeds : React.FC<FeedProps>= ({
           </React.Fragment>
         ))
         :
-        <div className='slug-list'>
+        <div className='feeds-edit-list'>
           {slugs?.map(slug => (
           <div className='puzzleinfo-remove-entity-container' key={slug}>
             <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
@@ -133,13 +151,10 @@ const Feeds : React.FC<FeedProps>= ({
             </Twemoji>
           </div>
           ))}
-          <input
+          <Input
             className='puzzleinfo-input-entity'
-            ref={ref}
-            type='text'
             list={`puzzleinfo-datalist-${type}`}
             onBlur={onBlur}
-            onKeyDown={onKeyDown}
           />
           <datalist id={`puzzleinfo-datalist-${type}`}>
             {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
@@ -149,7 +164,172 @@ const Feeds : React.FC<FeedProps>= ({
       {(editState === EditState.DEFAULT || null) &&
         <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
       }
-      <div className={`loader ${editState === EditState.WAITING ? 'loading' : ''}`}/>
+      {(editState === EditState.WAITING || null) &&
+        <div className='loader loading'/>
+      }
+    </div>
+  );
+};
+
+interface FeedersProps {
+  type: string;
+  slugs: string[];
+  data: {[slug: string]: Model.Puzzle};
+  loadSlug: any;
+  options: string[];
+  changeFeeders: any;
+}
+
+const Feeders : React.FC<FeedersProps>= ({
+  type,
+  slugs,
+  data,
+  loadSlug,
+  options,
+  changeFeeders,
+}) => {
+  const [editState, setEditState] = useState(EditState.DEFAULT);
+  const [prevSlugs, setPrevSlugs] = useState(slugs);
+  const [toDone, setToDone] = useState(false);
+  const [pressedEnter, setPressedEnter] = useState(false);
+  const ref = useRef(null);
+
+  const feederType = type === 'round' ? 'puzzles' : 'feeders';
+  const slugSet = new Set(slugs);
+  const optionsSlugs = options.filter(slug => !slugSet.has(slug));
+
+  useEffect(() => {
+    switch (editState) {
+      case EditState.DEFAULT:
+        if (toDone) setToDone(false);
+        break;
+      case EditState.EDITING:
+        if (toDone) setEditState(EditState.DEFAULT);
+        break;
+      case EditState.WAITING:
+        if (!_.eq(prevSlugs, slugs)) {
+          if (toDone) {
+            setEditState(EditState.DEFAULT);
+          } else {
+            ref.current.value = '';
+            setEditState(EditState.EDITING);
+            if (pressedEnter) {
+              ref.current.focus();
+            }
+          }
+          setPressedEnter(false);
+        }
+        break;
+    }
+    setPrevSlugs(slugs);
+  }, [editState, pressedEnter, prevSlugs, slugs, toDone]);
+
+  const onKeyDown = (e) => {
+    switch (e.key) {
+      case 'Enter':
+        setPressedEnter(true);
+        e.target.blur();
+        break;
+      case 'Escape':
+        // firefox doesn't blur on escape automatically
+        e.target.blur();
+        break;
+    }
+  };
+  const onBlur = async (e) => {
+    const puzzleSlugs = Object.keys(data);
+    const puzzleNames = puzzleSlugs.map(slug => data[slug].name);
+    const index = puzzleNames.indexOf(e.target.value);
+    if (index === -1) {
+      if (pressedEnter) e.target.focus();
+      setPressedEnter(false);
+    } else {
+      const feeder = puzzleSlugs[index];
+      setEditState(EditState.WAITING);
+      const response = await changeFeeders({
+        action: 'add',
+        type: type,
+        feeder: feeder,
+      });
+      if (!response.ok) {
+        // TODO: notify error
+        console.error(`POST request for adding ${feeder} failed`);
+        if (pressedEnter) e.target.focus();
+        setPressedEnter(false);
+      }
+    }
+  };
+  const remove = (slug) => async (e) => {
+    setEditState(EditState.WAITING);
+    const response = await changeFeeders({
+      action: 'remove',
+      type: type,
+      feeder: slug,
+    });
+    if (!response.ok) {
+      // TODO: notify error
+      console.error(`POST request for removing ${slug} failed`);
+    }
+  };
+
+  return (
+    <div className={`feeders-${feederType}`}>
+      <span className={`capitalize colon title-${feederType}`}>{feederType}</span>
+      {editState === EditState.DEFAULT ?
+        <div className='feeder-list'>
+          {slugs?.map((slug, i) => (
+            <div key={slug}>
+              <a
+                href={`/puzzles/${slug}`}
+                onClick={(e) => {
+                  if (e.altKey || e.ctrlKey || e.shiftKey) return;
+                  if (loadSlug) {
+                    e.preventDefault();
+                    loadSlug(slug);
+                  }
+                }}
+              >
+                <Twemoji>
+                  {data[slug]?.name}
+                </Twemoji>
+              </a>
+            </div>
+          ))}
+        </div>
+        :
+        <div className='feeders-edit-list'>
+          {slugs?.map(slug => (
+          <div className='puzzleinfo-remove-entity-container' key={slug}>
+            <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
+            <Twemoji>
+              {data[slug]?.name}
+            </Twemoji>
+          </div>
+          ))}
+          <Input
+            ref={ref}
+            className='puzzleinfo-input-entity'
+            onKeyDown={onKeyDown}
+            onBlur={onBlur}
+            list={`puzzleinfo-datalist-${type}`}
+          />
+          <datalist id={`puzzleinfo-datalist-${type}`}>
+            {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
+          </datalist>
+        </div>
+      }
+      {(() => {
+        switch (editState) {
+          case EditState.DEFAULT:
+            return <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>;
+          case EditState.EDITING:
+            return <Check className='puzzleinfo-done' onClick={()=>setToDone(true)}/>;
+        }
+        return null;
+      })()}
+      {(editState === EditState.WAITING || null) &&
+        <div className='loader loading'/>
+      }
     </div>
   );
 };
@@ -252,21 +432,11 @@ const TextField : React.FC<TextFieldProps> = ({
     if (!textarea) e.target.select();
   };
   const onBlur = (e) => {
+    console.log(e)
     setEditState(editState => {
       if (editState === EditState.EDITING) return EditState.WAITING;
       return editState;
     });
-  };
-  const onKeyDown = (e) => {
-    switch (e.key) {
-      case 'Enter':
-        if (e.target.tagName.toLowerCase() !== 'textarea') e.target.blur();
-        break;
-      case 'Escape':
-        // firefox doesn't blur on escape automatically
-        e.target.blur();
-        break;
-    }
   };
 
   const valueColor = editState === EditState.DEFAULT && colors?.[value];
@@ -283,13 +453,11 @@ const TextField : React.FC<TextFieldProps> = ({
     <div className={`tr puzzleinfo-row-${name}`}>
       <X className={`puzzleinfo-remove-tag ${remove && editState !== EditState.WAITING ? '' : 'hidden'}`} onClick={remove}/>
       <X className='hidden puzzleinfo-remove-tag-ghost'/>
-      <div className={`td puzzleinfo-key ${patchKey ? 'key-can-be-input' : ''} ${keyIsInput ? 'key-is-input' : ''}`} onClick={keyOnClick}>
-        <input
+      <div className={`td colon puzzleinfo-key ${patchKey ? 'key-can-be-input' : ''} ${keyIsInput ? 'key-is-input' : ''}`} onClick={keyOnClick}>
+        <Input
           className={`puzzleinfo-input ${keyIsInput ? '' : 'nodisplay'}`}
           ref={keyRef}
-          type='text'
           onFocus={onFocus}
-          onKeyDown={onKeyDown}
           onBlur={onBlur}
           disabled={editState === EditState.WAITING}
         />
@@ -303,12 +471,11 @@ const TextField : React.FC<TextFieldProps> = ({
         {(canReset && value && editState === EditState.DEFAULT || null) &&
           <X className='puzzleinfo-reset' color={valueColorForeground} onClick={resetValue}/>
         }
-        <ValueElement
+        <Input
+          textarea={textarea}
           className='puzzleinfo-input'
           ref={valueRef}
-          type='text'
           onFocus={onFocus}
-          onKeyDown={onKeyDown}
           onBlur={onBlur}
           disabled={editState === EditState.WAITING}
           {...(options ? {list: `puzzleinfo-datalist-tag-${name}`} : {})}
@@ -395,7 +562,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
     };
   };
 
-  const changeFeeds = async ({action, type, feeds}) => {
+  const changeRelations = async ({type, feeds, feeder, ...kwargs}) => {
     let url = null;
     switch (type) {
       case 'round':
@@ -409,10 +576,18 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
       url: url,
       method: 'POST',
       data: {
-        action: action,
-        puzzles: [slug],
+        puzzles: [feeder],
+        ...kwargs,
       },
     });
+  };
+
+  const changeFeeds = async (kwargs) => {
+    return await changeRelations({feeder: slug, ...kwargs});
+  };
+
+  const changeFeeders = async (kwargs) => {
+    return await changeRelations({feeds: slug, ...kwargs});
   };
 
 
@@ -426,14 +601,28 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
           <a target='_blank' href={puzzle.link}><ExternalLink className='puzzleinfo-external-link'/></a>
         }
       </h2>
-      <Feeds type='round' slugs={puzzle?.rounds} data={data.rounds} options={Object.keys(data.rounds)} changeFeeds={changeFeeds}/>
+      <Feeds
+        type='round'
+        slugs={puzzle?.rounds}
+        data={data.rounds}
+        options={Object.keys(data.rounds)}
+        changeFeeds={changeFeeds}
+      />
       {(puzzle?.metas?.length || !puzzle?.is_meta || null) &&
-      <Feeds type='meta' slugs={puzzle?.metas} data={data.puzzles} prefix='/puzzles/' loadSlug={loadSlug} options={Object.keys(data.puzzles).filter(slug => data.puzzles[slug].is_meta)} changeFeeds={changeFeeds}/>
+      <Feeds
+        type='meta'
+        slugs={puzzle?.metas}
+        data={data.puzzles}
+        prefix='/puzzles/'
+        loadSlug={loadSlug}
+        options={Object.keys(data.puzzles).filter(_slug => data.puzzles[_slug].is_meta && _slug !== slug)}
+        changeFeeds={changeFeeds}
+      />
       }
       <div className='table'>
         <div className='tbody'>
           <TextField name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>
-          <TextField name='status' value={puzzle?.status} patchValue={patchValue('status')} options={[...statuses.keys()]} colors={colors}/>
+          <TextField name='status' value={puzzle?.status} patchValue={patchValue('status')} options={Object.keys(statuses)} colors={statuses}/>
           <TextField name='notes' textarea value={puzzle?.notes} patchValue={patchValue('notes')} colors={colors}/>
           {Object.keys(puzzle?.tags || {}).sort().map(tag => (
             <TextField key={tag} name={tag} value={puzzle.tags[tag]}
@@ -461,6 +650,24 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
           }
         </div>
       </div>
+      {(puzzle?.is_meta || null) &&
+      <Feeders
+        type='meta'
+        slugs={puzzle?.feeders}
+        data={data.puzzles}
+        loadSlug={loadSlug}
+        options={(() => {
+          let slugSet = new Set();
+          const puzzles = puzzle?.rounds.map(round => data.rounds[round].puzzles).flat().filter(_slug => {
+            const add = !slugSet.has(_slug) && _slug !== slug;
+            slugSet.add(_slug);
+            return add;
+          });
+          return puzzles;
+        })()}
+        changeFeeders={changeFeeders}
+      />
+      }
     </>
   );
 };

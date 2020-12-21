@@ -1,20 +1,20 @@
-export const statuses = new Map([
-  ['new', 'whitesmoke'],
-  ['working', 'lightgray'],
-  ['extraction', 'orange'],
-  ['stuck', 'red'],
-  ['solved', 'lime'],
-  ['abandoned', 'pink'],
-  ['event', '^magenta'],
-  ['claimed offline', 'khaki'],
-  ['backsolved', 'lime'],
-  ['bought', 'lime'],
-]);
+export const statuses = {
+  new: 'whitesmoke',
+  working: 'lightgray',
+  extraction: 'orange',
+  stuck: 'red',
+  solved: 'lime',
+  abandoned: 'pink',
+  event: '^magenta',
+  'claimed offline': 'khaki',
+  backsolved: 'lime',
+  bought: 'lime',
+};
 
 
 const colors = {
   // statuses
-  ...Object.fromEntries(statuses),
+  ...statuses,
   // colors
   red: 'red',
   orange: 'orange',
@@ -32,6 +32,8 @@ const colors = {
   pink: 'pink',
   brown: '^saddlebrown',
   black: '^black',
+  gold: 'gold',
+  silver: 'silver',
   // elements
   fire: 'red',
   water: 'aqua',

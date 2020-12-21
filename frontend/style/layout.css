@@ -49,6 +49,11 @@ body {
   text-transform: capitalize;
 }
 
+.colon:after {
+  content: ': ';
+  white-space: pre;
+}
+
 .h2 {
 }
 
