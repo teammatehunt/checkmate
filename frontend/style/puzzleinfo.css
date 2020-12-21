@@ -1,10 +1,11 @@
 .puzzleinfo.pane {
   padding-right: 1em;
   padding-left: 1em;
+  overflow-y: auto;
 }
 
 .puzzleinfo h2 {
-  margin: 0;
+  margin-bottom: 0;
   display: flex;
 }
 
@@ -13,7 +14,7 @@
   vertical-align: middle;
 }
 
-.puzzleinfo .table {
+.puzzleinfo .table.puzzleinfo-tags {
   margin: 1em 0;
 }
 .puzzleinfo .td {
@@ -110,12 +111,28 @@
   cursor: text;
 }
 
-.puzzleinfo [class^=feeders-] {
+.puzzleinfo .feeders {
   display: flex;
+}
+.puzzleinfo .feeders-list .td {
+  border: 1px solid lightgray;
+  padding: 2px 6px;
+}
+.puzzleinfo .feeders-answer {
+  min-width: 4em;
 }
 .puzzleinfo .feeders-edit-list {
   display: flex;
   flex-direction: column;
+}
+.puzzleinfo .feeders-edit-list > :not(input) {
+  cursor: move;
+}
+.puzzleinfo .feeders-edit-list > :not(:first-child) {
+  margin-top: 2px;
+}
+.puzzleinfo .feeders-edit-list > :not(:last-child) {
+  margin-bottom: 2px;
 }
 
 .puzzleinfo-remove-tag-ghost {

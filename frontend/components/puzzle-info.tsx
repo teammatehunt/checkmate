@@ -8,6 +8,8 @@ import React, {
 
 import produce from 'immer';
 import _ from 'lodash';
+import { DndProvider, DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Check, Edit3, ExternalLink, Plus, X } from 'react-feather';
 
 import Twemoji from 'components/twemoji';
@@ -171,6 +173,56 @@ const Feeds : React.FC<FeedsProps>= ({
   );
 };
 
+interface DragItem {
+  index: number;
+  originalIndex: number;
+  slug: string;
+  type: string;
+}
+const FeederDnd = ({slug, index, move, setDraggingItem, children}) => {
+  const ref = useRef(null);
+  const [, drop] = useDrop({
+    accept: 'feeder',
+    hover: (item: DragItem, monitor: DropTargetMonitor) => {
+      if (!ref.current) return;
+      if (item.index === index) return;
+
+      const hoverBoundingRect = ref.current?.getBoundingClientRect()
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const clientOffset = monitor.getClientOffset();
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top
+      if (item.index < index && hoverClientY < hoverMiddleY) return;
+      if (item.index > index && hoverClientY > hoverMiddleY) return;
+
+      setDraggingItem({
+        slug: item.slug,
+        index: index,
+      });
+
+      // NB: mutating the monitor item here
+      item.index = index;
+    },
+  });
+  const [{ isDragging }, drag] = useDrag({
+    item: { type: 'feeder', slug, index, originalIndex: index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    end: (item: DragItem, monitor: DragSourceMonitor) => {
+      if (!ref.current) return;
+      if (item.index === item.originalIndex) return;
+      move(item.slug, item.index);
+    },
+  });
+  const opacity = isDragging ? 0 : 1;
+  drag(drop(ref));
+  return (
+    <div ref={ref} style={{ opacity }}>
+      {children}
+    </div>
+  );
+};
+
 interface FeedersProps {
   type: string;
   slugs: string[];
@@ -192,6 +244,7 @@ const Feeders : React.FC<FeedersProps>= ({
   const [prevSlugs, setPrevSlugs] = useState(slugs);
   const [toDone, setToDone] = useState(false);
   const [pressedEnter, setPressedEnter] = useState(false);
+  const [draggingItem, setDraggingItem] = useState(null);
   const ref = useRef(null);
 
   const feederType = type === 'round' ? 'puzzles' : 'feeders';
@@ -217,6 +270,7 @@ const Feeders : React.FC<FeedersProps>= ({
               ref.current.focus();
             }
           }
+          setDraggingItem(null);
           setPressedEnter(false);
         }
         break;
@@ -271,41 +325,74 @@ const Feeders : React.FC<FeedersProps>= ({
       console.error(`POST request for removing ${slug} failed`);
     }
   };
+  const move = async (slug, index) => {
+    setEditState(EditState.WAITING);
+    const response = await changeFeeders({
+      action: 'move',
+      type: type,
+      feeder: slug,
+      order: index,
+    });
+    if (!response.ok) {
+      // TODO: notify error
+      console.error(`POST request for moving ${slug} failed`);
+    }
+  };
+
+  const staticSlugs = slugs.filter(slug => slug !== draggingItem?.slug);
+  const localSlugs = draggingItem ? [...staticSlugs.slice(0, draggingItem.index), draggingItem.slug, ...staticSlugs.slice(draggingItem.index)] : slugs;
 
   return (
-    <div className={`feeders-${feederType}`}>
+    <div className={`feeders feeders-${feederType}`}>
       <span className={`capitalize colon title-${feederType}`}>{feederType}</span>
       {editState === EditState.DEFAULT ?
-        <div className='feeder-list'>
-          {slugs?.map((slug, i) => (
-            <div key={slug}>
-              <a
-                href={`/puzzles/${slug}`}
-                onClick={(e) => {
-                  if (e.altKey || e.ctrlKey || e.shiftKey) return;
-                  if (loadSlug) {
-                    e.preventDefault();
-                    loadSlug(slug);
-                  }
-                }}
-              >
-                <Twemoji>
-                  {data[slug]?.name}
-                </Twemoji>
-              </a>
-            </div>
-          ))}
+        <div className='table feeders-list'>
+          <div className='tbody'>
+            {slugs?.map((slug, i) => (
+              <div key={slug} className='tr'>
+                <div className='td'>
+                  <a
+                    href={`/puzzles/${slug}`}
+                    onClick={(e) => {
+                      if (e.altKey || e.ctrlKey || e.shiftKey) return;
+                      if (loadSlug) {
+                        e.preventDefault();
+                        loadSlug(slug);
+                      }
+                    }}
+                  >
+                    <Twemoji>
+                      {data[slug]?.name}
+                    </Twemoji>
+                  </a>
+                </div>
+                <div className='td answerize feeders-answer'>
+                  {data[slug]?.answer || ''}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         :
         <div className='feeders-edit-list'>
-          {slugs?.map(slug => (
-          <div className='puzzleinfo-remove-entity-container' key={slug}>
-            <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
-            <Twemoji>
-              {data[slug]?.name}
-            </Twemoji>
-          </div>
-          ))}
+          <DndProvider backend={HTML5Backend}>
+            {localSlugs?.map((slug, i) => (
+              <FeederDnd
+                key={slug}
+                index={i}
+                slug={slug}
+                setDraggingItem={setDraggingItem}
+                move={move}
+              >
+                <div className='puzzleinfo-remove-entity-container' key={slug}>
+                  <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
+                  <Twemoji>
+                    {data[slug]?.name}
+                  </Twemoji>
+                </div>
+              </FeederDnd>
+            ))}
+          </DndProvider>
           <Input
             ref={ref}
             className='puzzleinfo-input-entity'
@@ -344,6 +431,7 @@ interface TextFieldProps {
   remove?: any;
   canReset?: boolean;
   colors?: {[value: string]: string};
+  className?: string;
 }
 
 const TextField : React.FC<TextFieldProps> = ({
@@ -355,6 +443,7 @@ const TextField : React.FC<TextFieldProps> = ({
   patchKey,
   remove,
   canReset=true,
+  className='',
   colors,
 }) => {
   const [prevKey, setPrevKey] = useState(name);
@@ -473,7 +562,7 @@ const TextField : React.FC<TextFieldProps> = ({
         }
         <Input
           textarea={textarea}
-          className='puzzleinfo-input'
+          className={`puzzleinfo-input ${className}`}
           ref={valueRef}
           onFocus={onFocus}
           onBlur={onBlur}
@@ -619,9 +708,9 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         changeFeeds={changeFeeds}
       />
       }
-      <div className='table'>
+      <div className='table puzzleinfo-tags'>
         <div className='tbody'>
-          <TextField name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>
+          <TextField className='answerize' name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>
           <TextField name='status' value={puzzle?.status} patchValue={patchValue('status')} options={Object.keys(statuses)} colors={statuses}/>
           <TextField name='notes' textarea value={puzzle?.notes} patchValue={patchValue('notes')} colors={colors}/>
           {Object.keys(puzzle?.tags || {}).sort().map(tag => (

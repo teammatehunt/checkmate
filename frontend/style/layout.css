@@ -54,6 +54,11 @@ body {
   white-space: pre;
 }
 
+.answerize {
+  font-family: Courier, 'Courier New', monospace;
+  font-weight: bold;
+}
+
 .h2 {
 }
 
