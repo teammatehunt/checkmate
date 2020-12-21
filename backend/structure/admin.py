@@ -55,14 +55,25 @@ class RoundAdmin(ModelAdmin):
         RoundPuzzleInlinePuzzle,
     )
 
+    def get_queryset(self, *args, **kwargs):
+        return super().get_queryset(*args, **kwargs).select_related('created_by')
+
 @admin.register(models.Puzzle)
 class PuzzleAdmin(ModelAdmin):
-    list_display = ('name', 'slug', 'created', 'created_by')
+    list_display = ('name', 'slug', 'get_rounds', 'created', 'created_by')
     inlines = (
         RoundPuzzleInlineRound,
         MetaFeederInlineMeta,
         MetaFeederInlineFeeder,
     )
+
+    def get_queryset(self, *args, **kwargs):
+        return super().get_queryset(*args, **kwargs).select_related('created_by').prefetch_related('rounds')
+
+    def get_rounds(self, obj):
+        return ', '.join((_round.name for _round in obj.rounds.all()))
+    get_rounds.short_description = 'rounds'
+    get_rounds.admin_order_field = 'rounds'
 
     def get_readonly_fields(self, request, obj=None):
         extra_readonly_fields = []
