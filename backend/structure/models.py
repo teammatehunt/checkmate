@@ -151,6 +151,7 @@ class BasePuzzleRelation(models.Model):
     def delete(self, *args, **kwargs):
         with transaction.atomic():
             super().delete(*args, **kwargs)
+            self.__class__.objects.filter(order__gt=self.order).update(order=models.F('order')-1)
             self.check_order(deleted=True)
 
     def check_order(self, deleted=False):

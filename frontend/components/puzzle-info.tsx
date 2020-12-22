@@ -77,7 +77,7 @@ const Feeds : React.FC<FeedsProps>= ({
   const optionsSlugs = options.filter(slug => !slugSet.has(slug));
   useEffect(() => {
     if (editState === EditState.WAITING) {
-      if (!_.eq(prevSlugs, slugs)) {
+      if (!_.isEqual(prevSlugs, slugs)) {
         setEditState(EditState.DEFAULT);
       }
     }
@@ -122,36 +122,36 @@ const Feeds : React.FC<FeedsProps>= ({
     <div className={`feeds-${type}`}>
       <span className={`capitalize colon title-${type}`}>{type}</span>
       {editState === EditState.DEFAULT ?
-        slugs?.map((slug, i) => (
-          <React.Fragment key={slug}>
-            {i ? <span>, </span> : null}
-            <span>
-              <a {...(prefix === undefined ? {} : {
-                href: `${prefix}${slug}`,
-                onClick: function(e) {
-                  if (e.altKey || e.ctrlKey || e.shiftKey) return;
-                  if (loadSlug) {
-                    e.preventDefault();
-                    loadSlug(slug);
-                  }
-                },
-              })}>
-                <Twemoji>
-                  {data[slug]?.name}
-                </Twemoji>
-              </a>
-            </span>
-          </React.Fragment>
+        slugs?.map((slug, i) => data[slug]?.hidden ? null : (
+            <React.Fragment key={slug}>
+              {i ? <span>, </span> : null}
+              <span>
+                <a {...(prefix === undefined ? {} : {
+                  href: `${prefix}${slug}`,
+                  onClick: function(e) {
+                    if (e.altKey || e.ctrlKey || e.shiftKey) return;
+                    if (loadSlug) {
+                      e.preventDefault();
+                      loadSlug(slug);
+                    }
+                  },
+                })}>
+                  <Twemoji>
+                    {data[slug]?.name}
+                  </Twemoji>
+                </a>
+              </span>
+            </React.Fragment>
         ))
         :
         <div className='feeds-edit-list'>
-          {slugs?.map(slug => (
-          <div className='puzzleinfo-remove-entity-container' key={slug}>
-            <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
-            <Twemoji>
-              {data[slug]?.name}
-            </Twemoji>
-          </div>
+          {slugs?.map(slug => data[slug]?.hidden ? null : (
+              <div className='puzzleinfo-remove-entity-container' key={slug}>
+                <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
+                <Twemoji>
+                  {data[slug]?.name}
+                </Twemoji>
+              </div>
           ))}
           <Input
             className='puzzleinfo-input-entity'
@@ -179,7 +179,23 @@ interface DragItem {
   slug: string;
   type: string;
 }
-const FeederDnd = ({slug, index, move, setDraggingItem, children}) => {
+
+interface FeederDndProps {
+  slug: string;
+  index: number;
+  move: any;
+  setDraggingItem: any;
+  className?: string;
+}
+
+const FeederDnd : React.FC<FeederDndProps> = ({
+  slug,
+  index,
+  move,
+  setDraggingItem,
+  className,
+  children,
+}) => {
   const ref = useRef(null);
   const [, drop] = useDrop({
     accept: 'feeder',
@@ -217,7 +233,7 @@ const FeederDnd = ({slug, index, move, setDraggingItem, children}) => {
   const opacity = isDragging ? 0 : 1;
   drag(drop(ref));
   return (
-    <div ref={ref} style={{ opacity }}>
+    <div className={className ?? ''} ref={ref} style={{ opacity }}>
       {children}
     </div>
   );
@@ -260,7 +276,7 @@ const Feeders : React.FC<FeedersProps>= ({
         if (toDone) setEditState(EditState.DEFAULT);
         break;
       case EditState.WAITING:
-        if (!_.eq(prevSlugs, slugs)) {
+        if (!_.isEqual(prevSlugs, slugs)) {
           if (toDone) {
             setEditState(EditState.DEFAULT);
           } else {
@@ -308,7 +324,11 @@ const Feeders : React.FC<FeedersProps>= ({
       if (!response.ok) {
         // TODO: notify error
         console.error(`POST request for adding ${feeder} failed`);
-        if (pressedEnter) e.target.focus();
+        if (toDone) setEditState(EditState.DEFAULT);
+        else {
+          if (pressedEnter) e.target.focus();
+          setEditState(EditState.EDITING);
+        }
         setPressedEnter(false);
       }
     }
@@ -336,6 +356,7 @@ const Feeders : React.FC<FeedersProps>= ({
     if (!response.ok) {
       // TODO: notify error
       console.error(`POST request for moving ${slug} failed`);
+      setEditState(EditState.EDITING);
     }
   };
 
@@ -348,7 +369,7 @@ const Feeders : React.FC<FeedersProps>= ({
       {editState === EditState.DEFAULT ?
         <div className='table feeders-list'>
           <div className='tbody'>
-            {slugs?.map((slug, i) => (
+            {slugs?.map((slug, i) => data[slug]?.hidden ? null : (
               <div key={slug} className='tr'>
                 <div className='td'>
                   <a
@@ -383,8 +404,9 @@ const Feeders : React.FC<FeedersProps>= ({
                 slug={slug}
                 setDraggingItem={setDraggingItem}
                 move={move}
+                className={data[slug]?.hidden ? 'nodisplay' : ''}
               >
-                <div className='puzzleinfo-remove-entity-container' key={slug}>
+                <div className='puzzleinfo-remove-entity-container'>
                   <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
                   <Twemoji>
                     {data[slug]?.name}

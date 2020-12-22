@@ -42,7 +42,6 @@ export const Main : React.FC<MainProps> = props => {
   const iframeDetailsReducer = (state, action) => Object.assign({}, state, action);
   const [iframeDetails, iframeDetailsDispatch] = useReducer(iframeDetailsReducer, {});
 
-
   const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
   const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
@@ -97,7 +96,7 @@ export const Main : React.FC<MainProps> = props => {
 
   const addTab = _slug => {
     if (page === 'puzzle') {
-      if (_slug !== undefined && _slug in puzzles) {
+      if (puzzles[_slug]?.hidden === false) {
         const _tabIndex = tabs.indexOf(_slug);
         if (_tabIndex === -1) {
           setTabs([_slug, ...tabs]);
@@ -135,6 +134,11 @@ export const Main : React.FC<MainProps> = props => {
     addTab(slug);
     setInitialLoad(false);
   }, []);
+  useEffect(() => {
+    if (tabs.some(slug => data.puzzles[slug]?.hidden !== false)) {
+      setTabs(tabs.filter(slug => data.puzzles[slug]?.hidden === false));
+    }
+  }, [tabs, data]);
 
   const activateTab = loadSlug;
   const removeTab = (_slug) => {
@@ -157,11 +161,11 @@ export const Main : React.FC<MainProps> = props => {
     const openWebsocket = () => {
       const socket = new WebSocket(`ws://${window.location.host}/ws/`);
       socket.addEventListener('message', (e) => {
-        const data = JSONbig.parse(e.data);
+        const _data = JSONbig.parse(e.data);
         dataDispatch({
           ws: socket,
           cacheRef: updateCacheRef,
-          update: data,
+          update: _data,
         });
       });
       socket.addEventListener('open', (e) => {

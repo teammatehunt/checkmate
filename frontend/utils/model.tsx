@@ -1,4 +1,5 @@
 import produce, { Draft } from 'immer';
+import _ from 'lodash';
 
 export interface HuntConfig {
   domain: string;
