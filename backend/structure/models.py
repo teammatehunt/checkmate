@@ -97,10 +97,25 @@ class Puzzle(Entity):
         default=False, help_text='Can only be edited directly when there are no feeder puzzles. Adding feeder puzzles will also set this field.')
     AUTO_FIELDS = Entity.AUTO_FIELDS + ('is_meta',)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_is_meta = self.is_meta
+
     def save(self, *args, **kwargs):
-        if self.feeders.exists():
+        feeder_ids = set(self.feeders.through.objects.filter(meta_id=self.pk))
+        if feeder_ids:
             self.is_meta = True
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+            if self.is_meta and not self.original_is_meta:
+                # add feeders from rounds
+                for _round in self.rounds.all().prefetch_related('puzzle_relations'):
+                    if _round.auto_assign_puzzles_to_meta:
+                        for relation in _round.puzzle_relations.all():
+                            puzzle_id = relation.puzzle_id
+                            if puzzle_id not in feeder_ids and puzzle_id != self.pk:
+                                self.feeders.through(meta_id=self.pk, feeder_id=puzzle_id).save()
+                                feeder_ids.add(puzzle_id)
 
 
 class BasePuzzleRelation(models.Model):
@@ -185,6 +200,27 @@ class RoundPuzzle(BasePuzzleRelation):
                 deferrable=models.Deferrable.DEFERRED,
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            adding = self._state.adding
+            super().save(*args, **kwargs)
+            if adding:
+                if self.round.auto_assign_puzzles_to_meta:
+                    if self.puzzle.is_meta:
+                        feeder_ids = set(self.puzzle.feeder_relations.filter(meta_id=self.puzzle_id))
+                        for relation in self.round.puzzle_relations.all():
+                            puzzle_id = relation.puzzle_id
+                            if puzzle_id not in feeder_ids and puzzle_id != self.puzzle_id:
+                                MetaFeeder(meta_id=self.puzzle_id, feeder_id=puzzle_id).save()
+                                feeder_ids.add(puzzle_id)
+                    metas = list(self.round.puzzles.all().filter(is_meta=True).prefetch_related('feeder_relations'))
+                    print(metas)
+                    for meta in metas:
+                        feeder_ids = set(relation.feeder_id for relation in meta.feeder_relations.all())
+                        if self.puzzle_id not in feeder_ids and self.puzzle_id != meta.pk:
+                            MetaFeeder(meta_id=meta.pk, feeder_id=self.puzzle_id).save()
+
 
 class MetaFeeder(BasePuzzleRelation):
     CONTAINER = 'meta'

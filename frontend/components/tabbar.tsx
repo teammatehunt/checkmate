@@ -11,18 +11,24 @@ import 'style/header.css';
 
 const Logo = ({slug, activateTab}) => {
   const activateThisTab = (e) => {
-    e.stopPropagation();
+    if (e.altKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
     activateTab(undefined);
   }
   const isActive = slug === undefined;
   return (
-    <div
-      className={`logo ${isActive ? 'active' : ''}`}
-      onClick={activateThisTab}
+    <a
+      href='/'
+      className='nostyle'
     >
-      <Icon className='icon'/>
-      <span className='logo-text'>Checkmate</span>
-    </div>
+      <div
+        className={`logo ${isActive ? 'active' : ''}`}
+        onClick={activateThisTab}
+      >
+        <Icon className='icon'/>
+        <span className='logo-text'>Checkmate</span>
+      </div>
+    </a>
   );
 };
 
@@ -42,31 +48,38 @@ const Tab = ({
   puzzleData,
 }) => {
   const activateThisTab = (e) => {
-    e.stopPropagation();
+    if (e.altKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
     activateTab(tab);
   }
   const removeThisTab = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     removeTab(tab);
   }
   return (
-    <div
+    <a
       key={tab}
-      className={`tab ${isActive ? 'active' : ''}`}
-      onClick={activateThisTab}
+      href={`/puzzles/${tab}`}
+      className='nostyle'
     >
-      <div className='tab-content'>
-        <Twemoji>
-          {puzzleData.name}
-        </Twemoji>
-      </div>
       <div
-        className='tab-remove'
-        onClick={removeThisTab}
+        className={`tab ${isActive ? 'active' : ''}`}
+        onClick={activateThisTab}
       >
-        <X size={16}/>
+        <div className='tab-content'>
+          <Twemoji>
+            {puzzleData.name}
+          </Twemoji>
+        </div>
+        <div
+          className='tab-remove'
+          onClick={removeThisTab}
+        >
+          <X size={16}/>
+        </div>
       </div>
-    </div>
+    </a>
   );
 }
 

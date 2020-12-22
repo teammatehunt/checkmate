@@ -50,7 +50,7 @@ class HuntConfigAdmin(ModelAdmin):
 
 @admin.register(models.Round)
 class RoundAdmin(ModelAdmin):
-    list_display = ('name', 'slug', 'created', 'created_by')
+    list_display = ('name', 'slug', 'hidden', 'created', 'created_by')
     inlines = (
         RoundPuzzleInlinePuzzle,
     )
@@ -60,7 +60,7 @@ class RoundAdmin(ModelAdmin):
 
 @admin.register(models.Puzzle)
 class PuzzleAdmin(ModelAdmin):
-    list_display = ('name', 'slug', 'get_rounds', 'created', 'created_by')
+    list_display = ('name', 'slug', 'get_rounds', 'hidden', 'created', 'created_by')
     inlines = (
         RoundPuzzleInlineRound,
         MetaFeederInlineMeta,
