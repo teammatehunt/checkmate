@@ -20,8 +20,8 @@ import Puzzles from 'components/puzzle';
 import PuzzleInfo from 'components/puzzle-info';
 import Header from 'components/tabbar';
 import {
-  ShowIf,
   DiscordFrame,
+  ShowIf,
 } from 'components/frames';
 
 import 'style/layout.css';

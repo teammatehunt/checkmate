@@ -18,7 +18,7 @@ import * as Model from 'utils/model';
 import colors, { statuses } from 'utils/colors';
 
 import 'style/layout.css';
-import 'style/puzzleinfo.css';
+import 'style/puzzle-info.css';
 
 enum EditState {
   DEFAULT,

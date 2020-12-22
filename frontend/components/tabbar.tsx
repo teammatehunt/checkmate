@@ -7,7 +7,7 @@ import * as Context from 'components/context';
 import Twemoji from 'components/twemoji';
 import Icon from 'assets/icon.svg';
 
-import 'style/header.css';
+import 'style/tabbar.css';
 
 const Logo = ({slug, activateTab}) => {
   const activateThisTab = (e) => {
