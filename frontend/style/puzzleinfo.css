@@ -1,7 +1,7 @@
 .puzzleinfo.pane {
   padding-right: 1em;
   padding-left: 1em;
-  overflow-y: auto;
+  overflow: auto;
 }
 
 .puzzleinfo h2 {
@@ -113,13 +113,19 @@
 
 .puzzleinfo .feeders {
   display: flex;
+  flex-direction: column;
+}
+.puzzleinfo .feeders-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5em;
 }
 .puzzleinfo .feeders-list .td {
   border: 1px solid lightgray;
   padding: 2px 6px;
 }
 .puzzleinfo .feeders-answer {
-  min-width: 4em;
+  min-width: 6em;
 }
 .puzzleinfo .feeders-edit-list {
   display: flex;

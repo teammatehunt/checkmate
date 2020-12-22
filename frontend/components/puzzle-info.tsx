@@ -364,81 +364,85 @@ const Feeders : React.FC<FeedersProps>= ({
   const localSlugs = draggingItem ? [...staticSlugs.slice(0, draggingItem.index), draggingItem.slug, ...staticSlugs.slice(draggingItem.index)] : slugs;
 
   return (
-    <div className={`feeders feeders-${feederType}`}>
-      <span className={`capitalize colon title-${feederType}`}>{feederType}</span>
-      {editState === EditState.DEFAULT ?
-        <div className='table feeders-list'>
-          <div className='tbody'>
-            {slugs?.map((slug, i) => data[slug]?.hidden ? null : (
-              <div key={slug} className='tr'>
-                <div className='td'>
-                  <a
-                    href={`/puzzles/${slug}`}
-                    onClick={(e) => {
-                      if (e.altKey || e.ctrlKey || e.shiftKey) return;
-                      if (loadSlug) {
-                        e.preventDefault();
-                        loadSlug(slug);
-                      }
-                    }}
-                  >
+    <div className='feeders'>
+      <div className='feeders-header'>
+        <span className={`capitalize colon title-${feederType}`}>{feederType}</span>
+        {(() => {
+          switch (editState) {
+            case EditState.DEFAULT:
+              return <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>;
+            case EditState.EDITING:
+              return <Check className='puzzleinfo-done' onClick={()=>setToDone(true)}/>;
+          }
+          return null;
+        })()}
+        {(editState === EditState.WAITING || null) &&
+          <div className='loader loading'/>
+        }
+      </div>
+      <div className={`feeders-${feederType}`}>
+        {editState === EditState.DEFAULT ?
+          <div className='table feeders-list'>
+            <div className='tbody'>
+              {slugs?.map((slug, i) => data[slug]?.hidden ? null : (
+                <div key={slug} className='tr'>
+                  <div className='td'>
+                    <a
+                      href={`/puzzles/${slug}`}
+                      onClick={(e) => {
+                        if (e.altKey || e.ctrlKey || e.shiftKey) return;
+                        if (loadSlug) {
+                          e.preventDefault();
+                          loadSlug(slug);
+                        }
+                      }}
+                    >
+                      <Twemoji>
+                        {data[slug]?.name}
+                      </Twemoji>
+                    </a>
+                  </div>
+                  <div className='td answerize feeders-answer'>
+                    {data[slug]?.answer || ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          :
+          <div className='feeders-edit-list'>
+            <DndProvider backend={HTML5Backend}>
+              {localSlugs?.map((slug, i) => (
+                <FeederDnd
+                  key={slug}
+                  index={i}
+                  slug={slug}
+                  setDraggingItem={setDraggingItem}
+                  move={move}
+                  className={data[slug]?.hidden ? 'nodisplay' : ''}
+                >
+                  <div className='puzzleinfo-remove-entity-container'>
+                    <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
                     <Twemoji>
                       {data[slug]?.name}
                     </Twemoji>
-                  </a>
-                </div>
-                <div className='td answerize feeders-answer'>
-                  {data[slug]?.answer || ''}
-                </div>
-              </div>
-            ))}
+                  </div>
+                </FeederDnd>
+              ))}
+            </DndProvider>
+            <Input
+              ref={ref}
+              className='puzzleinfo-input-entity'
+              onKeyDown={onKeyDown}
+              onBlur={onBlur}
+              list={`puzzleinfo-datalist-${type}`}
+            />
+            <datalist id={`puzzleinfo-datalist-${type}`}>
+              {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
+            </datalist>
           </div>
-        </div>
-        :
-        <div className='feeders-edit-list'>
-          <DndProvider backend={HTML5Backend}>
-            {localSlugs?.map((slug, i) => (
-              <FeederDnd
-                key={slug}
-                index={i}
-                slug={slug}
-                setDraggingItem={setDraggingItem}
-                move={move}
-                className={data[slug]?.hidden ? 'nodisplay' : ''}
-              >
-                <div className='puzzleinfo-remove-entity-container'>
-                  <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
-                  <Twemoji>
-                    {data[slug]?.name}
-                  </Twemoji>
-                </div>
-              </FeederDnd>
-            ))}
-          </DndProvider>
-          <Input
-            ref={ref}
-            className='puzzleinfo-input-entity'
-            onKeyDown={onKeyDown}
-            onBlur={onBlur}
-            list={`puzzleinfo-datalist-${type}`}
-          />
-          <datalist id={`puzzleinfo-datalist-${type}`}>
-            {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
-          </datalist>
-        </div>
-      }
-      {(() => {
-        switch (editState) {
-          case EditState.DEFAULT:
-            return <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>;
-          case EditState.EDITING:
-            return <Check className='puzzleinfo-done' onClick={()=>setToDone(true)}/>;
         }
-        return null;
-      })()}
-      {(editState === EditState.WAITING || null) &&
-        <div className='loader loading'/>
-      }
+      </div>
     </div>
   );
 };
