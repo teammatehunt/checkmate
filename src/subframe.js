@@ -108,6 +108,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         }
       };
       setVoiceState();
+      break;
+    case 'keydown-discord':
+      if (parseDiscordLocation(window.location.href)[0]) { // isDiscord
+        window.dispatchEvent(new KeyboardEvent('keydown', message.event));
+      }
+      break;
     }
   }
 });

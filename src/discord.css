@@ -138,6 +138,7 @@ button#voice-chat-for-puzzle {
   margin-bottom: 10px;
   top: 0;
   right: 106px;
+  z-index: 100;
 
   cursor: pointer;
   line-height: 0;

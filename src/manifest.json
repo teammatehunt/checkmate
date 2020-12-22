@@ -18,7 +18,10 @@
         "*://localhost/*",
         "*://checkmate.teammatehunt.com/*"
       ],
-      "js": ["rootframe.js"],
+      "js": [
+        "rootframe.js",
+        "keyhandler.js"
+      ],
       "run_at": "document_start"
     }
   ],
