@@ -95,15 +95,13 @@ export const Main : React.FC<MainProps> = props => {
   }, []);
 
   const addTab = _slug => {
-    if (page === 'puzzle') {
-      if (puzzles[_slug]?.hidden === false) {
-        const _tabIndex = tabs.indexOf(_slug);
-        if (_tabIndex === -1) {
-          setTabs([_slug, ...tabs]);
-          return 0;
-        } else {
-          return _tabIndex;
-        }
+    if (puzzles[_slug]?.hidden === false) {
+      const _tabIndex = tabs.indexOf(_slug);
+      if (_tabIndex === -1) {
+        setTabs([_slug, ...tabs]);
+        return 0;
+      } else {
+        return _tabIndex;
       }
     }
     return null;
@@ -218,6 +216,7 @@ export const Main : React.FC<MainProps> = props => {
                 <Master
                   isActive={page === 'master'}
                   data={data}
+                  loadSlug={loadSlug}
                 />
               </ShowIf>
               <ShowIf display={page === 'puzzle'}>

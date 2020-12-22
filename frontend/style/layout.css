@@ -59,36 +59,6 @@ body {
   font-weight: bold;
 }
 
-.h2 {
-}
-
-.table {
-  display: table;
-  border-collapse: collapse;
-  position: relative;
-}
-.tr {
-  display: table-row;
-  position: relative;
-}
-.thead { display: table-header-group; }
-.tbody { display: table-row-group; }
-.tfoot { display: table-footer-group; }
-.col { display: table-column; }
-.colgroup { display: table-column-group; }
-.td, .th {
-  display: table-cell;
-  position: relative;
-}
-.caption { display: table-caption; }
-
-a.nostyle,
-a.nostyle:visited {
-    text-decoration: inherit;
-    color: inherit;
-    cursor: auto;
-}
-
 img.emoji {
   height: 1em;
   width: 1em;

@@ -1,5 +1,4 @@
 import React, {
-  forwardRef,
   useEffect,
   useMemo,
   useRef,
@@ -12,6 +11,14 @@ import { DndProvider, DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } f
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Check, Edit3, ExternalLink, Plus, X } from 'react-feather';
 
+import {
+  Input,
+  Link,
+  Table,
+  Tbody,
+  Tr,
+  Td,
+} from 'components/replacements';
 import Twemoji from 'components/twemoji';
 import fetchJson from 'utils/fetch';
 import * as Model from 'utils/model';
@@ -25,31 +32,6 @@ enum EditState {
   EDITING,
   WAITING,
 }
-
-const Input = forwardRef<any, any>((props, ref) => {
-  const {textarea, ...rest} = props;
-  const Element = textarea ? 'textarea' : 'input';
-  const onKeyDown = props.onKeyDown || ((e) => {
-    switch (e.key) {
-      case 'Enter':
-        e.target.blur();
-        break;
-      case 'Escape':
-        // firefox doesn't blur on escape automatically
-        e.target.blur();
-        break;
-    }
-  });
-
-  return (
-    <Element
-      ref={ref}
-      type='text'
-      onKeyDown={onKeyDown}
-      {...rest}
-    />
-  );
-});
 
 interface FeedsProps {
   type: string;
@@ -126,20 +108,14 @@ const Feeds : React.FC<FeedsProps>= ({
             <React.Fragment key={slug}>
               {i ? <span>, </span> : null}
               <span>
-                <a {...(prefix === undefined ? {} : {
-                  href: `${prefix}${slug}`,
-                  onClick: function(e) {
-                    if (e.altKey || e.ctrlKey || e.shiftKey) return;
-                    if (loadSlug) {
-                      e.preventDefault();
-                      loadSlug(slug);
-                    }
-                  },
-                })}>
+                <Link
+                  href={prefix === undefined ? undefined : `${prefix}${slug}`}
+                  load={() => loadSlug(slug)}
+                >
                   <Twemoji>
                     {data[slug]?.name}
                   </Twemoji>
-                </a>
+                </Link>
               </span>
             </React.Fragment>
         ))
@@ -382,33 +358,27 @@ const Feeders : React.FC<FeedersProps>= ({
       </div>
       <div className={`feeders-${feederType}`}>
         {editState === EditState.DEFAULT ?
-          <div className='table feeders-list'>
-            <div className='tbody'>
+          <Table className='feeders-list'>
+            <Tbody>
               {slugs?.map((slug, i) => data[slug]?.hidden ? null : (
-                <div key={slug} className='tr'>
-                  <div className='td'>
-                    <a
+                <Tr key={slug}>
+                  <Td>
+                    <Link
                       href={`/puzzles/${slug}`}
-                      onClick={(e) => {
-                        if (e.altKey || e.ctrlKey || e.shiftKey) return;
-                        if (loadSlug) {
-                          e.preventDefault();
-                          loadSlug(slug);
-                        }
-                      }}
+                      load={() => loadSlug(slug)}
                     >
                       <Twemoji>
                         {data[slug]?.name}
                       </Twemoji>
-                    </a>
-                  </div>
-                  <div className='td answerize feeders-answer'>
+                    </Link>
+                  </Td>
+                  <Td className='answerize feeders-answer'>
                     {data[slug]?.answer || ''}
-                  </div>
-                </div>
+                  </Td>
+                </Tr>
               ))}
-            </div>
-          </div>
+            </Tbody>
+          </Table>
           :
           <div className='feeders-edit-list'>
             <DndProvider backend={HTML5Backend}>
@@ -547,7 +517,6 @@ const TextField : React.FC<TextFieldProps> = ({
     if (!textarea) e.target.select();
   };
   const onBlur = (e) => {
-    console.log(e)
     setEditState(editState => {
       if (editState === EditState.EDITING) return EditState.WAITING;
       return editState;
@@ -734,8 +703,8 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         changeFeeds={changeFeeds}
       />
       }
-      <div className='table puzzleinfo-tags'>
-        <div className='tbody'>
+      <Table className='puzzleinfo-tags'>
+        <Tbody>
           <TextField className='answerize' name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>
           <TextField name='status' value={puzzle?.status} patchValue={patchValue('status')} options={Object.keys(statuses)} colors={statuses}/>
           <TextField name='notes' textarea value={puzzle?.notes} patchValue={patchValue('notes')} colors={colors}/>
@@ -755,16 +724,16 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
               colors={colors}
             />
             :
-            <div className='tr'>
-              <div className='td'/>
-              <div className='td'/>
-              <div className='td'>
+            <Tr>
+              <Td/>
+              <Td/>
+              <Td>
                 <Plus className='puzzleinfo-add' onClick={()=>setIsAdding(true)}/>
-              </div>
-            </div>
+              </Td>
+            </Tr>
           }
-        </div>
-      </div>
+        </Tbody>
+      </Table>
       {(puzzle?.is_meta || null) &&
       <Feeders
         type='meta'

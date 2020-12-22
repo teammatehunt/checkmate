@@ -152,7 +152,9 @@ def process_relation(cls, pk, request):
                 with transaction.atomic():
                     for slug in new_slugs:
                         cls(**{f'{cls.CONTAINER}_id': pk, f'{cls.ITEM}_id': slug}).save()
-            return response.Response(status=status.HTTP_204_NO_CONTENT)
+                return response.Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                raise exceptions.NotAcceptable('Request is a no-op.')
         elif action == 'remove':
             slugs = set(slugs)
             existing_relations = list(existing_relations_query)
@@ -161,7 +163,9 @@ def process_relation(cls, pk, request):
                 with transaction.atomic():
                     for relation in relations_to_remove:
                         relation.delete()
-            return response.Response(status=status.HTTP_204_NO_CONTENT)
+                return response.Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                raise exceptions.NotAcceptable('Request is a no-op.')
         elif action == 'set':
             new_relations = [
                 cls(**{
@@ -198,7 +202,9 @@ def process_relation(cls, pk, request):
                         cls.objects.filter(order__gt=existing_relation.order, order__lte=new_order).update(order=F('order')-1)
                     existing_relation.order = new_order
                     existing_relation.save()
-            return response.Response(status=status.HTTP_204_NO_CONTENT)
+                return response.Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                raise exceptions.NotAcceptable('Request is a no-op.')
         else:
             raise NotImplementedError()
     except db.Error as e:

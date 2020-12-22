@@ -7,28 +7,27 @@ import * as Context from 'components/context';
 import Twemoji from 'components/twemoji';
 import Icon from 'assets/icon.svg';
 
+import {
+  Link,
+} from 'components/replacements';
+
 import 'style/tabbar.css';
 
 const Logo = ({slug, activateTab}) => {
-  const activateThisTab = (e) => {
-    if (e.altKey || e.ctrlKey || e.shiftKey) return;
-    e.preventDefault();
-    activateTab(undefined);
-  }
   const isActive = slug === undefined;
   return (
-    <a
+    <Link
       href='/'
       className='nostyle'
+      load={() => activateTab(undefined)}
     >
       <div
         className={`logo ${isActive ? 'active' : ''}`}
-        onClick={activateThisTab}
       >
         <Icon className='icon'/>
         <span className='logo-text'>Checkmate</span>
       </div>
-    </a>
+    </Link>
   );
 };
 
@@ -47,25 +46,20 @@ const Tab = ({
   removeTab,
   puzzleData,
 }) => {
-  const activateThisTab = (e) => {
-    if (e.altKey || e.ctrlKey || e.shiftKey) return;
-    e.preventDefault();
-    activateTab(tab);
-  }
   const removeThisTab = (e) => {
     e.preventDefault();
     e.stopPropagation();
     removeTab(tab);
   }
   return (
-    <a
+    <Link
       key={tab}
       href={`/puzzles/${tab}`}
       className='nostyle'
+      load={() => activateTab(tab)}
     >
       <div
         className={`tab ${isActive ? 'active' : ''}`}
-        onClick={activateThisTab}
       >
         <div className='tab-content'>
           <Twemoji>
@@ -79,7 +73,7 @@ const Tab = ({
           <X size={16}/>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 

@@ -1,0 +1,27 @@
+.master {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2em;
+}
+
+.master .table {
+  border-collapse: collapse;
+}
+
+.master .th {
+  font-weight: bold;
+  background-color: lightgray;
+}
+.master .round .name {
+  font-size: larger;
+}
+.master .th,
+.master .td {
+  padding: 2px 4px;
+  border: 1px solid lightgray;
+}
+
+.master .meta .name {
+  font-weight: bold;
+}

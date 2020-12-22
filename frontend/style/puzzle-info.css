@@ -101,7 +101,8 @@
   height: 100%;
   width: 100%;
 }
-.puzzleinfo-input:not(:focus):not(:disabled):hover {
+.puzzleinfo-input:not(:focus):not(:disabled):hover,
+.puzzleinfo-reset:hover ~ .puzzleinfo-input:not(:focus):not(:disabled) {
   background-color: lightcyan;
   filter: drop-shadow(0 0 3px gray);
 }
@@ -130,6 +131,7 @@
 .puzzleinfo .feeders-edit-list {
   display: flex;
   flex-direction: column;
+  align-items: start;
 }
 .puzzleinfo .feeders-edit-list > :not(input) {
   cursor: move;
