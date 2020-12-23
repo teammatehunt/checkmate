@@ -57,3 +57,7 @@
 .Resizer.disabled:hover {
   border-color: transparent;
 }
+
+.page-master .vertical.Pane1 {
+  overflow: auto;
+}

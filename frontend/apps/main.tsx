@@ -192,7 +192,7 @@ export const Main : React.FC<MainProps> = props => {
 
   return (
     <Base>
-      <div className={`root vflex ${resizingClass}`}>
+      <div className={`root vflex ${resizingClass} page-${page}`}>
         <Header {...{
           tabs,
           slug,

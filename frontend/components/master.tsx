@@ -85,7 +85,7 @@ const Puzzle : React.FC<PuzzleProps>= ({
         </Link>
       </Td>
       <TdEditable
-        className='answerize'
+        className='answerize answer'
         value={puzzle.answer}
         patch={patchValue('answer')}
       />
@@ -96,6 +96,7 @@ const Puzzle : React.FC<PuzzleProps>= ({
         colors={statuses}
       />
       <TdEditable
+        className='notes'
         value={puzzle.notes}
         patch={patchValue('notes')}
         textarea

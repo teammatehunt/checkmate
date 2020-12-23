@@ -1,40 +1,66 @@
 .master {
   display: flex;
   flex-direction: column;
-  align-items: center;
   padding: 2em;
 }
 
 .master .table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  margin: 0 auto;
+  border: 1px solid lightgray;
 }
 
-.master .th {
-  font-weight: bold;
-  background-color: lightgray;
-}
-.master .round .name {
-  font-size: larger;
-}
 .master .th,
 .master .td {
   padding: var(--td-field-padding);
   border: 1px solid lightgray;
+  font-size: smaller;
+}
+.master .th {
+  border: 1px solid gray;
+  color: white;
+  background-color: dimgray;
+  position: sticky;
+  top: -1px;
+  z-index: 1;
 }
 .master .td {
   vertical-align: middle;
+  background-color: white;
 }
 
+.master .name {
+  position: sticky;
+  left: -1px;
+  z-index: 1;
+  font-size: inherit;
+}
+.master .th.name {
+  z-index: 2;
+}
+.master .round .name {
+  font-size: larger;
+  font-weight: bold;
+}
+.master .round .th:not(.name) {
+  font-variant: small-caps;
+}
 .master .meta .name {
   font-weight: bold;
 }
 
-.master .td-field .textarea {
-}
-.master .td-field .textarea:not(.multiline) br {
+.master .td-field.textarea:not(.multiline) br {
   content: '';
 }
-.master .td-field .textarea:not(.multiline) br:after {
+.master .td-field.textarea:not(.multiline) br:after {
   content: ' ';
   background-color: lightskyblue;
+}
+
+.master .td-field.answer {
+  min-width: 20ex;
+  font-size: inherit;
+}
+.master .td-field.notes {
+  max-width: 40ex;
 }

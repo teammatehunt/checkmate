@@ -22,8 +22,13 @@
 .td-field textarea {
   resize: none;
 }
-.td-field .value.textarea.multiline {
+.td-field.textarea.multiline .value {
   min-height: 2em;
+}
+.td-field.textarea:not(.multiline) .value {
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .td-field .reset {

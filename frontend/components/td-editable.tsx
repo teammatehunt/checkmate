@@ -147,7 +147,7 @@ export const TdEditable : React.FC<TdEditableProps> = ({
 
   return (
     <Td
-      className={`td-field ${patch ? 'editable' : ''} ${editState} ${className}`}
+      className={`td-field ${patch ? 'editable' : ''} ${editState}  ${textarea ? `textarea ${expandTextarea || editState === EditState.EDITING ? 'multiline' : ''}` : ''} ${className}`}
       onClick={onClick}
       {...(color ? {style: {color: foregroundColor, backgroundColor: backgroundColor}} : {})}
     >
@@ -169,7 +169,7 @@ export const TdEditable : React.FC<TdEditableProps> = ({
       </datalist>
       }
       <div
-        className={`value ${valueClassName} ${textarea ? `textarea ${expandTextarea || editState === EditState.EDITING ? 'multiline' : ''}` : ''} ${displayStatic ? '' : 'hidden'}`}
+        className={`value ${valueClassName} ${displayStatic ? '' : 'hidden'}`}
         ref={valueRef}
         {...(options ? {style: {minWidth: `${Math.max(...options.map(opt => opt.length))}ex`}} : {})}
       >
