@@ -31,6 +31,7 @@ interface TdEditableProps {
   editState?: EditState;
   setEditState?: any;
   textarea?: boolean;
+  expandTextarea?: boolean;
   options?: string[];
   patch?: any;
   canReset?: boolean;
@@ -44,6 +45,7 @@ export const TdEditable : React.FC<TdEditableProps> = ({
   editState,
   setEditState,
   textarea=false,
+  expandTextarea=true,
   options,
   patch,
   canReset=false,
@@ -63,6 +65,7 @@ export const TdEditable : React.FC<TdEditableProps> = ({
         inputRef.current.value = value;
         break;
       case EditState.CHECKING:
+        inputRef.current.value =  inputRef.current.value.trim();
         if (inputRef.current.value === value) {
           setEditState(EditState.DEFAULT);
         } else {
@@ -133,11 +136,20 @@ export const TdEditable : React.FC<TdEditableProps> = ({
   } else {
     backgroundColor = color;
   }
+
   const ValueElement = textarea ? 'textarea' : 'input';
+  const valueLines = value.split(/\r?\n/).map((line, i) => (
+    <React.Fragment key={i}>
+      {i ? <br/> : null}
+      <span>{line}</span>
+    </React.Fragment>
+  ));
+
   return (
     <Td
       className={`td-field ${patch ? 'editable' : ''} ${editState} ${className}`}
       onClick={onClick}
+      {...(color ? {style: {color: foregroundColor, backgroundColor: backgroundColor}} : {})}
     >
       {(canReset && value && editState === EditState.DEFAULT || null) &&
       <X className='reset' color={foregroundColor} onClick={resetValue}/>
@@ -157,12 +169,13 @@ export const TdEditable : React.FC<TdEditableProps> = ({
       </datalist>
       }
       <div
-        className={`value ${valueClassName} ${textarea ? 'textarea' : ''} ${displayStatic ? '' : 'hidden'}`}
+        className={`value ${valueClassName} ${textarea ? `textarea ${expandTextarea || editState === EditState.EDITING ? 'multiline' : ''}` : ''} ${displayStatic ? '' : 'hidden'}`}
         ref={valueRef}
-        {...(color ? {style: {color: foregroundColor, backgroundColor: backgroundColor}} : {})}
+        {...(options ? {style: {minWidth: `${Math.max(...options.map(opt => opt.length))}ex`}} : {})}
       >
         <Twemoji>
-          {value}
+          {/* {value} */}
+          {valueLines}
         </Twemoji>
       </div>
       {(editState === EditState.WAITING || null) &&

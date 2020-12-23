@@ -23,6 +23,7 @@ import {
   DiscordFrame,
   ShowIf,
 } from 'components/frames';
+import baseColors, { statuses as baseStatuses } from 'utils/colors';
 
 import 'style/layout.css';
 import 'style/split-pane.css';
@@ -113,7 +114,7 @@ export const Main : React.FC<MainProps> = props => {
       setTabIndex(_tabIndex);
       const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
       history.pushState({slug: _slug}, '', url);
-      if (_slug !== undefined) loadDiscord(_slug, iframeDetails.discord?.frameId);
+      loadDiscord(_slug, iframeDetails.discord?.frameId);
     }
   };
 
@@ -121,12 +122,7 @@ export const Main : React.FC<MainProps> = props => {
   useEffect(() => {
     if (initialLoad) return;
     if (isBlank(slug)) return;
-    const _tabIndex = tabs.indexOf(slug);
-    if (_tabIndex === -1) {
-      const newIndex = Math.min(tabIndex, tabs.length - 1);
-      const newSlug = tabs[newIndex];
-      loadSlug(newSlug);
-    }
+    if (!tabs.includes(slug)) loadSlug(undefined);
   }, [tabs, slug]);
   useEffect(() => {
     addTab(slug);
@@ -190,6 +186,10 @@ export const Main : React.FC<MainProps> = props => {
     return set(x);
   };
 
+  // TODO: extend with colors from database
+  const statuses = baseStatuses;
+  const colors = baseColors;
+
   return (
     <Base>
       <div className={`root vflex ${resizingClass}`}>
@@ -217,6 +217,8 @@ export const Main : React.FC<MainProps> = props => {
                   isActive={page === 'master'}
                   data={data}
                   loadSlug={loadSlug}
+                  statuses={statuses}
+                  colors={colors}
                 />
               </ShowIf>
               <ShowIf display={page === 'puzzle'}>
@@ -239,7 +241,13 @@ export const Main : React.FC<MainProps> = props => {
               onDragFinished={onDragFinishedSet(setRhsplitter)}
             >
               <div className='puzzleinfo pane'>
-                <PuzzleInfo data={data} slug={slug} loadSlug={loadSlug}/>
+                <PuzzleInfo
+                  data={data}
+                  slug={slug}
+                  loadSlug={loadSlug}
+                  statuses={statuses}
+                  colors={colors}
+                />
               </div>
               <div className='chat pane'>
                 <DiscordFrame

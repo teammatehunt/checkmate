@@ -24,6 +24,12 @@ a.nostyle:visited {
     color: inherit;
     cursor: auto;
 }
+a.restyle {
+  text-decoration: inherit;
+}
+a.restyle[href]:hover {
+  text-decoration: underline;
+}
 
 .ghost-x {
   display: inline-block;

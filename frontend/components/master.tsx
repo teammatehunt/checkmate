@@ -16,6 +16,7 @@ import {
   TdEditable,
 } from 'components/td-editable';
 import Twemoji from 'components/twemoji';
+import { patch } from 'utils/fetch';
 import * as Model from 'utils/model';
 
 import 'style/master.css';
@@ -50,17 +51,31 @@ interface PuzzleProps {
   puzzle: Model.Puzzle;
   extraTags: string[];
   loadSlug: any;
+  statuses: {[status: string]: string};
+  colors: {[value: string]: string};
 }
 
-const Puzzle = ({
+const Puzzle : React.FC<PuzzleProps>= ({
   puzzle,
   extraTags,
   loadSlug,
+  statuses,
+  colors,
 }) => {
+  const patchValue = (key, isTags=false) => {
+    return async (value) => {
+      const _data = !isTags ? {[key]: value} : {tags: produce(puzzle.tags, draft => {
+        draft[key] = value;
+      })};
+      return await patch({slug: puzzle.slug, data: _data});
+    };
+  };
+
   return (
     <Tr className={`puzzle ${puzzle.is_meta ? 'meta' : ''}`}>
       <Td className='name'>
         <Link
+          className='restyle'
           href={`/puzzles/${puzzle.slug}`}
           load={() => loadSlug(puzzle.slug)}
         >
@@ -72,9 +87,20 @@ const Puzzle = ({
       <TdEditable
         className='answerize'
         value={puzzle.answer}
+        patch={patchValue('answer')}
       />
-      <Td>{puzzle.status}</Td>
-      <Td>{puzzle.notes}</Td>
+      <TdEditable
+        value={puzzle.status}
+        patch={patchValue('status')}
+        options={Object.keys(statuses)}
+        colors={statuses}
+      />
+      <TdEditable
+        value={puzzle.notes}
+        patch={patchValue('notes')}
+        textarea
+        expandTextarea={false}
+      />
       {extraTags.map(tag => (
         <Td key={tag}>{puzzle.tags[tag] ?? ''}</Td>
       ))}
@@ -86,12 +112,16 @@ interface MasterProps {
   isActive: boolean;
   data: Model.Data;
   loadSlug: any;
+  statuses: {[status: string]: string};
+  colors: {[value: string]: string};
 }
 
 const Master : React.FC<MasterProps> = ({
   isActive,
   data,
   loadSlug,
+  statuses,
+  colors,
 }) => {
   if (!isActive) return null;
   const roundsWithUnassigned = produce(data.rounds, draft => {
@@ -117,6 +147,8 @@ const Master : React.FC<MasterProps> = ({
                     puzzle={puzzle}
                     extraTags={extraTags}
                     loadSlug={loadSlug}
+                    statuses={statuses}
+                    colors={colors}
                   />
                 ))}
               </>

@@ -18,10 +18,23 @@
 }
 .master .th,
 .master .td {
-  padding: 2px 4px;
+  padding: var(--td-field-padding);
   border: 1px solid lightgray;
+}
+.master .td {
+  vertical-align: middle;
 }
 
 .master .meta .name {
   font-weight: bold;
+}
+
+.master .td-field .textarea {
+}
+.master .td-field .textarea:not(.multiline) br {
+  content: '';
+}
+.master .td-field .textarea:not(.multiline) br:after {
+  content: ' ';
+  background-color: lightskyblue;
 }

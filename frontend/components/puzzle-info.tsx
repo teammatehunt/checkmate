@@ -29,7 +29,6 @@ import {
   patch,
 } from 'utils/fetch';
 import * as Model from 'utils/model';
-import colors, { statuses } from 'utils/colors';
 
 import 'style/layout.css';
 import 'style/puzzle-info.css';
@@ -110,6 +109,7 @@ const Feeds : React.FC<FeedsProps>= ({
         visibleSlugs?.map((slug) => (
           <div className='comma' key={slug}>
             <Link
+              className='restyle'
               href={prefix === undefined ? undefined : `${prefix}${slug}`}
               load={() => loadSlug(slug)}
             >
@@ -374,6 +374,7 @@ const Feeders : React.FC<FeedersProps>= ({
                 <Tr key={slug}>
                   <Td>
                     <Link
+                      className='restyle'
                       href={`/puzzles/${slug}`}
                       load={() => loadSlug(slug)}
                     >
@@ -503,12 +504,16 @@ interface PuzzleInfoProps {
   data: Model.Data;
   slug: string;
   loadSlug: any;
+  statuses: {[status: string]: string};
+  colors: {[value: string]: string};
 }
 
 const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
   data,
   slug,
   loadSlug,
+  statuses,
+  colors,
 }) => {
   const puzzle = data.puzzles[slug];
   if (!puzzle) return null;
