@@ -11,6 +11,10 @@ import {
   Th,
   Td,
 } from 'components/drop-ins';
+import {
+  EditState,
+  TdEditable,
+} from 'components/td-editable';
 import Twemoji from 'components/twemoji';
 import * as Model from 'utils/model';
 
@@ -65,7 +69,10 @@ const Puzzle = ({
           </Twemoji>
         </Link>
       </Td>
-      <Td className='answerize'>{puzzle.answer}</Td>
+      <TdEditable
+        className='answerize'
+        value={puzzle.answer}
+      />
       <Td>{puzzle.status}</Td>
       <Td>{puzzle.notes}</Td>
       {extraTags.map(tag => (

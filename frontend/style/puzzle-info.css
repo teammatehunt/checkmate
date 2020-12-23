@@ -128,7 +128,7 @@
 .puzzleinfo-remove-tag {
   cursor: pointer;
   position: absolute;
-  margin-top: calc(5px + 0.5em);
+  margin-top: calc(3px + 0.5em); /* --td-field-padding */
   transform: translate(0, -50%);
   height: 16px;
   width: 16px;
@@ -161,30 +161,30 @@
   text-decoration: line-through;
 }
 
-.puzzleinfo .loader-container {
-  border: none;
-  padding-left: 5px;
-}
-.puzzleinfo .loader {
-  border-radius: 50%;
-  width: 0.75rem;
-  height: 0.75rem;
-  vertical-align: middle;
-}
-.puzzleinfo .feeds .loader {
-  display: inline-block;
-  margin-left: 5px;
-}
-.puzzleinfo .loader.loading {
-  border: 0.25rem solid lightgray;
-  border-top: 0.25rem solid dodgerblue;
-  animation: spin 0.5s linear infinite;
-}
+/* .puzzleinfo .loader-container { */
+  /* border: none; */
+  /* padding-left: 5px; */
+/* } */
+/* .puzzleinfo .loader { */
+  /* border-radius: 50%; */
+  /* width: 0.75rem; */
+  /* height: 0.75rem; */
+  /* vertical-align: middle; */
+/* } */
+/* .puzzleinfo .feeds .loader { */
+  /* display: inline-block; */
+  /* margin-left: 5px; */
+/* } */
+/* .puzzleinfo .loader.loading { */
+  /* border: 0.25rem solid lightgray; */
+  /* border-top: 0.25rem solid dodgerblue; */
+  /* animation: spin 0.5s linear infinite; */
+/* } */
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* @keyframes spin { */
+  /* 0% { transform: rotate(0deg); } */
+  /* 100% { transform: rotate(360deg); } */
+/* } */
 
 .puzzleinfo-add {
   color: green;

@@ -11,7 +11,7 @@ export const GhostX = () => (
 const divInsertClass = (_class : string) => (props) => {
   const {className, children, ...rest} = props;
   return (
-    <div className={`${className ?? ''} ${_class}`} {...rest}>
+    <div className={`${_class} ${className ?? ''}`} {...rest}>
       {children}
     </div>
   );

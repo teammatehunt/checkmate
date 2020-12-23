@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 
 import { X } from 'react-feather';
+import _ from 'lodash';
 
 import {
   GhostX,
@@ -26,10 +27,9 @@ export enum EditState {
 }
 
 interface TdEditableProps {
-  name: string;
   value: string;
-  editState: EditState;
-  setEditState: any;
+  editState?: EditState;
+  setEditState?: any;
   textarea?: boolean;
   options?: string[];
   patch?: any;
@@ -40,7 +40,6 @@ interface TdEditableProps {
 }
 
 export const TdEditable : React.FC<TdEditableProps> = ({
-  name,
   value,
   editState,
   setEditState,
@@ -52,7 +51,10 @@ export const TdEditable : React.FC<TdEditableProps> = ({
   className='',
   valueClassName='',
 }) => {
+  const [uid] = useState(_.uniqueId('datalist-uid-'));
   const [prevValue, setPrevValue] = useState(value);
+  const internalEditStatePair = useState(EditState.DEFAULT);
+  if (!editState) [editState, setEditState] = internalEditStatePair;
   const inputRef = useRef(null);
   const valueRef = useRef(null);
   useEffect(() => {
@@ -95,8 +97,6 @@ export const TdEditable : React.FC<TdEditableProps> = ({
             const response = await patch(inputRef.current.value);
             if (response === null) return;
             if (!response.ok) {
-              // TODO: notify error
-              console.error(`PATCH request for {${name}: '${inputRef.current.value}'} failed`);
               setEditState(EditState.DEFAULT);
             }
           }
@@ -112,7 +112,10 @@ export const TdEditable : React.FC<TdEditableProps> = ({
     setEditState(EditState.RESETING);
   };
 
+  const displayStatic = !patch || (editState === EditState.DEFAULT && value);
+
   const onClick = patch ? ((e) => setEditState(EditState.EDITING)) : undefined;
+  const onFocus = (e) => setEditState(EditState.EDITING);
 
   const onBlur = (e) => {
     setEditState(editState => {
@@ -133,27 +136,28 @@ export const TdEditable : React.FC<TdEditableProps> = ({
   const ValueElement = textarea ? 'textarea' : 'input';
   return (
     <Td
-      className={`${className} td-field ${patch ? 'editable' : ''} ${editState}`}
+      className={`td-field ${patch ? 'editable' : ''} ${editState} ${className}`}
       onClick={onClick}
     >
       {(canReset && value && editState === EditState.DEFAULT || null) &&
       <X className='reset' color={foregroundColor} onClick={resetValue}/>
       }
       <Input
-        className={`input ${editState === EditState.DEFAULT && value ? 'nodisplay' : ''}`}
+        className={`input ${displayStatic ? 'nodisplay' : ''}`}
         textarea={textarea}
         ref={inputRef}
+        onFocus={onFocus}
         onBlur={onBlur}
         disabled={editState === EditState.WAITING}
-        {...(options ? {list: `datalist-tag-${name}`} : {})}
+        {...(options ? {list: uid} : {})}
       />
       {(options || null) &&
-      <datalist id={`datalist-tag-${name}`}>
+      <datalist id={uid}>
         {options.map(option => <option key={option} value={option}/>)}
       </datalist>
       }
       <div
-        className={`value ${valueClassName} ${textarea ? 'textarea' : ''} ${editState === EditState.DEFAULT && value ? '' : 'hidden'}`}
+        className={`value ${valueClassName} ${textarea ? 'textarea' : ''} ${displayStatic ? '' : 'hidden'}`}
         ref={valueRef}
         {...(color ? {style: {color: foregroundColor, backgroundColor: backgroundColor}} : {})}
       >
@@ -161,6 +165,11 @@ export const TdEditable : React.FC<TdEditableProps> = ({
           {value}
         </Twemoji>
       </div>
+      {(editState === EditState.WAITING || null) &&
+      <div className='loader-container'>
+        <div className='loader loading'/>
+      </div>
+      }
     </Td>
   );
 };

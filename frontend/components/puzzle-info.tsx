@@ -24,7 +24,10 @@ import {
   TdEditable,
 } from 'components/td-editable';
 import Twemoji from 'components/twemoji';
-import fetchJson from 'utils/fetch';
+import {
+  fetchJson,
+  patch,
+} from 'utils/fetch';
 import * as Model from 'utils/model';
 import colors, { statuses } from 'utils/colors';
 
@@ -208,7 +211,7 @@ const FeederDnd : React.FC<FeederDndProps> = ({
   drag(dragRef);
   drop(dropRef);
   return (
-    <div className={`${className} drop-container`} ref={dropRef}>
+    <div className={`drop-container ${className}`} ref={dropRef}>
       <div className='drag-container' ref={dragRef} style={{ opacity }}>
         {children}
       </div>
@@ -454,6 +457,12 @@ const TextField : React.FC<TextFieldProps> = ({
 
   const isWaiting = editStateKey === EditState.WAITING || editStateValue === EditState.WAITING;
 
+  const _remove = remove ? async () => {
+    setEditStateKey(EditState.WAITING);
+    const response = await remove();
+    if (!response.ok) setEditStateKey(EditState.DEFAULT);
+  } : undefined;
+
   useEffect(() => {
     if (name === null) {
       setEditStateKey(EditState.EDITING);
@@ -462,20 +471,18 @@ const TextField : React.FC<TextFieldProps> = ({
 
   return (
     <Tr className={`puzzleinfo-row-${name}`}>
-      <X className={`puzzleinfo-remove-tag ${remove && !isWaiting ? '' : 'hidden'}`} onClick={remove}/>
+      <X className={`puzzleinfo-remove-tag ${_remove && !isWaiting ? '' : 'hidden'}`} onClick={_remove}/>
       <X className='hidden puzzleinfo-remove-tag-ghost'/>
       <TdEditable
         className='tag-key'
         valueClassName='capitalize colon text-align-right'
-        name={`${name}-key`}
         value={name}
         patch={patchKey}
         editState={editStateKey}
         setEditState={setEditStateKey}
       />
       <TdEditable
-        className='tag-value'
-        name={`${name}-value`}
+        className={`tag-value ${className}`}
         value={value}
         textarea={textarea}
         patch={patchValue}
@@ -508,15 +515,6 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
 
   const [isAdding, setIsAdding] = useState(false);
 
-  const patch = async (_data) => {
-    const url = `/api/puzzles/${slug}`;
-    return await fetchJson({
-      url: url,
-      method: 'PATCH',
-      data: _data,
-    });
-  };
-
   const patchValue = (key, isTags=false) => {
     return async (value) => {
       if (key === null) {
@@ -527,7 +525,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
       const _data = !isTags ? {[key]: value} : {tags: produce(puzzle.tags, draft => {
         draft[key] = value;
       })};
-      return await patch(_data);
+      return await patch({slug, data: _data});
     };
   };
 
@@ -543,7 +541,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
           delete draft[key];
         }
       })};
-      return await patch(_data);
+      return await patch({slug, data: _data});
     };
   };
 
@@ -556,7 +554,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
       const _data = {tags: produce(puzzle.tags, draft => {
         delete draft[key];
       })};
-      return await patch(_data);
+      return await patch({slug, data: _data});
     };
   };
 

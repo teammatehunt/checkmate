@@ -1,3 +1,5 @@
+import produce from 'immer';
+
 export const getCookie = (name) => {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -14,8 +16,7 @@ export const getCookie = (name) => {
   return cookieValue;
 }
 
-
-const fetchJson = async ({url, data, ...kwargs}) => {
+export const fetchJson = async ({url, data, ...kwargs}) => {
   return await fetch(url, {
     headers: {
       'X-CSRFToken': getCookie('csrftoken'),
@@ -26,3 +27,17 @@ const fetchJson = async ({url, data, ...kwargs}) => {
   });
 };
 export default fetchJson;
+
+export const patch = async ({slug, data}) => {
+  const url = `/api/puzzles/${slug}`;
+  const response = await fetchJson({
+    url: url,
+    method: 'PATCH',
+    data: data,
+  });
+  if (!response.ok) {
+    // TODO: notify error
+    console.error('PATCH request failed');
+  }
+  return response;
+};
