@@ -10,7 +10,7 @@ import {
   Tr,
   Th,
   Td,
-} from 'components/replacements';
+} from 'components/drop-ins';
 import Twemoji from 'components/twemoji';
 import * as Model from 'utils/model';
 

@@ -9,7 +9,7 @@ import Icon from 'assets/icon.svg';
 
 import {
   Link,
-} from 'components/replacements';
+} from 'components/drop-ins';
 
 import 'style/tabbar.css';
 

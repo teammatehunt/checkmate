@@ -184,7 +184,8 @@ def process_relation(cls, pk, request):
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         elif action == 'move':
             slug = next(iter(slugs))
-            relations = list(cls.objects.filter(**{f'{cls.CONTAINER}_id': pk}))
+            relations_set = cls.objects.filter(**{f'{cls.CONTAINER}_id': pk})
+            relations = list(relations_set)
             existing_relation = None
             for relation in relations:
                 if getattr(relation, f'{cls.ITEM}_id') == slug:
@@ -197,9 +198,9 @@ def process_relation(cls, pk, request):
             if new_order != existing_relation.order:
                 with transaction.atomic():
                     if new_order < existing_relation.order:
-                        cls.objects.filter(order__gte=new_order, order__lt=existing_relation.order).update(order=F('order')+1)
+                        relations_set.filter(order__gte=new_order, order__lt=existing_relation.order).update(order=F('order')+1)
                     else:
-                        cls.objects.filter(order__gt=existing_relation.order, order__lte=new_order).update(order=F('order')-1)
+                        relations_set.filter(order__gt=existing_relation.order, order__lte=new_order).update(order=F('order')-1)
                     existing_relation.order = new_order
                     existing_relation.save()
                 return response.Response(status=status.HTTP_204_NO_CONTENT)

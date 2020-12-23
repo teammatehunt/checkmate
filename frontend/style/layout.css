@@ -1,5 +1,6 @@
 body {
   margin: 0;
+  line-height: 1;
 }
 
 .root {
@@ -54,6 +55,19 @@ body {
   white-space: pre;
 }
 
+.comma:not(:last-of-type):after {
+  content: ', ';
+  white-space: pre;
+}
+
+.text-align-left {
+  text-align: left;
+}
+
+.text-align-right {
+  text-align: right;
+}
+
 .answerize {
   font-family: Courier, 'Courier New', monospace;
   font-weight: bold;
@@ -64,4 +78,8 @@ img.emoji {
   width: 1em;
   margin: 0 .05em 0 .1em;
   vertical-align: -0.1em;
+}
+
+input, select, textarea, button {
+  font: inherit;
 }

@@ -18,7 +18,11 @@ import {
   Tbody,
   Tr,
   Td,
-} from 'components/replacements';
+} from 'components/drop-ins';
+import {
+  EditState,
+  TdEditable,
+} from 'components/td-editable';
 import Twemoji from 'components/twemoji';
 import fetchJson from 'utils/fetch';
 import * as Model from 'utils/model';
@@ -26,12 +30,6 @@ import colors, { statuses } from 'utils/colors';
 
 import 'style/layout.css';
 import 'style/puzzle-info.css';
-
-enum EditState {
-  DEFAULT,
-  EDITING,
-  WAITING,
-}
 
 interface FeedsProps {
   type: string;
@@ -100,27 +98,26 @@ const Feeds : React.FC<FeedsProps>= ({
     }
   };
 
+  const visibleSlugs = slugs?.filter(slug => data[slug]?.hidden === false);
+
   return (
-    <div className={`feeds-${type}`}>
-      <span className={`capitalize colon title-${type}`}>{type}</span>
+    <div className={`feeds feeds-${type}`}>
+      <div className={`capitalize colon title-${type}`}>{type}{visibleSlugs.length > 1 ? 's' : ''}</div>
       {editState === EditState.DEFAULT ?
-        slugs?.map((slug, i) => data[slug]?.hidden ? null : (
-            <React.Fragment key={slug}>
-              {i ? <span>, </span> : null}
-              <span>
-                <Link
-                  href={prefix === undefined ? undefined : `${prefix}${slug}`}
-                  load={() => loadSlug(slug)}
-                >
-                  <Twemoji>
-                    {data[slug]?.name}
-                  </Twemoji>
-                </Link>
-              </span>
-            </React.Fragment>
+        visibleSlugs?.map((slug) => (
+          <div className='comma' key={slug}>
+            <Link
+              href={prefix === undefined ? undefined : `${prefix}${slug}`}
+              load={() => loadSlug(slug)}
+            >
+              <Twemoji>
+                {data[slug]?.name}
+              </Twemoji>
+            </Link>
+          </div>
         ))
         :
-        <div className='feeds-edit-list'>
+        <>
           {slugs?.map(slug => data[slug]?.hidden ? null : (
               <div className='puzzleinfo-remove-entity-container' key={slug}>
                 <X className='puzzleinfo-remove-entity' onClick={remove(slug)}/>
@@ -137,7 +134,7 @@ const Feeds : React.FC<FeedsProps>= ({
           <datalist id={`puzzleinfo-datalist-${type}`}>
             {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
           </datalist>
-        </div>
+        </>
       }
       {(editState === EditState.DEFAULT || null) &&
         <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
@@ -172,14 +169,15 @@ const FeederDnd : React.FC<FeederDndProps> = ({
   className,
   children,
 }) => {
-  const ref = useRef(null);
+  const dragRef = useRef(null);
+  const dropRef = useRef(null);
   const [, drop] = useDrop({
     accept: 'feeder',
     hover: (item: DragItem, monitor: DropTargetMonitor) => {
-      if (!ref.current) return;
+      if (!dropRef.current) return;
       if (item.index === index) return;
 
-      const hoverBoundingRect = ref.current?.getBoundingClientRect()
+      const hoverBoundingRect = dropRef.current?.getBoundingClientRect()
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
       const hoverClientY = clientOffset.y - hoverBoundingRect.top
@@ -201,16 +199,19 @@ const FeederDnd : React.FC<FeederDndProps> = ({
       isDragging: monitor.isDragging(),
     }),
     end: (item: DragItem, monitor: DragSourceMonitor) => {
-      if (!ref.current) return;
+      if (!dragRef.current) return;
       if (item.index === item.originalIndex) return;
       move(item.slug, item.index);
     },
   });
   const opacity = isDragging ? 0 : 1;
-  drag(drop(ref));
+  drag(dragRef);
+  drop(dropRef);
   return (
-    <div className={className ?? ''} ref={ref} style={{ opacity }}>
-      {children}
+    <div className={`${className} drop-container`} ref={dropRef}>
+      <div className='drag-container' ref={dragRef} style={{ opacity }}>
+        {children}
+      </div>
     </div>
   );
 };
@@ -305,6 +306,7 @@ const Feeders : React.FC<FeedersProps>= ({
           if (pressedEnter) e.target.focus();
           setEditState(EditState.EDITING);
         }
+        setDraggingItem(null);
         setPressedEnter(false);
       }
     }
@@ -319,6 +321,9 @@ const Feeders : React.FC<FeedersProps>= ({
     if (!response.ok) {
       // TODO: notify error
       console.error(`POST request for removing ${slug} failed`);
+      setDraggingItem(null);
+      setPressedEnter(false);
+      setEditState(EditState.EDITING);
     }
   };
   const move = async (slug, index) => {
@@ -332,6 +337,8 @@ const Feeders : React.FC<FeedersProps>= ({
     if (!response.ok) {
       // TODO: notify error
       console.error(`POST request for moving ${slug} failed`);
+      setDraggingItem(null);
+      setPressedEnter(false);
       setEditState(EditState.EDITING);
     }
   };
@@ -342,7 +349,7 @@ const Feeders : React.FC<FeedersProps>= ({
   return (
     <div className='feeders'>
       <div className='feeders-header'>
-        <span className={`capitalize colon title-${feederType}`}>{feederType}</span>
+        <div className={`capitalize colon title-${feederType}`}>{feederType}</div>
         {(() => {
           switch (editState) {
             case EditState.DEFAULT:
@@ -442,139 +449,46 @@ const TextField : React.FC<TextFieldProps> = ({
   className='',
   colors,
 }) => {
-  const [prevKey, setPrevKey] = useState(name);
-  const [prevValue, setPrevValue] = useState(value);
-  const [editState, setEditState] = useState(EditState.DEFAULT);
-  const [keyIsInput, setKeyIsInput] = useState(false);
-  const keyRef = useRef(null);
-  const valueRef = useRef(null);
-  useEffect(() => {
-    switch (editState) {
-      case EditState.DEFAULT:
-        keyRef.current.value = name || '';
-        valueRef.current.value = value;
-        if (textarea) {
-          valueRef.current.style.height = '';
-          valueRef.current.style.height = `${valueRef.current.scrollHeight}px`;
-        }
-        break;
-      case EditState.WAITING:
-        if (prevKey !== name || prevValue !== value) {
-          setEditState(EditState.DEFAULT);
-          setKeyIsInput(false);
-        }
-        break;
-    }
-    setPrevKey(name);
-    setPrevValue(value);
-  }, [name, prevKey, value, prevValue, editState]);
-  useEffect(() => {
-    if (editState === EditState.WAITING) {
-      if (keyRef.current.value === name && valueRef.current.value === value) {
-          setEditState(EditState.DEFAULT);
-          setKeyIsInput(false);
-      } else {
-        let promise = null;
-        if (valueRef.current.value === value) {
-          promise = patchKey(keyRef.current.value);
-        } else {
-          promise = patchValue(valueRef.current.value);
-        }
-        const func = async () => {
-          const response = await promise;
-          if (response === null) return;
-          if (!response.ok) {
-            // TODO: notify error
-            console.error(`PATCH request for {${keyRef.current.value}: ${valueRef.current.value}} failed`);
-            setEditState(EditState.DEFAULT);
-            setKeyIsInput(false);
-          }
-        }
-        func();
-      }
-    }
-  }, [editState]);
+  const [editStateKey, setEditStateKey] = useState(EditState.DEFAULT);
+  const [editStateValue, setEditStateValue] = useState(EditState.DEFAULT);
 
-  const keyOnClick = (e) => {
-    if (patchKey) setKeyIsInput(true);
-  };
+  const isWaiting = editStateKey === EditState.WAITING || editStateValue === EditState.WAITING;
+
   useEffect(() => {
-    if (name === null) setKeyIsInput(true);
-  }, [name]);
-  useEffect(() => {
-    if (keyIsInput) keyRef.current.focus();
-  }, [keyIsInput]);
-  const resetValue = (e) => {
-    e.preventDefault();
-    valueRef.current.value = '';
-    if (document.activeElement !== valueRef.current) {
-      setEditState(EditState.WAITING);
+    if (name === null) {
+      setEditStateKey(EditState.EDITING);
     }
-  };
+  }, []);
 
-  const onFocus = (e) => {
-    setEditState(EditState.EDITING);
-    if (!textarea) e.target.select();
-  };
-  const onBlur = (e) => {
-    setEditState(editState => {
-      if (editState === EditState.EDITING) return EditState.WAITING;
-      return editState;
-    });
-  };
-
-  const valueColor = editState === EditState.DEFAULT && colors?.[value];
-  let valueColorBackground = undefined;
-  let valueColorForeground = undefined;
-  if (valueColor?.[0] === '^') {
-    valueColorForeground = 'white';
-    valueColorBackground = valueColor.substr(1);
-  } else {
-    valueColorBackground = valueColor;
-  }
-  const ValueElement = textarea ? 'textarea' : 'input';
   return (
-    <div className={`tr puzzleinfo-row-${name}`}>
-      <X className={`puzzleinfo-remove-tag ${remove && editState !== EditState.WAITING ? '' : 'hidden'}`} onClick={remove}/>
+    <Tr className={`puzzleinfo-row-${name}`}>
+      <X className={`puzzleinfo-remove-tag ${remove && !isWaiting ? '' : 'hidden'}`} onClick={remove}/>
       <X className='hidden puzzleinfo-remove-tag-ghost'/>
-      <div className={`td colon puzzleinfo-key ${patchKey ? 'key-can-be-input' : ''} ${keyIsInput ? 'key-is-input' : ''}`} onClick={keyOnClick}>
-        <Input
-          className={`puzzleinfo-input ${keyIsInput ? '' : 'nodisplay'}`}
-          ref={keyRef}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          disabled={editState === EditState.WAITING}
-        />
-        <span className={`capitalize ${keyIsInput ? 'hidden' : ''}`}>
-          <Twemoji>
-            {name}
-          </Twemoji>
-        </span>
-      </div>
-      <div className='td puzzleinfo-value'>
-        {(canReset && value && editState === EditState.DEFAULT || null) &&
-          <X className='puzzleinfo-reset' color={valueColorForeground} onClick={resetValue}/>
-        }
-        <Input
-          textarea={textarea}
-          className={`puzzleinfo-input ${className}`}
-          ref={valueRef}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          disabled={editState === EditState.WAITING}
-          {...(options ? {list: `puzzleinfo-datalist-tag-${name}`} : {})}
-          {...(valueColor ? {style: {color: valueColorForeground, backgroundColor: valueColorBackground}} : {})}
-        />
-        {(options || null) &&
-        <datalist id={`puzzleinfo-datalist-tag-${name}`}>
-          {options.map(option => <option key={option} value={option}/>)}
-        </datalist>
-        }
-      </div>
-      <div className='td loader-container'>
-        <div className={`loader ${editState === EditState.WAITING ? 'loading' : ''}`}/>
-      </div>
-    </div>
+      <TdEditable
+        className='tag-key'
+        valueClassName='capitalize colon text-align-right'
+        name={`${name}-key`}
+        value={name}
+        patch={patchKey}
+        editState={editStateKey}
+        setEditState={setEditStateKey}
+      />
+      <TdEditable
+        className='tag-value'
+        name={`${name}-value`}
+        value={value}
+        textarea={textarea}
+        patch={patchValue}
+        options={options}
+        colors={colors}
+        editState={editStateValue}
+        setEditState={setEditStateValue}
+        canReset
+      />
+      <Td className='loader-container'>
+        <div className={`loader ${isWaiting ? 'loading' : ''}`}/>
+      </Td>
+    </Tr>
   );
 };
 

@@ -2,10 +2,14 @@ import React, {
   forwardRef,
 } from 'react';
 
-import 'style/replacements.css';
+import 'style/drop-ins.css';
+
+export const GhostX = () => (
+  <div className='ghost-x'>x</div>
+);
 
 const divInsertClass = (_class : string) => (props) => {
-  const {className, children, rest} = props;
+  const {className, children, ...rest} = props;
   return (
     <div className={`${className ?? ''} ${_class}`} {...rest}>
       {children}
@@ -66,4 +70,3 @@ export const Input = forwardRef<any, any>((props, ref) => {
     />
   );
 });
-

@@ -150,9 +150,12 @@ class BasePuzzleRelation(models.Model):
             for key in (self.CONTAINER, self.ITEM)
         }
 
+    def objects_in_container(self):
+        return self._meta.model.objects.filter(**{self.CONTAINER: getattr(self, self.CONTAINER)})
+
     def next_order(self):
         try:
-            return self._meta.model.objects.filter(**{self.CONTAINER: getattr(self, self.CONTAINER)}).latest('order').order + 1
+            return self.objects_in_container().latest('order').order + 1
         except models.ObjectDoesNotExist:
             return 0
 
@@ -166,7 +169,7 @@ class BasePuzzleRelation(models.Model):
     def delete(self, *args, **kwargs):
         with transaction.atomic():
             super().delete(*args, **kwargs)
-            self.__class__.objects.filter(order__gt=self.order).update(order=models.F('order')-1)
+            self.objects_in_container().filter(order__gt=self.order).update(order=models.F('order')-1)
             self.check_order(deleted=True)
 
     def check_order(self, deleted=False):

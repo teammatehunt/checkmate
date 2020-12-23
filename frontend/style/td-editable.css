@@ -1,0 +1,53 @@
+.td-field {
+  --td-field-padding: 3px 5px;
+}
+
+.td-field .input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: transparent;
+
+  border: none;
+  padding: var(--td-field-padding);
+}
+.editable:not(.editing):hover {
+  background-color: lightcyan;
+  filter: drop-shadow(0 0 3px gray);
+  cursor: text;
+}
+
+.td-field .value {
+  padding: var(--td-field-padding);
+  min-height: 1em;
+  box-sizing: content-box;
+}
+.td-field textarea {
+  resize: none;
+}
+.td-field .value.textarea {
+  overflow-y: auto;
+  white-space: pre;
+  min-height: 2em;
+}
+
+.reset {
+  position: absolute;
+  margin: var(--td-field-padding);
+  padding: 2px;
+  height: 12px;
+  width: 12px;
+  right: 0;
+  bottom: 0.5em;
+  transform: translate(0, 50%);
+  z-index: 1;
+  cursor: pointer;
+}
+.reset:hover {
+  filter: drop-shadow(0 0 3px red);
+}
+.reset:hover ~ * {
+  text-decoration: line-through;
+}

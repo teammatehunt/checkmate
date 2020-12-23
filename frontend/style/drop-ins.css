@@ -25,3 +25,7 @@ a.nostyle:visited {
     cursor: auto;
 }
 
+.ghost-x {
+  display: inline-block;
+  visibility: hidden;
+}
