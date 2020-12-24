@@ -1,3 +1,5 @@
+aiogoogle
+celery
 channels
 channels-redis
 discord.py

@@ -10,11 +10,16 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+import json
+import logging
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 import django_feature_policy
 import yaml
+
+logger = logging.getLogger(__name__)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -33,10 +38,17 @@ else:
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Make sure this gets set to a non-default value.
-SECRET_KEY = SECRETS.get('SECRET_KEY', 'z2fz@_zi&qb2yy_9gv7955_(*pykz6qw=qdqhdy2e%0_500i68')
+SECRET_KEY = SECRETS.get('SECRET_KEY')
+if SECRET_KEY is None:
+    logger.warning('Using a default secret key')
+    SECRET_KEY = 'z2fz@_zi&qb2yy_9gv7955_(*pykz6qw=qdqhdy2e%0_500i68'
 
+DOMAIN = SECRETS.get('DOMAIN', 'http://localhost')
 ALLOWED_HOSTS = [
-    'localhost',
+    '.localhost',
+    '127.0.0.1',
+    '[::1]',
+    urlparse(DOMAIN).hostname,
 ]
 
 # Application definition
@@ -151,10 +163,12 @@ SOCIALACCOUNT_ADAPTER = 'accounts.admin.SocialAccountAdapter'
 
 SITE_ID = 1
 
+DISCORD_CREDENTIALS = SECRETS.get('DISCORD_CREDENTIALS', {})
+
 SOCIALACCOUNT_PROVIDERS = {
     'discord': {
         'SCOPE': ['identify'],
-        'APP': SECRETS.get('DISCORD_CREDENTIALS', {}),
+        'APP': DISCORD_CREDENTIALS,
     }
 }
 
@@ -187,23 +201,13 @@ DEFAULT_AUTHENTICATION_CLASSES = [
     'rest_framework.authentication.SessionAuthentication',
 ]
 
-# External services configuration
-# allow all as if they were root document
-PERMISSIONS_POLICY = {
-    feature: '*' for feature in django_feature_policy.FEATURE_NAMES
-}
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'America/New_York'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -219,4 +223,28 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'build', 'static')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# External services configuration
+# allow all as if they were root document
+PERMISSIONS_POLICY = {
+    feature: '*' for feature in django_feature_policy.FEATURE_NAMES
+}
+
+DRIVE_SETTINGS = SECRETS.get('DRIVE_SETTINGS', {})
+if 'credentials_file' in DRIVE_SETTINGS:
+    with open(PROJECT_DIR / DRIVE_SETTINGS['credentials_file'], 'rt') as f:
+        DRIVE_SETTINGS['credentials'] = json.load(f)
+
+# Celery
+CELERY_BROKER_URL = 'redis://localhost:6379/2'
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 300, # 5 minutes
+}
+CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
 
