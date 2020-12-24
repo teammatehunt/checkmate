@@ -42,11 +42,16 @@
   font-size: larger;
   font-weight: bold;
 }
-.master .round .th:not(.name) {
+.master .round .th {
   font-variant: small-caps;
 }
 .master .meta .name {
   font-weight: bold;
+}
+.master .metatag:after {
+  content: 'meta: ';
+  font-variant: small-caps;
+  white-space: pre;
 }
 
 .master .td-field.textarea:not(.multiline) br {

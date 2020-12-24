@@ -11,19 +11,35 @@ class StaticDiscordHttpClient(discord.http.HTTPClient):
         self._token(token, bot=bot)
 
 class DiscordManager:
+    __instance = None
+
+    @classmethod
+    def instance(cls):
+        '''
+        Get single instance per process.
+        Not threadsafe.
+        '''
+        if cls.__instance is None:
+            cls.__instance = cls()
+            # ensure event loop is set for main thread
+            cls.__instance.loop = asyncio.get_event_loop()
+        return cls.__instance
+
     def __init__(self):
         self.server_id = settings.DISCORD_CREDENTIALS['server_id']
         self.bot_token = settings.DISCORD_CREDENTIALS['bot_token']
         self.default_category_id = settings.DISCORD_CREDENTIALS.get('default_category_id')
         self.deprecated_category_id = settings.DISCORD_CREDENTIALS.get('deprecated_category_id')
 
+        self.loop = None
         self.client = None
         self.__setup_done = False
 
     async def setup(self):
         if not self.__setup_done:
-            loop = asyncio.get_running_loop()
-            self.client = StaticDiscordHttpClient(self.bot_token, loop=loop)
+            if self.loop is None:
+                self.loop = asyncio.get_running_loop()
+            self.client = StaticDiscordHttpClient(self.bot_token, loop=self.loop)
             await self.client.static_login(self.bot_token, bot=True)
             self.__setup_done = True
 
@@ -37,16 +53,17 @@ class DiscordManager:
     async def __aexit__(self, *args, **kwargs):
         await self.close()
 
-    async def create_channels(self, slug, voice=True, link=None):
+    async def create_channels(self, slug, text=True, voice=True, link=None):
         await self.setup()
         requests = {}
-        requests['text'] = self.client.create_channel(
-            self.server_id,
-            discord.enums.ChannelType.text.value,
-            name=slug,
-            parent_id=self.default_category_id,
-            topic=link,
-        )
+        if text:
+            requests['text'] = self.client.create_channel(
+                self.server_id,
+                discord.enums.ChannelType.text.value,
+                name=slug,
+                parent_id=self.default_category_id,
+                topic=link,
+            )
         if voice:
             requests['voice'] = self.client.create_channel(
                 self.server_id,

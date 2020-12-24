@@ -1,4 +1,5 @@
 import datetime
+import inspect
 
 from django import db
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,7 @@ from django.contrib.auth.models import User
 from rest_framework import decorators, exceptions, permissions, response, serializers, status, viewsets
 from allauth.socialaccount.models import SocialAccount
 
+from services import tasks
 from . import models
 
 class SocialAccountSerializer(serializers.ModelSerializer):
@@ -90,6 +92,17 @@ class PuzzleViewSet(ContainerSpecialization, viewsets.ModelViewSet):
     queryset = model.objects.all().prefetch_related('round_relations', 'meta_relations', 'feeder_relations')
     serializer_class = PuzzleSerializer
     item_serializer_class = PuzzleSerializer
+
+    @decorators.action(methods=['POST'], detail=False)
+    def create_and_populate(self, request):
+        data = request.data
+        if 'name' not in data or 'link' not in data:
+            raise exceptions.NotAcceptable('Need name and puzzle_link')
+        kwargs_names = set(inspect.signature(tasks.create_puzzle).parameters.keys())
+        if set(data.keys()) - kwargs_names:
+            raise exceptions.NotAcceptable('Unrecognized args')
+        tasks.create_puzzle.delay(**data)
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
 
     @decorators.action(methods=['GET', 'POST'], detail=True)
     def feeders(self, *args, **kwargs):

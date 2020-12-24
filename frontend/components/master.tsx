@@ -80,7 +80,7 @@ const Puzzle : React.FC<PuzzleProps>= ({
           load={() => loadSlug(puzzle.slug)}
         >
           <Twemoji>
-            {puzzle.is_meta ? 'META: ' : ''}{puzzle.name}
+            {puzzle.is_meta ? <span className='metatag'/> : null}{puzzle.name}
           </Twemoji>
         </Link>
       </Td>

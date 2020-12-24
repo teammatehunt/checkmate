@@ -23,7 +23,7 @@ PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE ch
 
 To run in `dev` mode, run the following in separate terminals:
 - `cd frontend && yarn start`
-- `cd backend && . ./.venv/bin/activate && celery -A checkmate worker --loglevel=INFO`
+- `cd backend && . ./.venv/bin/activate && celery -A checkmate worker --loglevel=INFO -n worker1@%h`
 - `cd backend && . ./.venv/bin/activate && ./manage.py runserver`
 - `cd backend && . ./.venv/bin/activate && ./manage.py runworker fan_root`
 
@@ -40,7 +40,7 @@ cd backend
 rm -rf build || true
 . ./.venv/bin/activate
 ./manage.py collectstatic
-DJANGO_SERVER=prod celery -A checkmate worker --loglevel=INFO &
+DJANGO_SERVER=prod celery -A checkmate worker --loglevel=INFO -n worker1@%h &
 DJANGO_SERVER=prod ./manage.py runworker fan_root &
 DJANGO_SERVER=prod ./manage.py runserver &
 wait

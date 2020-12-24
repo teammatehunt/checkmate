@@ -54,9 +54,8 @@ class Entity(models.Model):
                                     null=True, editable=False,
                                     related_name='%(class)s_modified_set')
     hidden = models.BooleanField(default=False, help_text='Hidden objects will not be shown.')
-    AUTO_FIELDS = ('modified', 'modified_by', 'hidden')
     notes = models.TextField(blank=True)
-    tags = fields.HStoreField()
+    tags = fields.HStoreField(default=dict)
 
     discord_text_channel_id = models.BigIntegerField(null=True, blank=True)
     discord_voice_channel_id = models.BigIntegerField(null=True, blank=True)
@@ -71,9 +70,13 @@ class Entity(models.Model):
         user = crum.get_current_user()
         if user and user.pk is None:
             user = None
+        self.modified_by = user
+        auto_fields = ['modified', 'modified_by']
         if self._state.adding:
             self.created_by = user
-        self.modified_by = user
+            auto_fields.extend(['created', 'created_by'])
+        if 'update_fields' in kwargs:
+            kwargs['update_fields'] = list({*kwargs['update_fields'], *auto_fields})
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -95,7 +98,6 @@ class Puzzle(Entity):
     status = CharField(blank=True)
     is_meta = models.BooleanField(
         default=False, help_text='Can only be edited directly when there are no feeder puzzles. Adding feeder puzzles will also set this field.')
-    AUTO_FIELDS = Entity.AUTO_FIELDS + ('is_meta',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -103,8 +105,12 @@ class Puzzle(Entity):
 
     def save(self, *args, **kwargs):
         feeder_ids = set(self.feeders.through.objects.filter(meta_id=self.pk))
+        auto_fields = []
         if feeder_ids:
             self.is_meta = True
+            auto_fields.append('is_meta')
+        if 'update_fields' in kwargs:
+            kwargs['update_fields'] = list({*kwargs['update_fields'], *auto_fields})
         with transaction.atomic():
             super().save(*args, **kwargs)
             if self.is_meta and not self.original_is_meta:
@@ -179,10 +185,10 @@ class BasePuzzleRelation(models.Model):
             if self.original_related_objects[key] != saved_related_objects[key]:
                 relation_was_modified = True
         if relation_was_modified:
-            objs = set(self.original_related_objects.values()) | set(saved_related_objects.values())
+            objs = {*self.original_related_objects.values(), *saved_related_objects.values()}
             for obj in objs:
                 if obj is not None:
-                    obj.save(update_fields=obj.AUTO_FIELDS)
+                    obj.save(update_fields=[])
 
 
 class RoundPuzzle(BasePuzzleRelation):

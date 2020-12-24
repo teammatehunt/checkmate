@@ -11,6 +11,9 @@ class GoogleManager:
 
     @classmethod
     def instance(cls):
+        '''
+        Get single instance per process.
+        '''
         if cls.__instance is None:
             cls.__instance = cls()
         return cls.__instance
@@ -44,14 +47,14 @@ class GoogleManager:
                 },
             ),
         )
-        _id = sheet_file['id']
-        return _id
+        sheet_id = sheet_file['id']
+        return sheet_id
 
-    async def add_links(self, name, checkmate_link=None, puzzle_link=None):
+    async def add_links(self, sheet_id, checkmate_link=None, puzzle_link=None):
         if checkmate_link or puzzle_link:
             await self.client.as_service_account(
                 self.sheets.spreadsheets.values.update(
-                    spreadsheetId=_id,
+                    spreadsheetId=sheet_id,
                     range='A1:B1',
                     valueInputOption='USER_ENTERED',
                     json={
