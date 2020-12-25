@@ -54,6 +54,11 @@
   white-space: pre;
 }
 
+.master .editable:not(.editing):hover {
+  /* z-index / borders behave weirdly so disable drop-shadow and use box-shadow only */
+  filter: none;
+}
+
 .master .td-field.textarea:not(.multiline) br {
   content: '';
 }

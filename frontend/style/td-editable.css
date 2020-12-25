@@ -12,6 +12,7 @@
 .editable:not(.editing):hover {
   background-color: lightcyan;
   filter: drop-shadow(0 0 3px gray);
+  box-shadow: inset 0 0 3px gray;
   cursor: text;
 }
 
