@@ -1,7 +1,7 @@
 import asyncio
 from datetime import timedelta
 import re
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 from channels.db import database_sync_to_async
 from django.conf import settings
@@ -25,18 +25,32 @@ def create_puzzle(
         name,
         link,
         rounds=None,
+        is_meta=False,
         sheet=True,
         text=True,
         voice=True,
+        force=False,
 ):
-    link_regex = f"^{re.escape(link.rstrip('/'))}/*"
+    hunt_root = models.HuntConfig.get().root
+    url = urlsplit(link)
+    url_root = url[:2] + ('',) * (len(url) - 2)
+    url_suffix = ('',) * 2 + url[2:]
+    root = urlunsplit(url_root)
+    suffix = urlunsplit(url_suffix)
+    # Construct a regex for resolving the root optionally and stripping trailing slashes
+    if root == '' or root == hunt_root:
+        link_regex = f"^({re.escape(hunt_root)})?{re.escape(suffix.rstrip('/'))}/*$"
+    else:
+        link_regex = f"^{re.escape(link.rstrip('/'))}/*$"
     puzzle = models.Puzzle.objects.filter(link__regex=link_regex, hidden=False).last()
-    # if a puzzle with the same link was created within the past 10 minutes,
-    # assume this is a duplicate request
-    if puzzle is None or (timezone.localtime() - puzzle.created) > timedelta(minutes=10):
+    # If a puzzle with the same link exists and the force flag is not set, or
+    # if the puzzle was created in the past minute, assume this is a duplicate
+    # request.
+    if puzzle is None or (force and (timezone.localtime() - puzzle.created) > timedelta(minutes=1)):
         puzzle = models.Puzzle(
             name=name,
             link=link,
+            is_meta=is_meta,
         )
         puzzle.save()
     if rounds:
@@ -47,6 +61,7 @@ def create_puzzle(
         sheet=sheet,
         text=text,
         voice=voice,
+        hunt_root=hunt_root,
     )
 
 @app.task(
@@ -58,23 +73,23 @@ def create_puzzle(
 def sync_populate_puzzle(
         puzzle=None,
         slug=None,
-        hunt_domain=None,
+        hunt_root=None,
         **kwargs,
 ):
     if puzzle is None:
         puzzle = models.Puzzle.get(pk=slug)
-    if hunt_domain is None:
-        hunt_domain = models.HuntConfig.get().domain
+    if hunt_root is None:
+        hunt_root = models.HuntConfig.get().root
     asyncio.get_event_loop().run_until_complete(populate_puzzle(
         puzzle,
-        hunt_domain=hunt_domain,
+        hunt_root=hunt_root,
         **kwargs,
     ))
 
 async def populate_puzzle(
     puzzle,
     *,
-    hunt_domain,
+    hunt_root,
     sheet=True,
     text=True,
     voice=True,
@@ -95,7 +110,7 @@ async def populate_puzzle(
             voice=voice,
             link=checkmate_link,
         )
-    keys, values = zip(*tasks.items())
+    keys, values = zip(*tasks.items()) if tasks else ((), ())
     _results = await asyncio.gather(*values)
     results = dict(zip(keys, _results))
     sheet_id = results.get('sheet')
@@ -113,8 +128,15 @@ async def populate_puzzle(
         update_fields.append('discord_voice_channel_id')
     if update_fields:
         await database_sync_to_async(puzzle.save)(update_fields=update_fields)
-    puzzle_link = urljoin(hunt_domain, puzzle.link)
     if sheet_id is not None:
+        has_origin = any(urlsplit(puzzle.link)[:2])
+        if has_origin:
+            puzzle_link = puzzle.link
+        else:
+            # str.removesuffix and str.removeprefix only added in Python 3.9
+            hunt_root_stripped = hunt_root[:-1] if hunt_root.endswith('/') else hunt_root
+            link_stripped = puzzle.link[1:] if puzzle.link.startswith('/') else puzzle.link
+            puzzle_link = f'{hunt_root_stripped}/{link_stripped}'
         await google_manager.add_links(
             sheet_id,
             checkmate_link=checkmate_link,

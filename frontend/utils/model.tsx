@@ -2,7 +2,7 @@ import produce, { Draft } from 'immer';
 import _ from 'lodash';
 
 export interface HuntConfig {
-  domain: string;
+  root: string;
   auto_assign_puzzles_to_meta: boolean;
   discord_server_id: number;
 }
@@ -33,7 +33,7 @@ export interface User {
 export interface Entity {
   slug: string;
   name: string;
-  link: string; // link to puzzle relative to hunt domain root
+  link: string; // link to puzzle relative to hunt root
   created: string; // timestamp
   created_by: number; // User.id
   modified: string; // timestamp

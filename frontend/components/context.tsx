@@ -22,7 +22,7 @@ export interface SiteContextType extends Model.HuntConfig {
 }
 
 export const SiteContext = createContext<SiteContextType>({
-  domain: '',
+  root: '',
   auto_assign_puzzles_to_meta: true,
   discord_server_id: null,
 });

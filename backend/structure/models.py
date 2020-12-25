@@ -20,7 +20,7 @@ class HuntConfig(models.Model):
     auto_assign_puzzles_to_meta = models.BooleanField(
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
-    domain = CharField(blank=True, help_text='Include the protocol. (eg https://example.com)')
+    root = CharField(blank=True, help_text='Hunt prefix (protocol, domain, and path prefix). (eg https://example.com)')
     discord_server_id = models.BigIntegerField(
         null=True, blank=True,
         default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))
@@ -44,7 +44,7 @@ class Entity(models.Model):
     slug = autoslug.AutoSlugField(max_length=MAX_LENGTH, primary_key=True,
                                   populate_from='name')
     name = CharField()
-    link = CharField(blank=True, help_text='path relative to hunt domain root')
+    link = CharField(blank=True, help_text='Can be path relative to hunt root')
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                    null=True, editable=False,
