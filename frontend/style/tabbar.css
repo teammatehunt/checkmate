@@ -1,22 +1,60 @@
-.logo {
+.header {
   display: flex;
-  width: min-content;
-  align-items: center;
-  font-size: 20px;
-  padding: 8px 8px 8px 0;
-  cursor: pointer;
-}
-.logo:hover {
-  color: purple;
-}
-.icon {
-  height: 32px;
-  width: 32px;
-  fill: currentColor;
-}
-.logo-text {
+  align-items: stretch;
+  --header-height: 48px;
+  height: var(--header-height);
+  user-select: none;
+  border-bottom: 2px solid silver;
+  background-color: floralwhite;
 }
 
+.nav-item {
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+}
+.nav-item:hover {
+  background-color: lavender;
+}
+
+.nav-item-link {
+  white-space: nowrap;
+}
+.nav-item-link > * {
+  display: flex;
+}
+.nav-item-link > * > :not(:last-child) {
+  margin-right: 0.5ex;
+}
+.nav-item-link > * > :not(:first-child) {
+  margin-left: 0.5ex;
+}
+.nav-item-link:hover {
+  color: purple;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  padding: 8px;
+}
+.icon {
+  height: 100%;
+  width: auto;
+  margin: 0 ! important;
+  fill: currentColor;
+}
+
+.tabs {
+  display: flex;
+  align-items: flex-end;
+}
+
+.tab-container {
+  position: relative;
+  display: flex;
+}
 .tab {
   position: relative;
   height: 32px;
@@ -25,7 +63,6 @@
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   background-color: silver;
-  cursor: pointer;
   display: flex;
   align-items: center;
 }
@@ -41,12 +78,13 @@
 }
 .tab:hover {
   filter: brightness(90%);
-  box-shadow: 0 0 3px black;
+  box-shadow: inset 0 0 3px dimgray;
 }
 .tab-remove {
-  float: right;
-  margin-top: auto;
-  margin-bottom: auto;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 0;
   margin-right: 4px;
   padding: 2px;
   border-radius: 50%;
@@ -56,10 +94,39 @@
 .tab-remove:hover {
   background-color: rgba(0,0,0,0.15);
 }
+.tab-remove > svg {
+  height: 16px;
+  width: 16px;
+}
 
-.header {
+
+.nav-settings {
+  position: relative;
+  width: var(--header-height);
+  padding: calc(0.25 * var(--header-height));
+}
+.nav-menu {
+  height: 100%;
+  width: 100%;
+}
+.nav-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  border-radius: 0 0 0 10px;
+  border-left: 1px solid purple;
+  border-bottom: 1px solid purple;
+}
+.nav-settings:hover .nav-dropdown {
   display: flex;
-  align-items: flex-end;
-  user-select: none;
-  border-bottom: 2px solid silver;
+  flex-direction: column;
+  background-color: inherit;
+}
+.nav-dropdown > * {
+  padding: 8px;
+}
+.nav-dropdown > :hover {
+  backdrop-filter: brightness(90%);
 }

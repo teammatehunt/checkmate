@@ -74,6 +74,11 @@ body {
   font-weight: bold;
 }
 
+svg {
+  height: 1em;
+  width: 1em;
+}
+
 img.emoji {
   height: 1em;
   width: 1em;

@@ -31,7 +31,7 @@ const Round = ({
   extraTags,
 }) => {
   return (
-    <Tr className='round'>
+    <Tr className={`round ${round.is_pseudoround ? 'pseudoround' : ''}`}>
       <Th className='name'>
         <Twemoji>
           {round.name}
@@ -53,6 +53,7 @@ interface PuzzleProps {
   loadSlug: any;
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
+  isPseudoround?: boolean;
 }
 
 const Puzzle : React.FC<PuzzleProps>= ({
@@ -61,6 +62,7 @@ const Puzzle : React.FC<PuzzleProps>= ({
   loadSlug,
   statuses,
   colors,
+  isPseudoround,
 }) => {
   const patchValue = (key, isTags=false) => {
     return async (value) => {
@@ -72,7 +74,7 @@ const Puzzle : React.FC<PuzzleProps>= ({
   };
 
   return (
-    <Tr className={`puzzle ${puzzle.is_meta ? 'meta' : ''}`}>
+    <Tr className={`puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
       <Td className='name'>
         <Link
           className='restyle'
@@ -125,23 +127,31 @@ const Master : React.FC<MasterProps> = ({
   colors,
 }) => {
   if (!isActive) return null;
-  const roundsWithUnassigned = produce(data.rounds, draft => {
+  const roundsWithExtras = produce(data.rounds, draft => {
     const unassignedPuzzles = Object.keys(data.puzzles).filter(slug => !data.puzzles[slug].rounds.filter(round => data.rounds[round]?.hidden === false).length);
-    if (unassignedPuzzles.length) draft['unassigned'] = {
+    if (unassignedPuzzles.length) draft['_unassigned'] = {
       name: 'Unassigned',
       hidden: false,
       puzzles: unassignedPuzzles,
+      is_pseudoround: true,
+    } as Model.Round;
+    const metas = Object.keys(data.puzzles).filter(slug => data.puzzles[slug].hidden === false && data.puzzles[slug].is_meta);
+    if (metas.length) draft['_metas'] = {
+      name: 'Metas',
+      hidden: false,
+      puzzles: metas,
+      is_pseudoround: true,
     } as Model.Round;
   });
   return (
     <div className='master'>
       <Table>
         <Tbody>
-          {Object.entries(roundsWithUnassigned).filter(([slug, round]) => round.hidden === false).map(([slug, round]) => {
+          {Object.entries(roundsWithExtras).filter(([slug, round]) => round.hidden === false).map(([slug, round]) => {
             const extraTags = [];
             return (
-              <>
-                <Round key={`${slug}`} round={round} extraTags={extraTags}/>
+              <React.Fragment key={slug}>
+                <Round key={slug} round={round} extraTags={extraTags}/>
                 {_.orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle.hidden === false), ['is_meta'], ['desc']).map(puzzle => (
                   <Puzzle
                     key={`${slug}::${puzzle.slug}`}
@@ -150,9 +160,10 @@ const Master : React.FC<MasterProps> = ({
                     loadSlug={loadSlug}
                     statuses={statuses}
                     colors={colors}
+                    isPseudoround={round.is_pseudoround}
                   />
                 ))}
-              </>
+              </React.Fragment>
             );
           })}
         </Tbody>

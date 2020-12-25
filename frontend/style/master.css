@@ -28,6 +28,10 @@
   vertical-align: middle;
   background-color: white;
 }
+.master .pseudoround .td {
+  background-color: beige;
+}
+
 
 .master .name {
   position: sticky;

@@ -51,6 +51,8 @@ export interface Round extends Entity {
   auto_assign_puzzles_to_meta: boolean;
 
   puzzles: string[]; // puzzle slugs
+
+  is_pseudoround?: boolean; // set clientside, not on server
 }
 
 export interface Puzzle extends Entity {

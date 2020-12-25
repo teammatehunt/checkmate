@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { X } from 'react-feather';
+import { LogOut, Menu, X } from 'react-feather';
 
 import * as Model from 'utils/model';
 import * as Context from 'components/context';
@@ -13,16 +13,16 @@ import {
 
 import 'style/tabbar.css';
 
-const Logo = ({slug, activateTab}) => {
+const NavHome = ({slug, activateTab}) => {
   const isActive = slug === undefined;
   return (
     <Link
       href='/'
-      className='nostyle'
+      className='nav-item-link nostyle'
       load={() => activateTab(undefined)}
     >
       <div
-        className={`logo ${isActive ? 'active' : ''}`}
+        className={`logo nav-item ${isActive ? 'active' : ''}`}
       >
         <Icon className='icon'/>
         <span className='logo-text'>Checkmate</span>
@@ -46,36 +46,51 @@ const Tab = ({
   removeTab,
   puzzleData,
 }) => {
-  const removeThisTab = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    removeTab(tab);
-  }
+  const removeThisTab = (e) => removeTab(tab);
   return (
-    <Link
-      key={tab}
-      href={`/puzzles/${tab}`}
-      className='nostyle'
-      load={() => activateTab(tab)}
-    >
-      <div
-        className={`tab ${isActive ? 'active' : ''}`}
+    <div className='tab-container'>
+      <Link
+        key={tab}
+        href={`/puzzles/${tab}`}
+        className='nostyle'
+        load={() => activateTab(tab)}
       >
-        <div className='tab-content'>
-          <Twemoji>
-            {puzzleData.name}
-          </Twemoji>
-        </div>
         <div
-          className='tab-remove'
-          onClick={removeThisTab}
+          className={`tab ${isActive ? 'active' : ''}`}
         >
-          <X size={16}/>
+          <div className='tab-content'>
+            <Twemoji>
+              {puzzleData.name}
+            </Twemoji>
+          </div>
         </div>
+      </Link>
+      <div
+        className='tab-remove'
+        onClick={removeThisTab}
+      >
+        <X/>
       </div>
-    </Link>
+    </div>
   );
 }
+
+const NavSettings = () => (
+  <div className='nav-item nav-settings'>
+    <Menu className='nav-menu'/>
+    <div className='nav-dropdown'>
+      <Link
+        href='/accounts/logout'
+        className='nav-item-link nostyle'
+      >
+        <div className='logout'>
+          <LogOut/>
+          <span>Logout</span>
+        </div>
+      </Link>
+    </div>
+  </div>
+);
 
 interface HeaderProps {
   tabs: string[];
@@ -99,18 +114,21 @@ const Header : React.FC<HeaderProps> = ({
   return (
     <>
       <div className='header'>
-        <Logo slug={slug} activateTab={activateTab}/>
-        {tabs.map(tab => (
-          <Tab
-            key={tab}
-            tab={tab}
-            isActive={tab === slug}
-            activateTab={activateTab}
-            removeTab={removeTab}
-            puzzleData={puzzles[tab]}
-          />
-        ))}
+        <NavHome slug={slug} activateTab={activateTab}/>
+        <div className='tabs'>
+          {tabs.map(tab => (
+            <Tab
+              key={tab}
+              tab={tab}
+              isActive={tab === slug}
+              activateTab={activateTab}
+              removeTab={removeTab}
+              puzzleData={puzzles[tab]}
+            />
+          ))}
+        </div>
         <div className='flex'/>
+        <NavSettings/>
       </div>
     </>
   );
