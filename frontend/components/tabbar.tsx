@@ -2,14 +2,14 @@ import React from 'react';
 
 import { LogOut, Menu, X } from 'react-feather';
 
-import * as Model from 'utils/model';
 import * as Context from 'components/context';
-import Twemoji from 'components/twemoji';
-import Icon from 'assets/icon.svg';
-
 import {
   Link,
 } from 'components/drop-ins';
+import Twemoji from 'components/twemoji';
+import * as Model from 'utils/model';
+
+import Icon from 'assets/icon.svg';
 
 import 'style/tabbar.css';
 
@@ -37,6 +37,7 @@ interface TabProps {
   activateTab: any;
   removeTab: any;
   puzzleData: Model.Puzzle;
+  colors: {[value: string]: string};
 }
 
 const Tab = ({
@@ -45,10 +46,11 @@ const Tab = ({
   activateTab,
   removeTab,
   puzzleData,
+  colors,
 }) => {
   const removeThisTab = (e) => removeTab(tab);
   return (
-    <div className='tab-container'>
+    <div className={`tab-container ${Model.isSolved(puzzleData, colors) ? 'solved' : ''}`}>
       <Link
         key={tab}
         href={`/puzzles/${tab}`}
@@ -92,7 +94,7 @@ const NavSettings = () => (
   </div>
 );
 
-interface HeaderProps {
+interface TabBarProps {
   tabs: string[];
   slug: string;
   activateTab: any;
@@ -100,9 +102,10 @@ interface HeaderProps {
   siteCtx: Context.SiteContextType;
   puzzles: Model.Puzzles;
   uid: number;
+  colors: {[value: string]: string};
 }
 
-const Header : React.FC<HeaderProps> = ({
+const TabBar : React.FC<TabBarProps> = ({
   tabs,
   slug,
   activateTab,
@@ -110,6 +113,7 @@ const Header : React.FC<HeaderProps> = ({
   siteCtx,
   puzzles,
   uid,
+  colors,
 }) => {
   return (
     <>
@@ -124,6 +128,7 @@ const Header : React.FC<HeaderProps> = ({
               activateTab={activateTab}
               removeTab={removeTab}
               puzzleData={puzzles[tab]}
+              colors={colors}
             />
           ))}
         </div>
@@ -133,5 +138,4 @@ const Header : React.FC<HeaderProps> = ({
     </>
   );
 };
-
-export default Header;
+export default TabBar;

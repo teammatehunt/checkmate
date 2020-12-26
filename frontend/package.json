@@ -2,6 +2,7 @@
   "name": "checkmate",
   "dependencies": {
     "@rehooks/local-storage": "^2.4.0",
+    "humanize-duration": "^3.25.0",
     "immer": "^8.0.0",
     "json-bigint": "^1.0.0",
     "lodash": "^4.17.20",

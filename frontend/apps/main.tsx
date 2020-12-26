@@ -14,11 +14,12 @@ import SplitPane from 'react-split-pane';
 
 import * as Model from 'utils/model';
 import Base from 'components/base';
+import { useLocalStorageObject } from 'components/context';
 import Master from 'components/master';
 import MasterInfo from 'components/master-info';
 import Puzzles from 'components/puzzle';
 import PuzzleInfo from 'components/puzzle-info';
-import Header from 'components/tabbar';
+import TabBar from 'components/tabbar';
 import {
   DiscordFrame,
   ShowIf,
@@ -46,6 +47,8 @@ export const Main : React.FC<MainProps> = props => {
   const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
   const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
+
+  const hideSolved = useLocalStorageObject<boolean>('master/hide-solved', false);
 
   // because tabs can update outside of this window
   const [tabIndex, setTabIndex] = useState(null);
@@ -193,7 +196,7 @@ export const Main : React.FC<MainProps> = props => {
   return (
     <Base>
       <div className={`root vflex ${resizingClass} page-${page}`}>
-        <Header {...{
+        <TabBar {...{
           tabs,
           slug,
           activateTab,
@@ -201,6 +204,7 @@ export const Main : React.FC<MainProps> = props => {
           siteCtx,
           puzzles,
           uid,
+          colors,
         }}/>
         <div className='flex'>
           <SplitPane
@@ -219,6 +223,7 @@ export const Main : React.FC<MainProps> = props => {
                   loadSlug={loadSlug}
                   statuses={statuses}
                   colors={colors}
+                  hideSolved={hideSolved.value}
                 />
               </ShowIf>
               <ShowIf display={page === 'puzzle'}>
@@ -244,6 +249,7 @@ export const Main : React.FC<MainProps> = props => {
                 <ShowIf display={page === 'master'}>
                   <MasterInfo
                     data={data}
+                    hideSolved={hideSolved}
                   />
                 </ShowIf>
                 <ShowIf display={page === 'puzzle'}>

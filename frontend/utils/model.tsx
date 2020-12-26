@@ -67,6 +67,9 @@ export interface Puzzle extends Entity {
   feeders: string[]; // feeder puzzle slugs
 }
 
+export const isSolved = (puzzle, colors) => colors?.solved && colors[puzzle.status] === colors.solved;
+
+
 export interface Users {
   [id: number]: User;
 }

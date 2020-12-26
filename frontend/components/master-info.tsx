@@ -7,6 +7,7 @@ import produce from 'immer';
 import Collapsible from 'react-collapsible';
 import { ChevronRight, ChevronDown, Plus } from 'react-feather';
 
+import { LocalStorageObject } from 'components/context';
 import {
   Table,
   Tbody,
@@ -20,10 +21,12 @@ import 'style/master-info.css';
 
 interface MasterInfoProps {
   data: Model.Data;
+  hideSolved: LocalStorageObject<boolean>;
 }
 
 const MasterInfo : React.FC<MasterInfoProps> = ({
   data,
+  hideSolved,
 }) => {
   const defaultFormPuzzleData = {
     name: '',
@@ -91,6 +94,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
 
   return (
     <>
+      <h2>Add Item</h2>
       <Collapsible
         trigger={
           <>
@@ -207,6 +211,10 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
           <input type='submit' value='Add Round'/>
         </form>
       </Collapsible>
+
+      <h2>Settings</h2>
+      <input type='checkbox' onChange={(e) => hideSolved.set(e.target.checked)} checked={hideSolved.value}/>
+      <span>Hide solved</span>
     </>
   );
 };

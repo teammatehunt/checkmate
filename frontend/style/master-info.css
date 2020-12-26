@@ -1,4 +1,6 @@
-.masterinfo form input[type=submit] {
+.masterinfo h2 {
+  margin-bottom: 5px;
+  display: flex;
 }
 
 .Collapsible__trigger {
@@ -25,7 +27,7 @@
 .masterinfo select  {
   vertical-align: top;
 }
-input[type=checkbox] + span:before {
+.masterinfo input[type=checkbox] + span:before {
   content: ' ';
   white-space: pre;
 }

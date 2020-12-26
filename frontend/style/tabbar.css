@@ -66,19 +66,25 @@
   display: flex;
   align-items: center;
 }
+.tab-container.solved .tab {
+  background-color: lightgreen;
+}
+.tab.active {
+  background-color: plum;
+}
+.tab-container.solved .tab.active {
+  background-color: lime;
+}
+.tab:hover {
+  filter: brightness(90%);
+  box-shadow: inset 0 0 3px dimgray;
+}
 .tab-content {
   width: 100%;
   margin: auto 4px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-.tab.active {
-  background-color: plum;
-}
-.tab:hover {
-  filter: brightness(90%);
-  box-shadow: inset 0 0 3px dimgray;
 }
 .tab-remove {
   position: absolute;

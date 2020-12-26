@@ -2,6 +2,7 @@ import React from 'react';
 
 import produce from 'immer';
 import _ from 'lodash';
+import humanizeDuration from 'humanize-duration';
 
 import {
   Link,
@@ -40,6 +41,7 @@ const Round = ({
       <Th>Answer</Th>
       <Th>Status</Th>
       <Th>Notes</Th>
+      <Th>Open For</Th>
       {roundTags.map(tag => (
         <Th key={tag} className='capitalize'>{tag}</Th>
       ))}
@@ -73,6 +75,22 @@ const Puzzle : React.FC<PuzzleProps>= ({
     };
   };
 
+  const now = Date.now();
+  const hasCreated = puzzle.created ?? undefined !== undefined;
+  const hasSolved = puzzle.solved ?? undefined !== undefined;
+  const createdTimestamp = hasCreated ? Date.parse(puzzle.created) : now;
+  const solvedTimestamp = hasSolved ? Date.parse(puzzle.solved) : now;
+  const duration = solvedTimestamp - createdTimestamp;
+  const humanDuration = duration < 60 * 1000 ? 'just now' : humanizeDuration(
+    duration,
+    {
+      largest: 2,
+      units: ['y', 'mo', 'd', 'h', 'm'],
+      round: true,
+    },
+  );
+  const openForStyle = Model.isSolved(puzzle, colors) ? {backgroundColor: colors?.solved} : undefined;
+
   return (
     <Tr className={`puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
       <Td className='name'>
@@ -104,6 +122,9 @@ const Puzzle : React.FC<PuzzleProps>= ({
         textarea
         expandTextarea={false}
       />
+      <Td className='open-for' style={openForStyle}>
+        {hasCreated ? humanDuration : null}
+      </Td>
       {roundTags.map(tag => (
         <Td key={tag}>{puzzle.tags[tag] ?? ''}</Td>
       ))}
@@ -117,6 +138,7 @@ interface MasterProps {
   loadSlug: any;
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
+  hideSolved: boolean;
 }
 
 const Master : React.FC<MasterProps> = ({
@@ -125,6 +147,7 @@ const Master : React.FC<MasterProps> = ({
   loadSlug,
   statuses,
   colors,
+  hideSolved,
 }) => {
   if (!isActive) return null;
   const roundsWithExtras = produce(data.rounds, draft => {
@@ -152,7 +175,7 @@ const Master : React.FC<MasterProps> = ({
             return (
               <React.Fragment key={slug}>
                 <Round key={slug} round={round} roundTags={roundTags}/>
-                {_.orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle.hidden === false), ['is_meta'], ['desc']).map(puzzle => (
+                {_.orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle.hidden === false && (!hideSolved || !Model.isSolved(puzzle, colors))), ['is_meta'], ['desc']).map(puzzle => (
                   <Puzzle
                     key={`${slug}::${puzzle.slug}`}
                     puzzle={puzzle}
