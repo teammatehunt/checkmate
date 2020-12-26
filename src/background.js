@@ -137,6 +137,10 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
               runAt: 'document_start',
             },
             (results) => {
+              if (chrome.runtime.lastError) {
+                console.log('Error:', chrome.runtime.lastError.message);
+                return;
+              }
               if (details.url.match(DISCORD_REGEX)) {
                 const message = (discordInfo[details.tabId]||{})[details.frameId];
                 if (message) sendLoadDiscord(details.tabId, message);

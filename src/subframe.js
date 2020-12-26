@@ -55,11 +55,34 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           }
           if (!fail && initialChannelId !== message.textChannelId && initialChannelId !== message.voiceChannelId) {
             if (message.textChannelId !== null) {
-              const element = document.querySelector(`[data-list-item-id='channels___${message.textChannelId}']`);
-              if (element) {
-                element.click();
-              } else {
-                fail = true;
+              const clickChannel = () => {
+                const element = document.querySelector(`[data-list-item-id='channels___${message.textChannelId}']`);
+                if (element) {
+                  element.click();
+                  return true;
+                } else {
+                  return false;
+                }
+              };
+              if (!clickChannel()) {
+                // attempt to scroll to find the channel
+                const scroll = async() => {
+                  const channelsElement = document.getElementById('channels');
+                  if (!channels) return false;
+                  for (let top=0; top < channelsElement.scrollHeight; top+=window.innerHeight) {
+                    console.log(top);
+                    channelsElement.scroll({top: top, behaviour: 'auto'});
+                    // let scolling and renders happen
+                    await new Promise(r => setTimeout(r, 0));
+                    if (clickChannel()) return true;
+                  }
+                  channelsElement.scroll({top: channelsElement.scrollHeight, behaviour: 'auto'});
+                  if (clickChannel()) return true;
+                  return false;
+                }
+                if (!await scroll()) {
+                  fail = true;
+                }
               }
             }
           }
