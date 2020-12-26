@@ -1,0 +1,31 @@
+.masterinfo form input[type=submit] {
+}
+
+.Collapsible__trigger {
+  cursor: pointer;
+}
+.Collapsible__trigger.is-open .closed-icon,
+.Collapsible__trigger.is-closed .open-icon {
+  display: none;
+}
+
+.Collapsible__contentInner {
+  font-size: smaller;
+  padding: 5px;
+  padding-left: 4ex;
+  background-color: floralwhite;
+}
+
+.masterinfo .td {
+  padding-block: 2px;
+}
+.masterinfo .td:first-child {
+  text-align: right;
+}
+.masterinfo select  {
+  vertical-align: top;
+}
+input[type=checkbox] + span:before {
+  content: ' ';
+  white-space: pre;
+}

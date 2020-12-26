@@ -97,10 +97,11 @@ class PuzzleViewSet(ContainerSpecialization, viewsets.ModelViewSet):
     def create_and_populate(self, request):
         data = request.data
         if 'name' not in data or 'link' not in data:
-            raise exceptions.NotAcceptable('Need name and puzzle_link')
+            raise exceptions.NotAcceptable('Need name and link')
         kwargs_names = set(inspect.signature(tasks.create_puzzle).parameters.keys())
-        if set(data.keys()) - kwargs_names:
-            raise exceptions.NotAcceptable('Unrecognized args')
+        extra_args = set(data.keys()) - kwargs_names
+        if extra_args:
+            raise exceptions.NotAcceptable(f'Unrecognized args: {sorted(extra_args)}')
         tasks.create_puzzle.delay(**data)
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 

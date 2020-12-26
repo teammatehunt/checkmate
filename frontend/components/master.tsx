@@ -23,12 +23,12 @@ import 'style/master.css';
 
 interface RoundProps {
   round: Model.Round;
-  extraTags: string[];
+  roundTags: string[];
 }
 
 const Round = ({
   round,
-  extraTags,
+  roundTags,
 }) => {
   return (
     <Tr className={`round ${round.is_pseudoround ? 'pseudoround' : ''}`}>
@@ -40,7 +40,7 @@ const Round = ({
       <Th>Answer</Th>
       <Th>Status</Th>
       <Th>Notes</Th>
-      {extraTags.map(tag => (
+      {roundTags.map(tag => (
         <Th key={tag} className='capitalize'>{tag}</Th>
       ))}
     </Tr>
@@ -49,7 +49,7 @@ const Round = ({
 
 interface PuzzleProps {
   puzzle: Model.Puzzle;
-  extraTags: string[];
+  roundTags: string[];
   loadSlug: any;
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
@@ -58,7 +58,7 @@ interface PuzzleProps {
 
 const Puzzle : React.FC<PuzzleProps>= ({
   puzzle,
-  extraTags,
+  roundTags,
   loadSlug,
   statuses,
   colors,
@@ -104,7 +104,7 @@ const Puzzle : React.FC<PuzzleProps>= ({
         textarea
         expandTextarea={false}
       />
-      {extraTags.map(tag => (
+      {roundTags.map(tag => (
         <Td key={tag}>{puzzle.tags[tag] ?? ''}</Td>
       ))}
     </Tr>
@@ -148,15 +148,15 @@ const Master : React.FC<MasterProps> = ({
       <Table>
         <Tbody>
           {Object.entries(roundsWithExtras).filter(([slug, round]) => round.hidden === false).map(([slug, round]) => {
-            const extraTags = [];
+            const roundTags = [];
             return (
               <React.Fragment key={slug}>
-                <Round key={slug} round={round} extraTags={extraTags}/>
+                <Round key={slug} round={round} roundTags={roundTags}/>
                 {_.orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle.hidden === false), ['is_meta'], ['desc']).map(puzzle => (
                   <Puzzle
                     key={`${slug}::${puzzle.slug}`}
                     puzzle={puzzle}
-                    extraTags={extraTags}
+                    roundTags={roundTags}
                     loadSlug={loadSlug}
                     statuses={statuses}
                     colors={colors}

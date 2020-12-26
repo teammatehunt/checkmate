@@ -9,13 +9,13 @@ import React, {
 } from 'react';
 
 import * as JSONbig from 'json-bigint';
-import produce from 'immer';
 import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
 
 import * as Model from 'utils/model';
 import Base from 'components/base';
 import Master from 'components/master';
+import MasterInfo from 'components/master-info';
 import Puzzles from 'components/puzzle';
 import PuzzleInfo from 'components/puzzle-info';
 import Header from 'components/tabbar';
@@ -240,14 +240,21 @@ export const Main : React.FC<MainProps> = props => {
               onDragStarted={onDragStarted}
               onDragFinished={onDragFinishedSet(setRhsplitter)}
             >
-              <div className='puzzleinfo pane'>
-                <PuzzleInfo
-                  data={data}
-                  slug={slug}
-                  loadSlug={loadSlug}
-                  statuses={statuses}
-                  colors={colors}
-                />
+              <div className={`${page}info infopane pane`}>
+                <ShowIf display={page === 'master'}>
+                  <MasterInfo
+                    data={data}
+                  />
+                </ShowIf>
+                <ShowIf display={page === 'puzzle'}>
+                  <PuzzleInfo
+                    data={data}
+                    slug={slug}
+                    loadSlug={loadSlug}
+                    statuses={statuses}
+                    colors={colors}
+                  />
+                </ShowIf>
               </div>
               <div className='chat pane'>
                 <DiscordFrame

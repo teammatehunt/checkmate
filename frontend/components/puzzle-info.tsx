@@ -645,7 +645,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
               <Td/>
               <Td/>
               <Td>
-                <Plus className='puzzleinfo-add' onClick={()=>setIsAdding(true)}/>
+                <Plus className='plus-add larger' onClick={()=>setIsAdding(true)}/>
               </Td>
             </Tr>
           }

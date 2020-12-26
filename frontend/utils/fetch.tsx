@@ -16,6 +16,14 @@ export const getCookie = (name) => {
   return cookieValue;
 }
 
+export const FormCSRFToken = () => {
+  const csrfToken = getCookie('csrftoken');
+  return (
+    <input type='hidden' name='csrfmiddlewaretoken' value={csrfToken}/>
+  );
+};
+
+// kwargs should contain at least `method`
 export const fetchJson = async ({url, data, ...kwargs}) => {
   return await fetch(url, {
     headers: {

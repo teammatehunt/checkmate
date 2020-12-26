@@ -74,9 +74,19 @@ body {
   font-weight: bold;
 }
 
+.larger {
+  font-size: larger;
+}
+
+.smaller {
+  font-size: smaller;
+}
+
+
 svg {
   height: 1em;
   width: 1em;
+  vertical-align: bottom;
 }
 
 img.emoji {
@@ -88,4 +98,23 @@ img.emoji {
 
 input, select, textarea, button {
   font: inherit;
+}
+
+.infopane {
+  padding-top: 1em;
+  padding-left: 1em;
+  padding-right: 1em;
+  overflow: auto;
+}
+
+.plus-add {
+  color: green;
+  cursor: pointer;
+}
+
+.form-item > span:first-child {
+}
+
+.ReactModal__Overlay {
+  z-index: 100;
 }
