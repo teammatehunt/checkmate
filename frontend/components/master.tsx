@@ -1,7 +1,7 @@
 import React from 'react';
 
 import produce from 'immer';
-import _ from 'lodash';
+import orderBy from 'lodash/orderBy';
 import humanizeDuration from 'humanize-duration';
 
 import {
@@ -175,7 +175,7 @@ const Master : React.FC<MasterProps> = ({
             return (
               <React.Fragment key={slug}>
                 <Round key={slug} round={round} roundTags={roundTags}/>
-                {_.orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle.hidden === false && (!hideSolved || !Model.isSolved(puzzle, colors))), ['is_meta'], ['desc']).map(puzzle => (
+                {orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle.hidden === false && (!hideSolved || !Model.isSolved(puzzle, colors))), ['is_meta'], ['desc']).map(puzzle => (
                   <Puzzle
                     key={`${slug}::${puzzle.slug}`}
                     puzzle={puzzle}

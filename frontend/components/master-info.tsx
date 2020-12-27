@@ -5,7 +5,6 @@ import React, {
 
 import produce from 'immer';
 import Collapsible from 'react-collapsible';
-import { ChevronRight, ChevronDown, Plus } from 'react-feather';
 
 import { LocalStorageObject } from 'components/context';
 import {
@@ -14,6 +13,7 @@ import {
   Tr,
   Td,
 } from 'components/drop-ins';
+import { ChevronRight, ChevronDown, Plus } from 'components/react-feather';
 import * as Model from 'utils/model';
 import { fetchJson } from 'utils/fetch';
 

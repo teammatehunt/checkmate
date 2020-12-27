@@ -1,11 +1,10 @@
 import React from 'react';
 
-import { LogOut, Menu, X } from 'react-feather';
-
 import * as Context from 'components/context';
 import {
   Link,
 } from 'components/drop-ins';
+import { LogOut, Menu, X } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
 import * as Model from 'utils/model';
 

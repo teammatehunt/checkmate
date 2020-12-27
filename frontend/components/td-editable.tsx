@@ -5,14 +5,14 @@ import React, {
   useState,
 } from 'react';
 
-import { X } from 'react-feather';
-import _ from 'lodash';
+import uniqueId from 'lodash/uniqueId';
 
 import {
   GhostX,
   Input,
   Td,
 } from 'components/drop-ins';
+import { X } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
 
 import 'style/layout.css';
@@ -53,7 +53,7 @@ export const TdEditable : React.FC<TdEditableProps> = ({
   className='',
   valueClassName='',
 }) => {
-  const [uid] = useState(_.uniqueId('datalist-uid-'));
+  const [uid] = useState(uniqueId('datalist-uid-'));
   const [prevValue, setPrevValue] = useState(value);
   const internalEditStatePair = useState(EditState.DEFAULT);
   if (!editState) [editState, setEditState] = internalEditStatePair;

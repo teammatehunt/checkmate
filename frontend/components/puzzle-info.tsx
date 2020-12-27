@@ -6,10 +6,9 @@ import React, {
 } from 'react';
 
 import produce from 'immer';
-import _ from 'lodash';
+import isEqual from 'lodash/isEqual';
 import { DndProvider, DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Check, Edit3, ExternalLink, Plus, X } from 'react-feather';
 
 import {
   Input,
@@ -23,6 +22,7 @@ import {
   EditState,
   TdEditable,
 } from 'components/td-editable';
+import { Check, Edit3, ExternalLink, Plus, X } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
 import {
   fetchJson,
@@ -59,7 +59,7 @@ const Feeds : React.FC<FeedsProps>= ({
   const optionsSlugs = options.filter(slug => !slugSet.has(slug));
   useEffect(() => {
     if (editState === EditState.WAITING) {
-      if (!_.isEqual(prevSlugs, slugs)) {
+      if (!isEqual(prevSlugs, slugs)) {
         setEditState(EditState.DEFAULT);
       }
     }
@@ -256,7 +256,7 @@ const Feeders : React.FC<FeedersProps>= ({
         if (toDone) setEditState(EditState.DEFAULT);
         break;
       case EditState.WAITING:
-        if (!_.isEqual(prevSlugs, slugs)) {
+        if (!isEqual(prevSlugs, slugs)) {
           if (toDone) {
             setEditState(EditState.DEFAULT);
           } else {
