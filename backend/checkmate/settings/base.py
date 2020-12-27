@@ -41,7 +41,7 @@ else:
 SECRET_KEY = SECRETS.get('SECRET_KEY')
 if SECRET_KEY is None:
     logger.warning('Using a default secret key')
-    SECRET_KEY = 'z2fz@_zi&qb2yy_9gv7955_(*pykz6qw=qdqhdy2e%0_500i68'
+    SECRET_KEY = 'k-Mmzuzy882vG6Captio-0yDNLjDW4ijBAkc_lBC39DHfQq8seyfEKzcqUoPWt904hJ-V0W-Cf45bMbQxc1fqg'
 
 
 # Trust Reverse Proxy. This is dangerous if used without one.
@@ -50,12 +50,12 @@ SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-DOMAIN = SECRETS.get('DOMAIN', 'https://localhost')
+ORIGIN = os.environ.get('ORIGIN', 'https://localhost')
 ALLOWED_HOSTS = [
     '.localhost',
     '127.0.0.1',
     '[::1]',
-    urlparse(DOMAIN).hostname,
+    urlparse(ORIGIN).hostname,
 ]
 
 # Application definition
@@ -131,19 +131,18 @@ ASGI_APPLICATION = 'checkmate.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'checkmate_postgres',
-        'HOST': 'localhost',
+        'NAME': 'postgres',
+        'HOST': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
     }
 }
-DATABASES['default'].update(SECRETS.get('DATABASE', {}))
 
 
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': 'redis://redis:6379/1',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
@@ -155,7 +154,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
+            'hosts': [('redis', 6379)],
         },
     },
 }
@@ -227,9 +226,7 @@ FRONTEND_DIR = PROJECT_DIR / 'frontend'
 BACKEND_DIR = BASE_DIR
 STATICFILES_DIRS = [
     os.path.join(BACKEND_DIR, 'static'),
-    os.path.join(FRONTEND_DIR, 'build', 'static'),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'build', 'static')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # External services configuration
@@ -244,8 +241,8 @@ if 'credentials_file' in DRIVE_SETTINGS:
         DRIVE_SETTINGS['credentials'] = json.load(f)
 
 # Celery
-CELERY_BROKER_URL = 'redis://localhost:6379/2'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/2'
+CELERY_BROKER_URL = 'redis://redis:6379/2'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/2'
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     'visibility_timeout': 5 * 60,
 }

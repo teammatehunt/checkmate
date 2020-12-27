@@ -1,0 +1,25 @@
+version: '3.7'
+
+services:
+  caddy:
+    environment:
+      - SERVER_HOSTNAME=localhost
+    ports:
+      - '8080:80'
+      - '8081:443'
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile
+      - ./backend/build/prod:/srv
+      - log_prod:/log
+
+  app:
+    restart: unless-stopped
+    environment:
+      - BUILD_MODE=prod
+      - SERVER_ORIGIN='https://localhost:8081'
+    volumes:
+      - .:/app
+      - log_prod:/log
+
+volumes:
+  log_prod:

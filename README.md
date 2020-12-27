@@ -11,34 +11,27 @@ Drive:
 
 Ensure the database is setup:
 ```
-docker-compose up -d
-PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE checkmate_postgres'
-cd backend
-. ./.venv/bin/activate
-./manage.py makemigrations checkmate accounts puzzles
-./manage.py migrate
-./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
+docker-compose build
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker exec checkmate_app_1 app/backend/manage.py makemigrations checkmate accounts puzzles
+docker exec checkmate_app_1 app/backend/manage.py migrate
+docker exec checkmate_app_1 app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
+docker-compose down
 ```
 
-To run in `dev` mode, run the following in separate terminals:
-- `cd frontend && yarn start`
-- `cd backend && . ./.venv/bin/activate && celery -A checkmate worker --loglevel=INFO -n worker1@%h`
-- `cd backend && . ./.venv/bin/activate && ./manage.py runserver`
-- `cd backend && . ./.venv/bin/activate && ./manage.py runworker fan_root`
+To run in `dev` mode, run the following:
+```
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker restart checkmate_app_1
+```
 
-To run in `prod` mode, run the following:
+To run in `prod` mode, run the following (replace `docker-compose.prod.yml` with `docker-compose.prod.localhost.yml` if running locally):
 ```
 set -e
-cd frontend
 rm -rf frontent/build || true
-yarn build
-pushd
-cd backend
-rm -rf build || true
-. ./.venv/bin/activate
-./manage.py collectstatic
-popd
-deactivate
-docker-compose up -d
-docker restart checkmate_app
+docker exec checkmate_app_1 yarn --cwd app/frontend build
+rm -rf backend/build || true
+docker exec checkmate_app_1 app/backend/manage.py collectstatic
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker restart checkmate_app_1
 ```

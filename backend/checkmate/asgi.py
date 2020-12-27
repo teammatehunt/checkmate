@@ -19,7 +19,7 @@ from channels.routing import ChannelNameRouter, ProtocolTypeRouter, URLRouter
 import structure.routing
 import structure.consumers
 
-build = os.environ.get('DJANGO_SERVER', 'dev')
+build = os.environ.get('BUILD_MODE', 'dev')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'checkmate.settings.{build}')
 
 application = ProtocolTypeRouter({
@@ -30,6 +30,6 @@ application = ProtocolTypeRouter({
         )
     ),
     'channel': ChannelNameRouter({
-        structure.consumers.MASTER_CHANNEL_NAME: structure.consumers.FanConsumer.as_asgi(),
+        structure.consumers.MASTER_CHANNEL_NAME: structure.consumers.BroadcastMasterConsumer.as_asgi(),
     }),
 })

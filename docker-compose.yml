@@ -4,29 +4,19 @@ services:
   caddy:
     restart: unless-stopped
     image: caddy:2.2.1-alpine
-    environment:
-      - SERVER_HOSTNAME=localhost
-    ports:
-      - '80:80'
-      - '443:443'
-    network_mode: host
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./backend/build/static:/srv/static
       - caddy_data:/data
       - caddy_config:/config
-      - checkmate_log:/log
 
   postgres:
     restart: unless-stopped
     image: postgres
     environment:
-      - POSTGRES_DB=checkmate_postgres
+      - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
       - '127.0.0.1:5432:5432'
-    network_mode: host
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -35,19 +25,13 @@ services:
     image: redis
     ports:
       - '127.0.0.1:6379:6379'
-    network_mode: host
 
   app:
-    restart: unless-stopped
     build: .
-    environment:
-      - DJANGO_SERVER=prod
     volumes:
       - .:/app
-      - checkmate_log:/log
     ports:
       - '127.0.0.1:8000:8000'
-    network_mode: host
     depends_on:
       - postgres
       - redis
@@ -56,4 +40,3 @@ volumes:
   caddy_data:
   caddy_config:
   pgdata:
-  checkmate_log:

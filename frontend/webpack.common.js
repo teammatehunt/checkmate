@@ -13,7 +13,6 @@ module.exports = {
     ],
   },
   output: {
-    path: path.resolve(__dirname, "build/static"), // must be in Django STATICFILES_DIRS
     publicPath: "/static/", // must match Django STATIC_URL
     filename: "[name].js", // no filename hashing so Django can render in template
     chunkFilename: "[id]-[chunkhash].js", // hash chunks as these are loaded clientside

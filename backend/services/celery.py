@@ -3,7 +3,7 @@ import os
 from celery import Celery
 
 # set the default Django settings module for the 'celery' program.
-build = os.environ.get('DJANGO_SERVER', 'dev')
+build = os.environ.get('BUILD_MODE', 'dev')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'checkmate.settings.{build}')
 
 app = Celery('checkmate')

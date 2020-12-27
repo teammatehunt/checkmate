@@ -12,7 +12,7 @@ from django import dispatch
 
 from . import api
 
-MASTER_CHANNEL_NAME = 'fan_root'
+MASTER_CHANNEL_NAME = 'channels_master'
 CLIENT_GROUP_NAME = 'all_updates'
 
 
@@ -63,7 +63,7 @@ class ClientConsumer(AsyncWebsocketConsumer):
         )
 
 
-class FanConsumer(SyncConsumer):
+class BroadcastMasterConsumer(SyncConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.timestamp = None

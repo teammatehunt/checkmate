@@ -97,7 +97,7 @@ async def populate_puzzle(
     discord_manager = DiscordManager.instance()
     google_manager = GoogleManager.instance()
 
-    checkmate_link = f'{settings.DOMAIN}/puzzles/{puzzle.slug}'
+    checkmate_link = f'{settings.ORIGIN}/puzzles/{puzzle.slug}'
     tasks = {}
     if sheet and not puzzle.sheet_link:
         tasks['sheet'] = google_manager.create(puzzle.name)
