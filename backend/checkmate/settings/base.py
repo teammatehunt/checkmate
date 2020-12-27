@@ -43,7 +43,14 @@ if SECRET_KEY is None:
     logger.warning('Using a default secret key')
     SECRET_KEY = 'z2fz@_zi&qb2yy_9gv7955_(*pykz6qw=qdqhdy2e%0_500i68'
 
-DOMAIN = SECRETS.get('DOMAIN', 'http://localhost')
+
+# Trust Reverse Proxy. This is dangerous if used without one.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+DOMAIN = SECRETS.get('DOMAIN', 'https://localhost')
 ALLOWED_HOSTS = [
     '.localhost',
     '127.0.0.1',

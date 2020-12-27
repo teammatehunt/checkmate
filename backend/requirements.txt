@@ -2,6 +2,7 @@ aiogoogle
 celery
 channels
 channels-redis
+daphne
 discord.py
 django
 django-admin-hstore-widget
@@ -10,10 +11,12 @@ django-autoslug
 django-cachalot
 django-crum
 django-extensions
+django-feature-policy
 django-redis
 djangorestframework
 psycopg2
 pyyaml
+Twisted[tls,http2]
 unidecode
 wheel
 whitenoise

@@ -11,10 +11,9 @@ Drive:
 
 Ensure the database is setup:
 ```
-cd backend
-docker run -d --name checkmate-redis -p 6379:6379 redis
-docker run -d --name checkmate-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres
+docker-compose up -d
 PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c 'CREATE DATABASE checkmate_postgres'
+cd backend
 . ./.venv/bin/activate
 ./manage.py makemigrations checkmate accounts puzzles
 ./manage.py migrate
@@ -30,19 +29,16 @@ To run in `dev` mode, run the following in separate terminals:
 To run in `prod` mode, run the following:
 ```
 set -e
-pushd
 cd frontend
-rm -rf build || true
+rm -rf frontent/build || true
 yarn build
-popd
 pushd
 cd backend
 rm -rf build || true
 . ./.venv/bin/activate
 ./manage.py collectstatic
-DJANGO_SERVER=prod celery -A checkmate worker --loglevel=INFO -n worker1@%h &
-DJANGO_SERVER=prod ./manage.py runworker fan_root &
-DJANGO_SERVER=prod ./manage.py runserver &
-wait
 popd
+deactivate
+docker-compose up -d
+docker restart checkmate_app
 ```

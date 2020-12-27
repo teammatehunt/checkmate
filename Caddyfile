@@ -1,0 +1,14 @@
+{$SERVER_HOSTNAME} {
+  log {
+    output file /log/caddy.log
+  }
+
+  encode zstd gzip
+
+  route {
+    file_server /static/* {
+      root /srv
+    }
+    reverse_proxy localhost:8000
+  }
+}

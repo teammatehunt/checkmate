@@ -156,7 +156,7 @@ export const Main : React.FC<MainProps> = props => {
       } catch (error) {}
     };
     const openWebsocket = () => {
-      const socket = new WebSocket(`ws://${window.location.host}/ws/`);
+      const socket = new WebSocket(`wss://${window.location.host}/ws/`);
       socket.addEventListener('message', (e) => {
         const _data = JSONbig.parse(e.data);
         dataDispatch({
