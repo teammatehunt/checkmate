@@ -29,6 +29,9 @@ services:
 
   app:
     build: .
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
     volumes:
       - .:/app:ro
       - ./frontend/.docker.yarnrc:/app/frontend/.yarnrc:ro

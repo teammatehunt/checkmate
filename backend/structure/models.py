@@ -21,6 +21,7 @@ class HuntConfig(models.Model):
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
     root = CharField(blank=True, help_text='Hunt prefix (protocol, domain, and path prefix). (eg https://example.com)')
+    puzzles_page = CharField(blank=True, help_text='Page with puzzles list to pass to scraper.')
     discord_server_id = models.BigIntegerField(
         null=True, blank=True,
         default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))

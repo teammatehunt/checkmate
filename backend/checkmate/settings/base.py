@@ -51,6 +51,9 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 ORIGIN = os.environ.get('ORIGIN', 'https://localhost')
+POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'localhost')
+REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+
 ALLOWED_HOSTS = [
     '.localhost',
     '127.0.0.1',
@@ -132,7 +135,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'postgres',
-        'HOST': 'postgres',
+        'HOST': POSTGRES_HOST,
         'USER': 'postgres',
         'PASSWORD': 'postgres',
     }
@@ -142,7 +145,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://redis:6379/1',
+        'LOCATION': f'redis://{REDIS_HOST}:6379/1',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
@@ -154,7 +157,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('redis', 6379)],
+            'hosts': [(REDIS_HOST, 6379)],
         },
     },
 }
@@ -230,6 +233,7 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = '/build/backend/static'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_ROOT = os.path.join(BACKEND_DIR, 'static_root')
 
 # External services configuration
 # allow all as if they were root document
@@ -243,8 +247,8 @@ if 'credentials_file' in DRIVE_SETTINGS:
         DRIVE_SETTINGS['credentials'] = json.load(f)
 
 # Celery
-CELERY_BROKER_URL = 'redis://redis:6379/2'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/2'
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:6379/2'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:6379/2'
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     'visibility_timeout': 5 * 60,
 }

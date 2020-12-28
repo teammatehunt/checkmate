@@ -22,9 +22,9 @@ RUN yarn install --non-interactive --frozen-lockfile
 
 # generate python environment and then copy node_modules and configs over
 FROM base
-COPY backend/requirements.txt .
-RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt
+COPY backend/requirements.txt ./
+RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+
 COPY --from=node_modules /node_modules /node_modules
 
 ENV PYTHONUNBUFFERED 1

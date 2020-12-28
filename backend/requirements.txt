@@ -1,4 +1,6 @@
 aiogoogle
+aiohttp[speedups]
+beautifulsoup4
 celery
 channels
 channels-redis
@@ -16,6 +18,7 @@ django-redis
 djangorestframework
 psycopg2
 pyyaml
+requests
 Twisted[tls,http2]
 unidecode
 wheel

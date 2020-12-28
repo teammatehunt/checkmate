@@ -1,7 +1,8 @@
 const glob = require('glob');
 const path = require('path');
 
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+// const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const CleanWebpackPlugin = require('webpack-clean-obsolete-chunks');
 
 module.exports = {
   entry: Object.assign({}, ...glob.sync('./apps/**/*.tsx').map(filename => ({ [path.parse(filename).name]: filename}))),
