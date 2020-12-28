@@ -9,7 +9,6 @@ services:
       - '443:443'
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile
-      - ./backend/build/prod:/srv
       - log_prod:/log
 
   app:
@@ -18,7 +17,7 @@ services:
       - BUILD_MODE=prod
       - SERVER_ORIGIN='https://checkmate.teammatehunt.com'
     volumes:
-      - .:/app
+      - build_prod:/build/backend
       - log_prod:/log
 
 volumes:

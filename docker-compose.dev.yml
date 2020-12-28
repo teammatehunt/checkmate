@@ -9,7 +9,6 @@ services:
       - '8081:443'
     volumes:
       - ./Caddyfile.dev:/etc/caddy/Caddyfile
-      - ./backend/build/dev:/srv
       - log_dev:/log
 
   app:
@@ -17,7 +16,6 @@ services:
       - BUILD_MODE=dev
       - SERVER_ORIGIN='https://localhost:8081'
     volumes:
-      - .:/app
       - log_dev:/log
 
 volumes:

@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     image: caddy:2.2.1-alpine
     volumes:
+      - build_prod:/srv:ro
       - caddy_data:/data
       - caddy_config:/config
 
@@ -29,7 +30,9 @@ services:
   app:
     build: .
     volumes:
-      - .:/app
+      - .:/app:ro
+      - ./frontend/.docker.yarnrc:/app/frontend/.yarnrc:ro
+      - /app/frontend/node_modules # ignore host node_modules
     ports:
       - '127.0.0.1:8000:8000'
     depends_on:
@@ -37,6 +40,7 @@ services:
       - redis
 
 volumes:
+  build_prod:
   caddy_data:
   caddy_config:
   pgdata:

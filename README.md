@@ -13,25 +13,19 @@ Ensure the database is setup:
 ```
 docker-compose build
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-docker exec checkmate_app_1 app/backend/manage.py makemigrations checkmate accounts puzzles
-docker exec checkmate_app_1 app/backend/manage.py migrate
-docker exec checkmate_app_1 app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
+docker-compose exec app /app/backend/manage.py makemigrations accounts checkmate structure
+docker-compose exec app /app/backend/manage.py migrate
+docker-compose exec app /app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
 docker-compose down
 ```
 
 To run in `dev` mode, run the following:
 ```
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-docker restart checkmate_app_1
 ```
 
 To run in `prod` mode, run the following (replace `docker-compose.prod.yml` with `docker-compose.prod.localhost.yml` if running locally):
 ```
-set -e
-rm -rf frontent/build || true
-docker exec checkmate_app_1 yarn --cwd app/frontend build
-rm -rf backend/build || true
-docker exec checkmate_app_1 app/backend/manage.py collectstatic
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-docker restart checkmate_app_1
+docker-compose exec app /app/build_static.sh
 ```

@@ -30,9 +30,9 @@
     "webpack-merge": "^5.7.3"
   },
   "scripts": {
-    "start": "webpack --config webpack.dev.js --watch",
-    "start:dev": "yarn start",
+    "start": "webpack --mode development --watch",
+    "start:dev": "webpack --mode development --watch",
     "start:prod": "sleep infinity",
-    "build": "webpack --config webpack.prod.js"
+    "build": "webpack --mode production"
   }
 }

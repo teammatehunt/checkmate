@@ -226,7 +226,9 @@ FRONTEND_DIR = PROJECT_DIR / 'frontend'
 BACKEND_DIR = BASE_DIR
 STATICFILES_DIRS = [
     os.path.join(BACKEND_DIR, 'static'),
+    '/build/frontend/static',
 ]
+STATIC_ROOT = '/build/backend/static'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # External services configuration

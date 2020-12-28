@@ -8,11 +8,13 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
     modules: [
+      '/node_modules',
       path.resolve(__dirname, 'node_modules'),
       path.resolve(__dirname),
     ],
   },
   output: {
+    path: "/build/frontend/static", // must be in Django STATICFILES_DIRS
     publicPath: "/static/", // must match Django STATIC_URL
     filename: "[name].js", // no filename hashing so Django can render in template
     chunkFilename: "[id]-[chunkhash].js", // hash chunks as these are loaded clientside
