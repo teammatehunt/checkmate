@@ -33,7 +33,7 @@ const setVoiceState = () => {
   if (newState !== currentState) document.body.setAttribute('voice-state', newState);
 };
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+const asyncOnMessage = async (message, sender) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'load-discord':
@@ -139,7 +139,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       break;
     }
   }
-});
+};
+chrome.runtime.onMessage.addListener((message, sender) => asyncOnMessage(message, sender));
 
 // update voice state class
 if (parseDiscordLocation(window.location.href)[0]) {

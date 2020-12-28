@@ -1,4 +1,4 @@
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'loaded-subframe':
@@ -15,8 +15,16 @@ window.addEventListener('ping', () => window.dispatchEvent(new Event('pong')));
 window.addEventListener('load-discord', (e) => {
   if (!e.detail.frameId) return;
   if (!e.detail.serverId) return;
-  chrome.runtime.sendMessage({
-    ...e.detail,
-    action: 'load-discord',
-  });
+  chrome.runtime.sendMessage(
+    {
+      ...e.detail,
+      action: 'load-discord',
+    },
+    {},
+    () => {
+      if (chrome.runtime.lastError) {
+        console.log('Error:', chrome.runtime.lastError.message);
+      }
+    },
+  );
 });

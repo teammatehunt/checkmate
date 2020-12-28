@@ -17,6 +17,14 @@ let discordInfo = {}; // {[tabId]: {[parentFrameId]: {frameId, serverId, voiceCh
 let discordFrame = {}; // {[tabId]: [frameId]}
 const DISCORD_FRAME = 'discord';
 
+const logError = () => {
+  if (chrome.runtime.lastError) {
+    console.log('Error:', chrome.runtime.lastError.message);
+    return true;
+  }
+  return false;
+}
+
 const sendLoadDiscord = (tabId, message) => {
   chrome.tabs.sendMessage(
     tabId,
@@ -24,6 +32,7 @@ const sendLoadDiscord = (tabId, message) => {
     {
       frameId: message.frameId,
     },
+    logError,
   );
 }
 
@@ -36,6 +45,7 @@ chrome.webRequest.onBeforeRequest.addListener(
           frameId: details.parentFrameId,
         },
         parentFrame => {
+          if (logError()) return;
           if (parentFrame && parentFrame.url.match(PARENT_REGEX)) {
             matchedRequestsCache[details.requestId] = true;
           }
@@ -84,6 +94,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
         frameId: details.parentFrameId,
       },
       parentFrame => {
+        if (logError()) return;
         if (!parentFrame) return;
         if (parentFrame.url.match(PARENT_REGEX)) {
           // set site-specific CSS
@@ -94,6 +105,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
                 frameId: details.frameId,
                 file: 'discord.css',
               },
+              logError,
             );
           }
           if (details.url.match(DRIVE_REGEX)) {
@@ -103,6 +115,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
                 frameId: details.frameId,
                 file: 'drive.css',
               },
+              logError,
             );
           }
           // tell parent that url loaded / changed
@@ -118,6 +131,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
               {
                 frameId: details.parentFrameId,
               },
+              logError,
             );
           };
           if (!(details.tabId in frameNames)) frameNames[details.tabId] = {};
@@ -128,6 +142,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
               frameId: details.frameId,
               file: '/keyhandler.js',
             },
+            logError,
           );
           chrome.tabs.executeScript(
             details.tabId,
@@ -137,10 +152,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
               runAt: 'document_start',
             },
             (results) => {
-              if (chrome.runtime.lastError) {
-                console.log('Error:', chrome.runtime.lastError.message);
-                return;
-              }
+              if (logError()) return;
               if (details.url.match(DISCORD_REGEX)) {
                 const message = (discordInfo[details.tabId]||{})[details.frameId];
                 if (message) sendLoadDiscord(details.tabId, message);
@@ -165,7 +177,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   }
 });
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'load-discord':
@@ -181,6 +193,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           {
             frameId: discordFrame[sender.tab.id],
           },
+          logError,
         );
       }
       break;

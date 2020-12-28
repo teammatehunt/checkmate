@@ -6,30 +6,38 @@ if (window.name !== 'discord') {
       case 'D':
       case 'M':
         e.preventDefault();
-        chrome.runtime.sendMessage({
-          action: 'keydown-discord',
-          event: (({
-            altKey,
-            charCode,
-            code,
-            ctrlKey,
-            key,
-            keyCode,
-            metaKey,
-            shiftKey,
-            which,
-          }) => ({
-            altKey,
-            charCode,
-            code,
-            ctrlKey,
-            key,
-            keyCode,
-            metaKey,
-            shiftKey,
-            which,
-          }))(e),
-        });
+        chrome.runtime.sendMessage(
+          {
+            action: 'keydown-discord',
+            event: (({
+              altKey,
+              charCode,
+              code,
+              ctrlKey,
+              key,
+              keyCode,
+              metaKey,
+              shiftKey,
+              which,
+            }) => ({
+              altKey,
+              charCode,
+              code,
+              ctrlKey,
+              key,
+              keyCode,
+              metaKey,
+              shiftKey,
+              which,
+            }))(e),
+          },
+          {},
+          () => {
+            if (chrome.runtime.lastError) {
+              console.log('Error:', chrome.runtime.lastError.message);
+            }
+          },
+        );
       }
     }
   });
