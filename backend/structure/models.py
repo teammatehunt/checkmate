@@ -21,10 +21,15 @@ class HuntConfig(models.Model):
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
     root = CharField(blank=True, help_text='Hunt prefix (protocol, domain, and path prefix). (eg https://example.com)')
-    puzzles_page = CharField(blank=True, help_text='Page with puzzles list to pass to scraper.')
     discord_server_id = models.BigIntegerField(
         null=True, blank=True,
         default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))
+
+    # Scraper settings
+    puzzles_page = CharField(blank=True, help_text='Page with puzzles list (or data endpoint) to be queried by scraper.')
+    login_page = CharField(blank=True, help_text='Login page (used by scraper).')
+    login_api_endpoint = CharField(blank=True, help_text='Login endpoint (used by scraper).')
+    enable_scraping = models.BooleanField(default=True, help_text='Enable scraping for new puzzles.')
 
     @classmethod
     def get(cls):
@@ -46,6 +51,8 @@ class Entity(models.Model):
                                   populate_from='name')
     name = CharField()
     link = CharField(blank=True, help_text='Can be path relative to hunt root')
+    original_link = CharField(blank=True, editable=False,
+                              help_text='Link upon creation. (Used to ensure scraper does not duplicate)')
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                    null=True, editable=False,
@@ -75,7 +82,8 @@ class Entity(models.Model):
         auto_fields = ['modified', 'modified_by']
         if self._state.adding:
             self.created_by = user
-            auto_fields.extend(['created', 'created_by'])
+            self.original_link = self.link
+            auto_fields.extend(['created', 'created_by', 'original_link'])
         if 'update_fields' in kwargs:
             kwargs['update_fields'] = list({*kwargs['update_fields'], *auto_fields})
         super().save(*args, **kwargs)
@@ -103,6 +111,7 @@ class Puzzle(Entity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.original_is_meta = self.is_meta
+        self.original_solved = self.solved
 
     def save(self, *args, **kwargs):
         feeder_ids = set(self.feeders.through.objects.filter(meta_id=self.pk))
@@ -110,6 +119,9 @@ class Puzzle(Entity):
         if feeder_ids:
             self.is_meta = True
             auto_fields.append('is_meta')
+        if self.solved is not None and self.solved != self.original_solved:
+            self.solved_by = crum.get_current_user()
+            auto_fields.append('solved_by')
         if 'update_fields' in kwargs:
             kwargs['update_fields'] = list({*kwargs['update_fields'], *auto_fields})
         with transaction.atomic():
@@ -133,6 +145,7 @@ class BasePuzzleRelation(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['order']
         get_latest_by = 'created'
         required_db_features = {
             'supports_deferrable_unique_constraints',
@@ -199,7 +212,6 @@ class RoundPuzzle(BasePuzzleRelation):
     puzzle = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='round_relations')
 
     class Meta(BasePuzzleRelation.Meta):
-        ordering = ['round', 'order']
         constraints = [
             models.UniqueConstraint(
                 fields=['round', 'puzzle'], name='unique_puzzle',
@@ -239,7 +251,6 @@ class MetaFeeder(BasePuzzleRelation):
     feeder = models.ForeignKey('Puzzle', on_delete=models.CASCADE, related_name='meta_relations')
 
     class Meta(BasePuzzleRelation.Meta):
-        ordering = ['meta', 'order']
         constraints = [
             models.CheckConstraint(check=~models.Q(meta=models.F('feeder')), name='meta_ne_feeder'),
             models.UniqueConstraint(

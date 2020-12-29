@@ -1,5 +1,6 @@
 import datetime
 import inspect
+import logging
 
 from django import db
 from django.contrib.auth.decorators import login_required
@@ -11,6 +12,8 @@ from allauth.socialaccount.models import SocialAccount
 
 from services import tasks
 from . import models
+
+logger = logging.getLogger(__name__)
 
 class SocialAccountSerializer(serializers.ModelSerializer):
     extra_data = serializers.JSONField()
@@ -226,12 +229,23 @@ def process_relation(cls, pk, request):
         raise exceptions.APIException(e)
 
 def data_everything():
-    hunt_config = HuntConfigSerializer(models.HuntConfig.get()).data
-    users = UserSerializer(User.objects.all(), many=True).data
-    rounds = BaseRoundSerializer(models.Round.objects.all(), many=True).data
-    puzzles = BasePuzzleSerializer(models.Puzzle.objects.all(), many=True).data
-    round_puzzles = models.RoundPuzzle.objects.all()
-    meta_feeders = models.MetaFeeder.objects.all()
+    # using Django REST Framework serializers directly is slow
+    # hunt_config = HuntConfigSerializer(models.HuntConfig.get()).data
+    hunt_config = models.HuntConfig.get()
+    hunt_config = {key: getattr(hunt_config, key) for key in HuntConfigSerializer().fields.keys()}
+    user_keys = list(UserSerializer().fields.keys())
+    socialaccount_keys = list()
+    all_user_keys = [*user_keys, *(f'socialaccount__{key}' for key in socialaccount_keys)]
+    users = User.objects.values(*(key for key in user_keys if key != 'socialaccounts'))
+    socialaccounts = SocialAccount.objects.values('user_id', *SocialAccountSerializer().fields.keys())
+    user_by_id = {user['id']: user for user in users}
+    for socialaccount in socialaccounts:
+        user_by_id[socialaccount['user_id']].setdefault('socialaccount', []).append(
+            {key: socialaccount[key] for key in SocialAccountSerializer().fields.keys()})
+    rounds = models.Round.objects.values(*BaseRoundSerializer().fields.keys())
+    puzzles = models.Puzzle.objects.values(*BasePuzzleSerializer().fields.keys())
+    round_puzzles = list(models.RoundPuzzle.objects.values('round_id', 'puzzle_id'))
+    meta_feeders = list(models.MetaFeeder.objects.values('meta_id', 'feeder_id'))
     round_by_slug = {}
     puzzle_by_slug = {}
     for _round in rounds:
@@ -243,15 +257,19 @@ def data_everything():
         puzzle.setdefault('metas', [])
         puzzle.setdefault('feeders', [])
     for round_puzzle in round_puzzles:
-        if round_puzzle.puzzle_id in puzzle_by_slug:
-            puzzle_by_slug[round_puzzle.puzzle_id]['rounds'].append(round_puzzle.round_id)
-        if round_puzzle.round_id in round_by_slug:
-            round_by_slug[round_puzzle.round_id]['puzzles'].append(round_puzzle.puzzle_id)
+        puzzle = puzzle_by_slug.get(round_puzzle['puzzle_id'])
+        _round = round_by_slug.get(round_puzzle['round_id'])
+        if puzzle is not None:
+            puzzle['rounds'].append(round_puzzle['round_id'])
+        if _round is not None:
+            _round['puzzles'].append(round_puzzle['puzzle_id'])
     for meta_feeder in meta_feeders:
-        if meta_feeder.feeder_id in puzzle_by_slug:
-            puzzle_by_slug[meta_feeder.feeder_id]['metas'].append(meta_feeder.meta_id)
-        if meta_feeder.meta_id in puzzle_by_slug:
-            puzzle_by_slug[meta_feeder.meta_id]['feeders'].append(meta_feeder.feeder_id)
+        feeder = feeder_by_slug.get(meta_feeder['feeder_id'])
+        meta = meta_by_slug.get(meta_feeder['meta_id'])
+        if feeder is not None:
+            feeder['metas'].append(meta_feeder['meta_id'])
+        if meta is not None:
+            meta['feeders'].append(meta_feeder['feeder_id'])
     data = {
         'hunt': hunt_config,
         'users': {user['id']: user for user in users},

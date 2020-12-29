@@ -12,7 +12,7 @@ class GoogleManager:
     @classmethod
     def instance(cls):
         '''
-        Get single instance per process.
+        Get a single instance per process.
         '''
         if cls.__instance is None:
             cls.__instance = cls()

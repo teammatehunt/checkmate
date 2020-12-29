@@ -16,7 +16,7 @@ class DiscordManager:
     @classmethod
     def instance(cls):
         '''
-        Get single instance per process.
+        Get a single instance per process.
         Not threadsafe.
         '''
         if cls.__instance is None:

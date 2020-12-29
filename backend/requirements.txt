@@ -16,10 +16,11 @@ django-extensions
 django-feature-policy
 django-redis
 djangorestframework
+html5lib
 psycopg2
 pyyaml
 requests
-Twisted[tls,http2]
+twisted[tls,http2]
 unidecode
 wheel
 whitenoise

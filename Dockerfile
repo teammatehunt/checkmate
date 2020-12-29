@@ -31,7 +31,7 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 # yarn --modules-folder has a bug for .bin so add to the path manually
 ENV PATH="${PATH}:/node_modules/.bin"
-RUN mkdir /run/daphne
+RUN mkdir /run/daphne /run/celery
 COPY supervisord.conf /etc/supervisor/conf.d/checkmate.conf
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/checkmate.conf"]

@@ -152,7 +152,6 @@ CACHES = {
     },
 }
 
-
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -205,7 +204,7 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
 }
 DEFAULT_AUTHENTICATION_CLASSES = [
     'rest_framework.authentication.SessionAuthentication',
@@ -259,4 +258,15 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_ENABLE_UTC = True
-
+CELERY_BEAT_SCHEDULE = {
+    'auto_create_new_puzzles': {
+        'task': 'services.tasks.auto_create_new_puzzles',
+        'kwargs': {
+            'dry_run': False,
+        },
+        'schedule': 30.0, # every 30 seconds
+        'options': {
+            'expires': 20.0,
+        },
+    },
+}
