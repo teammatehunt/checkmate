@@ -231,21 +231,22 @@ def process_relation(cls, pk, request):
 def data_everything():
     # using Django REST Framework serializers directly is slow
     # hunt_config = HuntConfigSerializer(models.HuntConfig.get()).data
+    def cast(objs):
+        return [{key: value.isoformat() if isinstance(value, datetime.datetime) else value
+                 for key, value in obj.items()}
+                for obj in objs]
     hunt_config = models.HuntConfig.get()
     hunt_config = {key: getattr(hunt_config, key) for key in HuntConfigSerializer().fields.keys()}
-    user_keys = list(UserSerializer().fields.keys())
-    socialaccount_keys = list()
-    all_user_keys = [*user_keys, *(f'socialaccount__{key}' for key in socialaccount_keys)]
-    users = User.objects.values(*(key for key in user_keys if key != 'socialaccounts'))
-    socialaccounts = SocialAccount.objects.values('user_id', *SocialAccountSerializer().fields.keys())
+    users = cast(User.objects.values(*(key for key in UserSerializer().fields.keys() if key != 'socialaccounts')))
+    socialaccounts = cast(SocialAccount.objects.values('user_id', *SocialAccountSerializer().fields.keys()))
     user_by_id = {user['id']: user for user in users}
     for socialaccount in socialaccounts:
         user_by_id[socialaccount['user_id']].setdefault('socialaccount', []).append(
             {key: socialaccount[key] for key in SocialAccountSerializer().fields.keys()})
-    rounds = models.Round.objects.values(*BaseRoundSerializer().fields.keys())
-    puzzles = models.Puzzle.objects.values(*BasePuzzleSerializer().fields.keys())
-    round_puzzles = list(models.RoundPuzzle.objects.values('round_id', 'puzzle_id'))
-    meta_feeders = list(models.MetaFeeder.objects.values('meta_id', 'feeder_id'))
+    rounds = cast(models.Round.objects.values(*BaseRoundSerializer().fields.keys()))
+    puzzles = cast(models.Puzzle.objects.values(*BasePuzzleSerializer().fields.keys()))
+    round_puzzles = cast(models.RoundPuzzle.objects.values('round_id', 'puzzle_id'))
+    meta_feeders = cast(models.MetaFeeder.objects.values('meta_id', 'feeder_id'))
     round_by_slug = {}
     puzzle_by_slug = {}
     for _round in rounds:

@@ -4,19 +4,19 @@
   padding: 2em;
 }
 
-.master .table {
+.sub-master.table {
   border-collapse: separate;
   margin: 0 auto;
   border: 1px solid lightgray;
 }
 
-.master .th,
-.master .td {
+.sub-master.th,
+.sub-master.td {
   padding: var(--td-field-padding);
   border: 1px solid lightgray;
   font-size: smaller;
 }
-.master .th {
+.sub-master.th {
   border: 1px solid gray;
   color: white;
   background-color: dimgray;
@@ -24,57 +24,57 @@
   top: -1px;
   z-index: 1;
 }
-.master .td {
+.sub-master.td {
   vertical-align: middle;
   background-color: white;
 }
-.master .pseudoround .td {
+.sub-master.pseudoround .td {
   background-color: beige;
 }
 
 
-.master .name {
+.sub-master.name {
   position: sticky;
   left: -1px;
   z-index: 1;
   font-size: inherit;
 }
-.master .th.name {
+.sub-master.th.name {
   z-index: 2;
 }
-.master .round .name {
+.sub-master.round > .name {
   font-size: larger;
   font-weight: bold;
 }
-.master .round .th {
+.sub-master.round > .th {
   font-variant: small-caps;
 }
-.master .meta .name {
+.sub-master.meta > .name {
   font-weight: bold;
 }
-.master .metatag:after {
+.sub-master.metatag:after {
   content: 'meta: ';
   font-variant: small-caps;
   white-space: pre;
 }
 
-.master .editable:not(.editing):hover {
+.sub-master.editable:not(.editing):hover {
   /* z-index / borders behave weirdly so disable drop-shadow and use box-shadow only */
   filter: none;
 }
 
-.master .td-field.textarea:not(.multiline) br {
+.sub-master.td-field.textarea:not(.multiline) > .value > br {
   content: '';
 }
-.master .td-field.textarea:not(.multiline) br:after {
+.sub-master.td-field.textarea:not(.multiline) > .value > br:after {
   content: ' ';
   background-color: lightskyblue;
 }
 
-.master .td-field.answer {
+.sub-master.td-field.answer {
   min-width: 20ex;
   font-size: inherit;
 }
-.master .td-field.notes {
+.sub-master.td-field.notes {
   max-width: 40ex;
 }

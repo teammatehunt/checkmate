@@ -130,9 +130,9 @@ const Feeds : React.FC<FeedsProps>= ({
               </div>
           ))}
           <Input
-            className='puzzleinfo-input-entity'
-            list={`puzzleinfo-datalist-${type}`}
-            onBlur={onBlur}
+            className='puzzleinfo-input-entity',
+            list={`puzzleinfo-datalist-${type}`},
+            onBlur={onBlur},
           />
           <datalist id={`puzzleinfo-datalist-${type}`}>
             {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}

@@ -1,6 +1,8 @@
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -9,21 +11,23 @@ import uniqueId from 'lodash/uniqueId';
 
 import {
   GhostX,
+  FunctionalInput,
   Input,
   Td,
 } from 'components/drop-ins';
 import { X } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
+import { usePrevious } from 'utils/hooks';
 
 import 'style/layout.css';
 import 'style/td-editable.css';
 
 export enum EditState {
-  DEFAULT = 'default',
-  EDITING = 'editing',
-  RESETING = 'reseting',
-  CHECKING = 'checking',
-  WAITING = 'waiting',
+  DEFAULT,
+  EDITING,
+  RESETING,
+  CHECKING,
+  WAITING,
 }
 
 interface TdEditableProps {
@@ -40,7 +44,7 @@ interface TdEditableProps {
   valueClassName?: string;
 }
 
-export const TdEditable : React.FC<TdEditableProps> = ({
+export const TdEditable : React.FC<TdEditableProps> = React.memo(({
   value,
   editState,
   setEditState,
@@ -54,11 +58,10 @@ export const TdEditable : React.FC<TdEditableProps> = ({
   valueClassName='',
 }) => {
   const [uid] = useState(uniqueId('datalist-uid-'));
-  const [prevValue, setPrevValue] = useState(value);
+  const prevValue = usePrevious(value);
   const internalEditStatePair = useState(EditState.DEFAULT);
   if (!editState) [editState, setEditState] = internalEditStatePair;
   const inputRef = useRef(null);
-  const valueRef = useRef(null);
   useEffect(() => {
     switch (editState) {
       case EditState.DEFAULT:
@@ -78,8 +81,7 @@ export const TdEditable : React.FC<TdEditableProps> = ({
         }
         break;
     }
-    setPrevValue(value);
-  }, [value, prevValue, editState]);
+  }, [value, editState]);
   useEffect(() => {
     switch (editState) {
       case EditState.DEFAULT:
@@ -117,15 +119,15 @@ export const TdEditable : React.FC<TdEditableProps> = ({
 
   const displayStatic = !patch || (editState === EditState.DEFAULT && value);
 
-  const onClick = patch ? ((e) => setEditState(EditState.EDITING)) : undefined;
-  const onFocus = (e) => setEditState(EditState.EDITING);
+  const onClick = useMemo(() => patch ? ((e) => setEditState(EditState.EDITING)) : undefined, [patch]);
+  const onFocus = useCallback((e) => setEditState(EditState.EDITING), []);
 
-  const onBlur = (e) => {
+  const onBlur = useCallback((e) => {
     setEditState(editState => {
       if (editState === EditState.EDITING) return EditState.CHECKING;
       return editState;
     });
-  };
+  }, []);
 
   const color = editState === EditState.DEFAULT && colors?.[value];
   let backgroundColor = undefined;
@@ -137,52 +139,47 @@ export const TdEditable : React.FC<TdEditableProps> = ({
     backgroundColor = color;
   }
 
-  const ValueElement = textarea ? 'textarea' : 'input';
-  const valueLines = value.split(/\r?\n/).map((line, i) => (
+  const valueLines = useMemo(() => value?.split(/\r?\n/).map((line, i) => (
     <React.Fragment key={i}>
       {i ? <br/> : null}
-      <span>{line}</span>
+      <Twemoji>{line}</Twemoji>
     </React.Fragment>
-  ));
+  )), [value]);
 
   return (
-    <Td
-      className={`td-field ${patch ? 'editable' : ''} ${editState}  ${textarea ? `textarea ${expandTextarea || editState === EditState.EDITING ? 'multiline' : ''}` : ''} ${className}`}
+    <div
+      className={`td td-field ${patch ? 'editable' : ''} ${EditState[editState].toLowerCase()}  ${textarea ? `textarea ${expandTextarea || editState === EditState.EDITING ? 'multiline' : ''}` : ''} ${className}`}
       onClick={onClick}
       {...(color ? {style: {color: foregroundColor, backgroundColor: backgroundColor}} : {})}
+      ref={inputRef}
     >
       {(canReset && value && editState === EditState.DEFAULT || null) &&
       <X className='reset' color={foregroundColor} onClick={resetValue}/>
       }
-      <Input
-        className={`input ${displayStatic ? 'nodisplay' : ''}`}
-        textarea={textarea}
-        ref={inputRef}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        disabled={editState === EditState.WAITING}
-        {...(options ? {list: uid} : {})}
-      />
-      {(options || null) &&
+      {FunctionalInput({
+        className: `input ${displayStatic ? 'nodisplay' : ''}`,
+        textarea: textarea,
+        ref: inputRef,
+        onFocus: onFocus,
+        onBlur: onBlur,
+        disabled: editState === EditState.WAITING,
+        list: Array.isArray(options) ? uid : options,
+      })}
+      {(Array.isArray(options) || null) &&
       <datalist id={uid}>
         {options.map(option => <option key={option} value={option}/>)}
       </datalist>
       }
       <div
         className={`value ${valueClassName} ${displayStatic ? '' : 'hidden'}`}
-        ref={valueRef}
-        {...(options ? {style: {minWidth: `${Math.max(...options.map(opt => opt.length))}ex`}} : {})}
       >
-        <Twemoji>
-          {/* {value} */}
-          {valueLines}
-        </Twemoji>
+        {valueLines}
       </div>
       {(editState === EditState.WAITING || null) &&
       <div className='loader-container'>
         <div className='loader loading'/>
       </div>
       }
-    </Td>
+    </div>
   );
-};
+});

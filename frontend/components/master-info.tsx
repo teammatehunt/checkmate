@@ -47,23 +47,23 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
     if (set !== undefined) return set;
     const e = reduce;
     let value = undefined;
-    switch (e.target.tagName.toLowerCase()) {
+    switch (e.currentTarget.tagName.toLowerCase()) {
       case 'input':
-        switch (e.target.getAttribute('type')) {
+        switch (e.currentTarget.getAttribute('type')) {
           case 'checkbox':
-            value = e.target.checked;
+            value = e.currentTarget.checked;
             break;
           default:
-            value = e.target.value;
+            value = e.currentTarget.value;
             break;
         }
         break;
       case 'select':
-        if (e.target.hasAttribute('multiple')) value = [...e.target.selectedOptions].map(option => option.value);
-        else value = e.target.value;
+        if (e.currentTarget.hasAttribute('multiple')) value = [...e.currentTarget.selectedOptions].map(option => option.value);
+        else value = e.currentTarget.value;
         break;
     }
-    draft[e.target.getAttribute('name')] = value;
+    draft[e.currentTarget.getAttribute('name')] = value;
   });
 
   const [formPuzzleData, dispatchFormPuzzleData] = useReducer(formDataReducer, defaultFormPuzzleData);

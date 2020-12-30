@@ -1,15 +1,26 @@
-import BaseTwemoji from 'react-twemoji';
+import {
+  useEffect,
+  useRef,
+} from 'react';
+import twemoji from 'twemoji';
 
-const Twemoji = ({children, options, ...props} : {children?, options?}) => {
-  const _options = {
-    folder: 'svg',
-    ext: '.svg',
-    ...options,
-  };
+const options = {
+  folder: 'svg',
+  ext: '.svg',
+};
+
+export const Twemoji = ({children, ...rest}) => {
+  const ref = useRef(null);
+  useEffect(() => {
+    twemoji.parse(ref.current, options);
+  }, [children]);
   return (
-    <BaseTwemoji tag='span' options={_options} {...props}>
+    <span
+      ref={ref}
+      {...rest}
+    >
       {children}
-    </BaseTwemoji>
+    </span>
   );
 };
 export default Twemoji;

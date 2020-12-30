@@ -87,8 +87,8 @@ def create_puzzle(
         for _round in rounds:
             try:
                 models.RoundPuzzle.objects.get_or_create(round_id=_round, puzzle_id=puzzle.pk)
-            except:
-                logger.warning(f'Could not create relation RoundPuzzle(round_id={_round}, puzzle_id={puzzle.pk})')
+            except Exception as e:
+                logger.warning(f'Could not create relation RoundPuzzle(round_id={_round}, puzzle_id={puzzle.pk}): {e}')
     sync_populate_puzzle(
         puzzle=puzzle,
         sheet=sheet,

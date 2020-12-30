@@ -1,8 +1,10 @@
 import mountElement from 'utils/mount';
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -12,7 +14,6 @@ import * as JSONbig from 'json-bigint';
 import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
 
-import * as Model from 'utils/model';
 import Base from 'components/base';
 import { useLocalStorageObject } from 'components/context';
 import Master from 'components/master';
@@ -25,6 +26,7 @@ import {
   ShowIf,
 } from 'components/frames';
 import baseColors, { statuses as baseStatuses } from 'utils/colors';
+import * as Model from 'utils/model';
 
 import 'style/layout.css';
 import 'style/split-pane.css';
@@ -61,17 +63,23 @@ export const Main : React.FC<MainProps> = props => {
   const puzzles = data.puzzles;
   const puzzleData = puzzles[slug];
 
-  const loadDiscord = (_slug, frameId) => {
+  const puzzlesRef = useRef(puzzles);
+  const siteCtxRef = useRef(siteCtx);
+  const iframeDetailsRef = useRef(iframeDetails);
+  useEffect(() => puzzlesRef.current = puzzles, [puzzles]);
+  useEffect(() => siteCtxRef.current = siteCtx, [siteCtx]);
+  useEffect(() => iframeDetailsRef.current = iframeDetails, [iframeDetails]);
+  const loadDiscord = useCallback((_slug, frameId) => {
     // BigInt doesn't fit in JSON types
     const nullOrString = x => isBlank(x) ? null : x.toString();
     const e = new CustomEvent('load-discord', {detail: {
       frameId: frameId,
-      serverId: nullOrString(siteCtx.discord_server_id),
-      voiceChannelId: nullOrString(puzzles[_slug]?.discord_voice_channel_id),
-      textChannelId: nullOrString(puzzles[_slug]?.discord_text_channel_id),
+      serverId: nullOrString(siteCtxRef.current.discord_server_id),
+      voiceChannelId: nullOrString(puzzlesRef.current[_slug]?.discord_voice_channel_id),
+      textChannelId: nullOrString(puzzlesRef.current[_slug]?.discord_text_channel_id),
     }});
     window.dispatchEvent(e);
-  };
+  }, []);
 
   // Check for extension
   useEffect(() => {
@@ -89,7 +97,7 @@ export const Main : React.FC<MainProps> = props => {
   // custom event for listening to url changes in iframes
   useEffect(() => {
     const handler = (e) => {
-      if (e.detail.name === 'discord' && !('discord' in iframeDetails)) {
+      if (e.detail.name === 'discord' && !('discord' in iframeDetailsRef.current)) {
         loadDiscord(slug, e.detail.frameId);
       }
       iframeDetailsDispatch({[e.detail.name]: e.detail});
@@ -98,8 +106,8 @@ export const Main : React.FC<MainProps> = props => {
     return () => window.removeEventListener('loaded-subframe', handler);
   }, []);
 
-  const addTab = _slug => {
-    if (puzzles[_slug]?.hidden === false) {
+  const addTab = useCallback(_slug => {
+    if (puzzlesRef.current[_slug]?.hidden === false) {
       const _tabIndex = tabs.indexOf(_slug);
       if (_tabIndex === -1) {
         setTabs([_slug, ...tabs]);
@@ -109,17 +117,17 @@ export const Main : React.FC<MainProps> = props => {
       }
     }
     return null;
-  }
-  const loadSlug = _slug => {
+  }, [tabs]);
+  const loadSlug = useCallback(_slug => {
     if (_slug !== slug) {
       const _tabIndex = addTab(_slug);
       setSlug(_slug);
       setTabIndex(_tabIndex);
       const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
       history.pushState({slug: _slug}, '', url);
-      loadDiscord(_slug, iframeDetails.discord?.frameId);
+      loadDiscord(_slug, iframeDetailsRef.current.discord?.frameId);
     }
-  };
+  }, [slug, addTab]);
 
   // validate slug in tabs
   useEffect(() => {
@@ -138,12 +146,12 @@ export const Main : React.FC<MainProps> = props => {
   }, [tabs, data]);
 
   const activateTab = loadSlug;
-  const removeTab = (_slug) => {
+  const removeTab = useCallback((_slug) => {
     if (tabs.includes(_slug)) {
       const newTabs = tabs.filter(x => x !== _slug);
       setTabs(newTabs);
     }
-  }
+  }, [tabs]);
 
   // connect to websocket for updates
   const socketRef = useRef(null);
@@ -183,11 +191,13 @@ export const Main : React.FC<MainProps> = props => {
     siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));
 
   const [resizingClass, setResizingClass] = useState('');
-  const onDragStarted = () => setResizingClass('resizing');
-  const onDragFinishedSet = (set) => (x) => {
+  const onDragStarted = useCallback(() => setResizingClass('resizing'), []);
+  const onDragFinishedSet = useCallback((set) => (x) => {
     setResizingClass('');
     return set(x);
-  };
+  }, []);
+  const onDragFinishedVsplitter = onDragFinishedSet(setVsplitter);
+  const onDragFinishedRhsplitter = onDragFinishedSet(setRhsplitter);
 
   // TODO: extend with colors from database
   const statuses = baseStatuses;
@@ -213,7 +223,7 @@ export const Main : React.FC<MainProps> = props => {
             defaultSize={vsplitter || 240}
             minSize={50}
             onDragStarted={onDragStarted}
-            onDragFinished={onDragFinishedSet(setVsplitter)}
+            onDragFinished={onDragFinishedVsplitter}
           >
             <div>
               <ShowIf display={page === 'master'}>
@@ -243,7 +253,7 @@ export const Main : React.FC<MainProps> = props => {
               split='horizontal'
               defaultSize={rhsplitter || window.innerHeight / 2}
               onDragStarted={onDragStarted}
-              onDragFinished={onDragFinishedSet(setRhsplitter)}
+              onDragFinished={onDragFinishedRhsplitter}
             >
               <div className={`${page}info infopane pane`}>
                 <ShowIf display={page === 'master'}>

@@ -46,21 +46,35 @@ export const Link = (props) => {
   );
 };
 
+const inputOnKeyDown = (e) => {
+  switch (e.key) {
+    case 'Enter':
+      if (!(e.currentTarget.tagName.toLowerCase() === 'textarea' && e.shiftKey)) e.target.blur();
+    break;
+    case 'Escape':
+      // firefox doesn't blur on escape automatically
+      e.target.blur();
+    break;
+  }
+};
 export const Input = forwardRef<any, any>((props, ref) => {
   const {textarea, ...rest} = props;
   const Element = textarea ? 'textarea' : 'input';
-  const onKeyDown = props.onKeyDown || ((e) => {
-    switch (e.key) {
-      case 'Enter':
-        if (!(textarea && e.shiftKey)) e.target.blur();
-        break;
-      case 'Escape':
-        // firefox doesn't blur on escape automatically
-        e.target.blur();
-        break;
-    }
-  });
-
+  const onKeyDown = props.onKeyDown || inputOnKeyDown;
+  return (
+    <Element
+      ref={ref}
+      type='text'
+      onKeyDown={onKeyDown}
+      {...rest}
+    />
+  );
+});
+// FunctionalInput can be used to reduce one level of the React tree
+export const FunctionalInput = ({ref, ...props}) => {
+  const {textarea, ...rest} = props;
+  const Element = textarea ? 'textarea' : 'input';
+  const onKeyDown = props.onKeyDown || inputOnKeyDown;
   return (
     <Element
       ref={ref}
