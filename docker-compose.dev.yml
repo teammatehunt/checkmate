@@ -8,7 +8,7 @@ services:
       - '8080:80'
       - '8081:443'
     volumes:
-      - ./Caddyfile.dev:/etc/caddy/Caddyfile
+      - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - log_dev:/log
 
   app:

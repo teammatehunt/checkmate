@@ -1,41 +1,69 @@
 .master {
-  display: flex;
-  flex-direction: column;
   padding: 2em;
 }
 
 .sub-master.table {
+  table-layout: fixed;
   border-collapse: separate;
   margin: 0 auto;
-  border: 1px solid lightgray;
+  width: min-content;
+}
+
+.sub-master.tr {
+  height: 28px;
+}
+
+.sub-master.name { width: 10ex; }
+.sub-master.answer { width: 20ex; }
+.sub-master.status { width: 20ex; }
+.sub-master.notes { width: 40ex; }
+.sub-master.open-for { width: 20ex; }
+.sub-master.tag { width: 20ex; }
+
+.sub-master.th > div,
+.sub-master.td > div{
+  display: inline;
 }
 
 .sub-master.th,
 .sub-master.td {
-  padding: var(--td-field-padding);
-  border: 1px solid lightgray;
   font-size: smaller;
 }
+.sub-master.th ,
+.sub-master.td {
+  padding: var(--td-field-padding);
+  overflow: hidden;
+  white-space: nowrap;
+}
 .sub-master.th {
-  border: 1px solid gray;
+  border-top: 2px solid gray;
+  border-right: 2px solid gray;
+  border-bottom: 2px solid gray;
   color: white;
   background-color: dimgray;
   position: sticky;
-  top: -1px;
+  top: 0;
   z-index: 1;
 }
+.sub-master.th:first-child {
+  border-left: 2px solid gray;
+}
 .sub-master.td {
+  border-bottom: 2px solid lightgray;
+  border-right: 2px solid lightgray;
   vertical-align: middle;
   background-color: white;
+}
+.sub-master.td:first-child {
+  border-left: 2px solid lightgray;
 }
 .sub-master.pseudoround .td {
   background-color: beige;
 }
 
-
 .sub-master.name {
   position: sticky;
-  left: -1px;
+  left: 0px;
   z-index: 1;
   font-size: inherit;
 }
@@ -72,9 +100,5 @@
 }
 
 .sub-master.td-field.answer {
-  min-width: 20ex;
   font-size: inherit;
-}
-.sub-master.td-field.notes {
-  max-width: 40ex;
 }

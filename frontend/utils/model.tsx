@@ -51,6 +51,7 @@ export interface Round extends Entity {
 
   puzzles: string[]; // puzzle slugs
 
+  tagNames?: string[]; // TODO
   is_pseudoround?: boolean; // set clientside, not on server
 }
 

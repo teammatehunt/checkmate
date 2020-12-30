@@ -50,6 +50,39 @@ export const Main : React.FC<MainProps> = props => {
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
   const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
 
+  // detect which rows are on screen
+  const mainPaneChildRef = useRef(null);
+  const [masterYDims, dispatchMasterYDims] = useReducer((state, action) => {
+    const scrollTop = mainPaneChildRef.current.parentElement.scrollTop;
+    const height = mainPaneChildRef.current.parentElement.getBoundingClientRect().height;
+    const scrollHeight = mainPaneChildRef.current.parentElement.scrollHeight;
+    const thresh = 0.1;
+    if (state.scrollHeight === null ||
+        Math.abs(scrollTop - state.scrollTop) >= thresh * height ||
+        Math.abs((scrollTop + height) - (state.scrollTop + state.height)) >= thresh * height) {
+      return {scrollTop, height, scrollHeight};
+    } else {
+      return state;
+    }
+  },
+  {
+    scrollTop: 0,
+    height: document.body.getBoundingClientRect().height,
+    scrollHeight: null,
+  });
+  useEffect(() => {
+    const handler = () => {
+      window.requestAnimationFrame(dispatchMasterYDims);
+    }
+    mainPaneChildRef.current.parentElement.addEventListener('scroll', handler, {passive: true});
+    window.addEventListener('resize', handler, {passive: true});
+    handler();
+    return () => {
+      mainPaneChildRef.current.parentElement.removeEventListener('scroll', handler);
+      window.removeEventListener('resize', handler);
+    };
+  }, []);
+
   const hideSolved = useLocalStorageObject<boolean>('master/hide-solved', false);
 
   // because tabs can update outside of this window
@@ -66,9 +99,9 @@ export const Main : React.FC<MainProps> = props => {
   const puzzlesRef = useRef(puzzles);
   const siteCtxRef = useRef(siteCtx);
   const iframeDetailsRef = useRef(iframeDetails);
-  useEffect(() => puzzlesRef.current = puzzles, [puzzles]);
-  useEffect(() => siteCtxRef.current = siteCtx, [siteCtx]);
-  useEffect(() => iframeDetailsRef.current = iframeDetails, [iframeDetails]);
+  useEffect(() => { puzzlesRef.current = puzzles; }, [puzzles]);
+  useEffect(() => { siteCtxRef.current = siteCtx; }, [siteCtx]);
+  useEffect(() => { iframeDetailsRef.current = iframeDetails; }, [iframeDetails]);
   const loadDiscord = useCallback((_slug, frameId) => {
     // BigInt doesn't fit in JSON types
     const nullOrString = x => isBlank(x) ? null : x.toString();
@@ -225,7 +258,7 @@ export const Main : React.FC<MainProps> = props => {
             onDragStarted={onDragStarted}
             onDragFinished={onDragFinishedVsplitter}
           >
-            <div>
+            <div ref={mainPaneChildRef}>
               <ShowIf display={page === 'master'}>
                 <Master
                   isActive={page === 'master'}
@@ -234,6 +267,7 @@ export const Main : React.FC<MainProps> = props => {
                   statuses={statuses}
                   colors={colors}
                   hideSolved={hideSolved.value}
+                  yDims={masterYDims}
                 />
               </ShowIf>
               <ShowIf display={page === 'puzzle'}>

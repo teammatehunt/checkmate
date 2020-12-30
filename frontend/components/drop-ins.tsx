@@ -83,4 +83,4 @@ export const FunctionalInput = ({ref, ...props}) => {
       {...rest}
     />
   );
-});
+};

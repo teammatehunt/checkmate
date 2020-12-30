@@ -36,7 +36,7 @@ interface TdEditableProps {
   setEditState?: any;
   textarea?: boolean;
   expandTextarea?: boolean;
-  options?: string[];
+  options?: string[] | string;
   patch?: any;
   canReset?: boolean;
   colors?: {[value: string]: string};
@@ -151,7 +151,6 @@ export const TdEditable : React.FC<TdEditableProps> = React.memo(({
       className={`td td-field ${patch ? 'editable' : ''} ${EditState[editState].toLowerCase()}  ${textarea ? `textarea ${expandTextarea || editState === EditState.EDITING ? 'multiline' : ''}` : ''} ${className}`}
       onClick={onClick}
       {...(color ? {style: {color: foregroundColor, backgroundColor: backgroundColor}} : {})}
-      ref={inputRef}
     >
       {(canReset && value && editState === EditState.DEFAULT || null) &&
       <X className='reset' color={foregroundColor} onClick={resetValue}/>
@@ -167,7 +166,7 @@ export const TdEditable : React.FC<TdEditableProps> = React.memo(({
       })}
       {(Array.isArray(options) || null) &&
       <datalist id={uid}>
-        {options.map(option => <option key={option} value={option}/>)}
+        {(options as string[]).map(option => <option key={option} value={option}/>)}
       </datalist>
       }
       <div

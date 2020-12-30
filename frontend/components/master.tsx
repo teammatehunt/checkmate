@@ -1,6 +1,8 @@
 import React, {
   useCallback,
+  useLayoutEffect,
   useMemo,
+  useRef,
 } from 'react';
 
 import produce from 'immer';
@@ -26,28 +28,37 @@ import * as Model from 'utils/model';
 
 import 'style/master.css';
 
+const emptyRow = () => {
+  return (
+    <div className='tr sub-master'/>
+  );
+};
+
 interface RoundProps {
   round: Model.Round;
   roundTags: string[] | null;
+  visible: boolean;
 }
 
-const Round = React.memo(({
+const Round : React.FC<RoundProps> = React.memo(({
   round,
   roundTags,
+  visible,
 }) => {
+  // Round is always visible (we need it because it is sticky)
   return (
     <div className={`tr sub-master round ${round.is_pseudoround ? 'pseudoround' : ''}`}>
-      <div className='th sub-master name'>
+      <div className='th sub-master name'><div>
         <Twemoji>
           {round.name}
         </Twemoji>
-      </div>
-      <div className='th sub-master'>Answer</div>
-      <div className='th sub-master'>Status</div>
-      <div className='th sub-master'>Notes</div>
-      <div className='th sub-master'>Open For</div>
+      </div></div>
+      <div className='th sub-master answer'><div>Answer</div></div>
+      <div className='th sub-master status'><div>Status</div></div>
+      <div className='th sub-master notes'><div>Notes</div></div>
+      <div className='th sub-master open-for'><div>Open For</div></div>
       {(roundTags || []).map(tag => (
-        <div key={tag} className='th sub-master capitalize'>{tag}</div>
+        <div key={tag} className='th sub-master tag capitalize'><div>{tag}</div></div>
       ))}
     </div>
   );
@@ -60,6 +71,7 @@ interface PuzzleProps {
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
   isPseudoround?: boolean;
+  visible: boolean;
 }
 
 const Puzzle : React.FC<PuzzleProps> = React.memo(({
@@ -69,6 +81,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   statuses,
   colors,
   isPseudoround,
+  visible,
 }) => {
   const patchValue = useMemo(() => (key, isTags=false) => {
     return async (value) => {
@@ -98,9 +111,11 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   );
   const openForStyle = useMemo(() => Model.isSolved(puzzle, colors) ? {backgroundColor: colors?.solved} : undefined, [puzzle, colors]);
 
+  if (!visible) return emptyRow();
+
   return (
     <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
-      <div className='td sub-master name'>
+      <div className='td sub-master name'><div>
         {Link({
           className: 'restyle',
           href: `/puzzles/${puzzle.slug}`,
@@ -111,7 +126,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
             </Twemoji>
           ),
         })}
-      </div>
+      </div></div>
       <TdEditable
         className='sub-master answerize answer'
         value={puzzle.answer}
@@ -131,11 +146,11 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
         textarea
         expandTextarea={false}
       />
-      <div className='td sub-master open-for' style={openForStyle}>
+      <div className='td sub-master open-for' style={openForStyle}><div>
         {hasCreated ? humanDuration : null}
-      </div>
+      </div></div>
       {(roundTags || []).map(tag => (
-        <div key={tag} className='td sub-master'>{puzzle.tags[tag] ?? ''}</div>
+        <div key={tag} className='td sub-master'><div>{puzzle.tags[tag] ?? ''}</div></div>
       ))}
     </div>
   );
@@ -149,6 +164,7 @@ interface MasterProps {
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
   hideSolved: boolean;
+  yDims: {[key: string]: number};
 }
 
 const Master : React.FC<MasterProps> = ({
@@ -158,8 +174,14 @@ const Master : React.FC<MasterProps> = ({
   statuses,
   colors,
   hideSolved,
+  yDims,
 }) => {
-  if (!isActive) return null;
+  const masterRef = useRef(null);
+  if (!isActive) {
+    masterRef.current = null;
+    return null;
+  }
+
   const roundsWithExtras = produce(data.rounds, draft => {
     const unassignedPuzzles = Object.keys(data.puzzles).filter(slug => !data.puzzles[slug].rounds.filter(round => data.rounds[round]?.hidden === false).length);
     if (unassignedPuzzles.length) draft['_unassigned'] = {
@@ -206,11 +228,23 @@ const Master : React.FC<MasterProps> = ({
     ];
   }).flat();
 
+  const rowHeight = masterRef.current ? masterRef.current.scrollHeight / Math.max(1, rows.length) : 30;
+  const padding = masterRef.current && yDims.scrollHeight ? yDims.scrollHeight - masterRef.current.scrollHeight : 0;
+  const buffer = 0.5;
+  const y0 = yDims.scrollTop - padding - buffer * yDims.height;
+  const y1 = yDims.scrollTop + padding + (1 + buffer) * yDims.height;
+
   return (
-    <div className='master'>
-      <Table>
-        <Tbody>
-          {rows.map(({Component, key, props}) => (<Component key={key} {...props}/>))}
+    <div className='master' ref={masterRef}>
+      <Table className='sub-master'>
+        <Tbody className='sub-master'>
+          {rows.map(({Component, key, props}, i) => (
+            <Component
+              key={key}
+              visible={y0 <= i * rowHeight && (i + 1) * rowHeight <= y1}
+              {...props}
+            />
+          ))}
         </Tbody>
       </Table>
       <datalist id='master-status-options'>

@@ -8,7 +8,8 @@ services:
       - '80:80'
       - '443:443'
     volumes:
-      - ./Caddyfile.prod:/etc/caddy/Caddyfile
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - build_prod:/srv:ro
       - log_prod:/log
 
   app:
@@ -21,4 +22,5 @@ services:
       - log_prod:/log
 
 volumes:
+  build_prod:
   log_prod:

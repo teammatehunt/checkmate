@@ -28,4 +28,5 @@ To run in `prod` mode, run the following (replace `docker-compose.prod.yml` with
 ```
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker-compose exec app /app/build_static.sh
+docker-compose restart app
 ```
