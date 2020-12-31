@@ -48,6 +48,10 @@ class ModelAdmin(admin.ModelAdmin):
 class HuntConfigAdmin(ModelAdmin):
     pass
 
+@admin.register(models.BotConfig)
+class BotConfigAdmin(ModelAdmin):
+    pass
+
 @admin.register(models.Round)
 class RoundAdmin(ModelAdmin):
     list_display = ('name', 'slug', 'hidden', 'created', 'created_by')

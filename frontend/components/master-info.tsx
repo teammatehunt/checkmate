@@ -47,23 +47,23 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
     if (set !== undefined) return set;
     const e = reduce;
     let value = undefined;
-    switch (e.currentTarget.tagName.toLowerCase()) {
+    switch (e.target.tagName.toLowerCase()) {
       case 'input':
-        switch (e.currentTarget.getAttribute('type')) {
+        switch (e.target.getAttribute('type')) {
           case 'checkbox':
-            value = e.currentTarget.checked;
+            value = e.target.checked;
             break;
           default:
-            value = e.currentTarget.value;
+            value = e.target.value;
             break;
         }
         break;
       case 'select':
-        if (e.currentTarget.hasAttribute('multiple')) value = [...e.currentTarget.selectedOptions].map(option => option.value);
-        else value = e.currentTarget.value;
+        if (e.target.hasAttribute('multiple')) value = [...e.target.selectedOptions].map(option => option.value);
+        else value = e.target.value;
         break;
     }
-    draft[e.currentTarget.getAttribute('name')] = value;
+    draft[e.target.getAttribute('name')] = value;
   });
 
   const [formPuzzleData, dispatchFormPuzzleData] = useReducer(formDataReducer, defaultFormPuzzleData);
@@ -117,7 +117,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
                   <span className='colon'>Name</span>
                 </Td>
                 <Td>
-                  <input type='text' name='name' onChange={onFormPuzzleChange} value={formPuzzleData.name}/>
+                  <input type='text' name='name' onChange={onFormPuzzleChange} value={formPuzzleData.name} autoComplete='off'/>
                 </Td>
               </Tr>
               <Tr>
@@ -125,7 +125,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
                   <span className='colon'>Link</span>
                 </Td>
                 <Td>
-                  <input type='text' name='link' onChange={onFormPuzzleChange} value={formPuzzleData.link}/>
+                  <input type='text' name='link' onChange={onFormPuzzleChange} value={formPuzzleData.link} autoComplete='off'/>
                 </Td>
               </Tr>
               <Tr>
@@ -184,7 +184,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
         transitionTime={transitionTime}
       >
         <form
-          action='/api/rounds'
+          action='/api/rounds/create_and_populate'
           method='post'
           onSubmit={onFormRoundSubmit}
         >
@@ -195,7 +195,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
                   <span className='colon'>Name</span>
                 </Td>
                 <Td>
-                  <input type='text' name='name' onChange={onFormRoundChange} value={formRoundData.name}/>
+                  <input type='text' name='name' onChange={onFormRoundChange} value={formRoundData.name} autoComplete='off'/>
                 </Td>
               </Tr>
               <Tr>
@@ -203,7 +203,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
                   <span className='colon'>Link</span>
                 </Td>
                 <Td>
-                  <input type='text' name='link' onChange={onFormRoundChange} value={formRoundData.link}/>
+                  <input type='text' name='link' onChange={onFormRoundChange} value={formRoundData.link} autoComplete='off'/>
                 </Td>
               </Tr>
             </Tbody>

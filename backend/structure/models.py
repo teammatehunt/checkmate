@@ -14,22 +14,13 @@ import crum
 MAX_LENGTH = 500
 
 def CharField(*args, **kwargs):
+    if kwargs.get('blank') and kwargs.get('default') is None:
+        kwargs['default'] = ''
     return models.CharField(*args, max_length=MAX_LENGTH, **kwargs)
 
-class HuntConfig(models.Model):
-    auto_assign_puzzles_to_meta = models.BooleanField(
-        default=True, help_text='Should be true when the entire round corresponds to one meta.',
-    )
-    root = CharField(blank=True, help_text='Hunt prefix (protocol, domain, and path prefix). (eg https://example.com)')
-    discord_server_id = models.BigIntegerField(
-        null=True, blank=True,
-        default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))
-
-    # Scraper settings
-    puzzles_page = CharField(blank=True, help_text='Page with puzzles list (or data endpoint) to be queried by scraper.')
-    login_page = CharField(blank=True, help_text='Login page (used by scraper).')
-    login_api_endpoint = CharField(blank=True, help_text='Login endpoint (used by scraper).')
-    enable_scraping = models.BooleanField(default=True, help_text='Enable scraping for new puzzles.')
+class SingletonModel(models.Model):
+    class Meta:
+        abstract = True
 
     @classmethod
     def get(cls):
@@ -45,6 +36,30 @@ class HuntConfig(models.Model):
             super().save(*args, **kwargs)
             # Remove all previous configs
             objs = self.__class__.objects.exclude(pk=self.pk).delete()
+
+class HuntConfig(SingletonModel):
+    auto_assign_puzzles_to_meta = models.BooleanField(
+        default=True, help_text='Should be true when the entire round corresponds to one meta.',
+    )
+    root = CharField(blank=True, help_text='Hunt prefix (protocol, domain, and path prefix). (eg https://example.com)')
+    discord_server_id = models.BigIntegerField(
+        null=True, blank=True,
+        default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))
+
+
+class BotConfig(SingletonModel):
+    '''Settings for bot that don't need to be passed to web users.'''
+    # Hunt site and scraper settings
+    puzzles_page = CharField(blank=True, help_text='Page with puzzles list (or data endpoint) to be queried by scraper.')
+    login_page = CharField(blank=True, help_text='Login page (used by scraper).')
+    login_api_endpoint = CharField(blank=True, help_text='Login endpoint (used by scraper).')
+    enable_scraping = models.BooleanField(default=False, help_text='Enable scraping for new puzzles.')
+
+    # Discord settings
+    # server_id in SECRETS and HuntConfig
+    default_category_id = models.BigIntegerField(
+        null=True, blank=True,
+        help_text='Category for puzzles to be placed if not in round category.')
 
 class Entity(models.Model):
     slug = autoslug.AutoSlugField(max_length=MAX_LENGTH, primary_key=True,
@@ -96,6 +111,7 @@ class Round(Entity):
     auto_assign_puzzles_to_meta = models.BooleanField(
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
+    discord_category_id = models.BigIntegerField(null=True, blank=True)
 
 class Puzzle(Entity):
     feeders = models.ManyToManyField('Puzzle', through='MetaFeeder', related_name='metas')
@@ -182,9 +198,11 @@ class BasePuzzleRelation(models.Model):
     def save(self, *args, **kwargs):
         if self.order is None:
             self.order = self.next_order()
-        with transaction.atomic():
-            super().save(*args, **kwargs)
-            self.check_order()
+        adding = self._state.adding
+        super().save(*args, **kwargs)
+        if not adding:
+            with transaction.atomic():
+                self.check_order()
 
     def delete(self, *args, **kwargs):
         with transaction.atomic():

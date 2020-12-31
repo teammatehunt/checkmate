@@ -30,3 +30,16 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker-compose exec app /app/build_static.sh
 docker-compose restart app
 ```
+
+To test autocreating puzzles, use this command:
+```
+docker-compose exec -w /app/backend app celery -A checkmate call services.tasks.auto_create_new_puzzles
+```
+This will be a `dry_run` by default and will print a task id. To check the result, use:
+```
+docker-compose exec -w /app/backend app celery -A checkmate task [TASK_ID]
+```
+or if there was an error:
+```
+docker-compose exec -w /app/backend app celery -A checkmate task --traceback [TASK_ID]
+```

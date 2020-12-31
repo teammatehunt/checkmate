@@ -85,6 +85,18 @@ class RoundViewSet(ContainerSpecialization, viewsets.ModelViewSet):
     serializer_class = RoundSerializer
     item_serializer_class = PuzzleSerializer
 
+    @decorators.action(methods=['POST'], detail=False)
+    def create_and_populate(self, request):
+        data = request.data
+        if 'name' not in data:
+            raise exceptions.NotAcceptable('Need name')
+        kwargs_names = set(inspect.signature(tasks.create_round).parameters.keys())
+        extra_args = set(data.keys()) - kwargs_names
+        if extra_args:
+            raise exceptions.NotAcceptable(f'Unrecognized args: {sorted(extra_args)}')
+        tasks.create_round.delay(**data)
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
+
     @decorators.action(methods=['GET', 'POST'], detail=True)
     def puzzles(self, *args, **kwargs):
         return self.process_items(*args, **kwargs)
@@ -243,10 +255,11 @@ def data_everything():
     for socialaccount in socialaccounts:
         user_by_id[socialaccount['user_id']].setdefault('socialaccount', []).append(
             {key: socialaccount[key] for key in SocialAccountSerializer().fields.keys()})
-    rounds = cast(models.Round.objects.values(*BaseRoundSerializer().fields.keys()))
-    puzzles = cast(models.Puzzle.objects.values(*BasePuzzleSerializer().fields.keys()))
+    # NB: important to fetch relations before objects
     round_puzzles = cast(models.RoundPuzzle.objects.values('round_id', 'puzzle_id'))
     meta_feeders = cast(models.MetaFeeder.objects.values('meta_id', 'feeder_id'))
+    rounds = cast(models.Round.objects.values(*BaseRoundSerializer().fields.keys()))
+    puzzles = cast(models.Puzzle.objects.values(*BasePuzzleSerializer().fields.keys()))
     round_by_slug = {}
     puzzle_by_slug = {}
     for _round in rounds:

@@ -17,7 +17,7 @@ from unidecode import unidecode
 from services.celery import app
 from services.discord_manager import DiscordManager
 from services.google_manager import GoogleManager
-from services.scraper import fetch_site_data
+from services import scraper
 from structure import api, models
 import structure.consumers # for activating update hooks
 
@@ -44,12 +44,7 @@ alphanumeric_regex = re.compile('[\W_]+', re.UNICODE)
 def reduced_name(name):
     return alphanumeric_regex.sub('', unidecode(name)).lower()
 
-@app.task(
-    acks_late=True,
-    autoretry_for=(Exception,),
-    max_retries=5,
-    default_retry_delay=10,
-)
+@app.task
 def create_puzzle(
         *,
         name,
@@ -60,6 +55,7 @@ def create_puzzle(
         text=True,
         voice=True,
         force=False,
+        discord_category_id=None,
 ):
     hunt_root = models.HuntConfig.get().root
     _canonical_link, relpath = canonical_link_pair(link, hunt_root)
@@ -89,33 +85,36 @@ def create_puzzle(
                 models.RoundPuzzle.objects.get_or_create(round_id=_round, puzzle_id=puzzle.pk)
             except Exception as e:
                 logger.warning(f'Could not create relation RoundPuzzle(round_id={_round}, puzzle_id={puzzle.pk}): {e}')
+            else:
+                if discord_category_id is None:
+                    discord_category_id = models.Round.objects.get(pk=_round).discord_category_id
     sync_populate_puzzle(
         puzzle=puzzle,
         sheet=sheet,
         text=text,
         voice=voice,
         hunt_root=hunt_root,
+        discord_category_id=discord_category_id,
     )
 
-@app.task(
-    acks_late=True,
-    autoretry_for=(Exception,),
-    max_retries=5,
-    default_retry_delay=10,
-)
+@app.task
 def sync_populate_puzzle(
         puzzle=None,
         slug=None,
         hunt_root=None,
+        discord_category_id=None,
         **kwargs,
 ):
     if puzzle is None:
         puzzle = models.Puzzle.get(pk=slug)
     if hunt_root is None:
         hunt_root = models.HuntConfig.get().root
+    if discord_category_id is None and (kwargs.get('text') or kwargs.get('voice')):
+        discord_category_id = models.BotConfig.get().default_category_id
     asyncio.get_event_loop().run_until_complete(populate_puzzle(
         puzzle,
         hunt_root=hunt_root,
+        discord_category_id=discord_category_id,
         **kwargs,
     ))
 
@@ -126,6 +125,7 @@ async def populate_puzzle(
     sheet=True,
     text=True,
     voice=True,
+    discord_category_id=None,
 ):
     discord_manager = DiscordManager.instance()
     google_manager = GoogleManager.instance()
@@ -142,17 +142,25 @@ async def populate_puzzle(
             text=text,
             voice=voice,
             link=checkmate_link,
+            parent_id=discord_category_id,
         )
     keys, values = zip(*tasks.items()) if tasks else ((), ())
-    _results = await asyncio.gather(*values)
+    _results = await asyncio.gather(*values, return_exceptions=True)
     results = dict(zip(keys, _results))
     sheet_id = results.get('sheet')
+    if isinstance(sheet_id, Exception):
+        logger.error(f'Sheets Creation Error: {sheet_id}')
+        sheet_id = None
     update_fields = []
     if sheet_id is not None:
         puzzle.sheet_link = f'https://docs.google.com/spreadsheets/d/{sheet_id}'
         update_fields.append('sheet_link')
-    discord_text_channel_id = results.get('discord', {}).get('text')
-    discord_voice_channel_id = results.get('discord', {}).get('voice')
+    results_discord = results.get('discord', {})
+    if isinstance(results_discord, Exception):
+        logger.error(f'Discord Error: {results_discord}')
+        results_discord = {}
+    discord_text_channel_id = results_discord.get('text')
+    discord_voice_channel_id = results_discord.get('voice')
     if discord_text_channel_id is not None:
         puzzle.discord_text_channel_id = discord_text_channel_id
         update_fields.append('discord_text_channel_id')
@@ -170,21 +178,42 @@ async def populate_puzzle(
             hunt_root_stripped = hunt_root[:-1] if hunt_root.endswith('/') else hunt_root
             link_stripped = puzzle.link[1:] if puzzle.link.startswith('/') else puzzle.link
             puzzle_link = f'{hunt_root_stripped}/{link_stripped}'
-        await google_manager.add_links(
-            sheet_id,
-            checkmate_link=checkmate_link,
-            puzzle_link=puzzle.link,
-        )
-
+        try:
+            await google_manager.add_links(
+                sheet_id,
+                checkmate_link=checkmate_link,
+                puzzle_link=puzzle.link,
+            )
+        except Exception as e:
+            logger.error(f'Sheets Edit Error: {results_discord}')
 
 @app.task
-def auto_create_new_puzzles(dry_run=True):
-    enable_scraping = models.HuntConfig.get().enable_scraping
-    if not dry_run and not enable_scraping:
+def create_round(
+        *,
+        name,
+        link=None,
+        **kwargs):
+    _round, _ = models.Round.objects.get_or_create(name=name, **({} if link is None else {'link': link}), hidden=False, defaults=kwargs)
+    if _round.discord_category_id is None:
+        # create discord category
+        discord_manager = DiscordManager.instance()
+        # round setup needs to happen immediately so it is available before puzzle creation
+        _round.discord_category_id = asyncio.get_event_loop().run_until_complete(
+            discord_manager.create_category(_round.slug))
+        _round.save(update_fields=['discord_category_id'])
+    round_dict = {key: getattr(_round, key) for key in api.BaseRoundSerializer().fields.keys()}
+    return round_dict
+
+@app.task
+def auto_create_new_puzzles(dry_run=True, manual=True):
+    enable_scraping = models.BotConfig.get().enable_scraping
+    if not manual and not enable_scraping:
         return
-    site_data = asyncio.get_event_loop().run_until_complete(fetch_site_data())
+    site_data = asyncio.get_event_loop().run_until_complete(scraper.fetch_site_data())
+    if site_data is scraper.NOT_CONFIGURED:
+        return
     if not site_data:
-        logger.warning('No data was parsed from autocreaton task')
+        logger.error(f'No data was parsed from autocreaton task: {site_data}')
         return
     site_rounds = site_data.get('rounds', [])
     site_puzzles = site_data.get('puzzles', [])
@@ -193,6 +222,7 @@ def auto_create_new_puzzles(dry_run=True):
     data = api.data_everything()
     hunt_root = data['hunt']['root']
     now = Now()
+    new_data = defaultdict(list)
 
     reduced_round_names_to_slugs = {
         reduced_name(_round['name']): slug
@@ -208,24 +238,29 @@ def auto_create_new_puzzles(dry_run=True):
         for link, slug in (*((puzzle['original_link'], slug) for slug, puzzle in data['puzzles'].items()),
                            *((puzzle['link'], slug) for slug, puzzle in data['puzzles'].items() if not puzzle['hidden']))
     }
+    round_slugs_to_discord_category_ids = {
+        slug: _round['discord_category_id'] for slug, _round in data['rounds'].items()
+    }
 
-    new_data = defaultdict(list)
-
+    discord_manager = None
     for site_round in site_rounds:
         if site_round['name'] in reduced_round_names_to_slugs:
             continue
         if site_round.get('link') and canonical_link(site_round['link'], hunt_root) in canonical_round_links_to_slugs:
             continue
+        # create round
         if dry_run:
             round_name = site_round['name']
             round_slug = slugify(round_name)
         else:
-            round_obj, _ = models.Round.objects.get_or_create(**site_round)
-            round_name = round_obj.name
-            round_slug = round_obj.slug
+            round_dict = create_round(**site_round)
+            round_slugs_to_discord_category_ids[round_dict['slug']] = round_dict['discord_category_id']
+            round_name = round_dict['name']
+            round_slug = round_dict['slug']
         new_data['rounds'].append(site_round)
         reduced_round_names_to_slugs[reduced_name(round_name)] = round_slug
     for site_puzzle in site_puzzles:
+        # new puzzles are setup asynchronously
         round_names = site_puzzle.pop('round_names', None)
         is_solved = site_puzzle.pop('is_solved', None)
         answer = site_puzzle.pop('answer', None)
@@ -235,7 +270,11 @@ def auto_create_new_puzzles(dry_run=True):
         if slug is None:
             # create puzzle
             if not dry_run:
-                create_puzzle.delay(**site_puzzle)
+                discord_category_id = None
+                if site_puzzle['rounds']:
+                    first_round = site_puzzle['rounds'][0]
+                    discord_category_id = round_slugs_to_discord_category_ids.get(first_round)
+                create_puzzle.delay(discord_category_id=discord_category_id, **site_puzzle)
             new_data['puzzles'].append(site_puzzle)
         else:
             # check for updated solved / answer status
@@ -250,5 +289,4 @@ def auto_create_new_puzzles(dry_run=True):
                 for key, value in updates.items():
                     setattr(puzzle_obj, key, value)
                 puzzle_obj.save(update_fields=updates.keys())
-    if new_data:
-        return new_data
+    return new_data

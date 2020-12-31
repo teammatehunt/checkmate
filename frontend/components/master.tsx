@@ -177,6 +177,7 @@ const Master : React.FC<MasterProps> = ({
   yDims,
 }) => {
   const masterRef = useRef(null);
+
   if (!isActive) {
     masterRef.current = null;
     return null;
@@ -228,7 +229,7 @@ const Master : React.FC<MasterProps> = ({
     ];
   }).flat();
 
-  const rowHeight = masterRef.current ? masterRef.current.scrollHeight / Math.max(1, rows.length) : 30;
+  const rowHeight = masterRef.current ? masterRef.current.scrollHeight / Math.max(1, rows.length) : 28;
   const padding = masterRef.current && yDims.scrollHeight ? yDims.scrollHeight - masterRef.current.scrollHeight : 0;
   const buffer = 0.5;
   const y0 = yDims.scrollTop - padding - buffer * yDims.height;

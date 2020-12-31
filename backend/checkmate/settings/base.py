@@ -263,6 +263,7 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'services.tasks.auto_create_new_puzzles',
         'kwargs': {
             'dry_run': False,
+            'manual': False,
         },
         'schedule': 30.0, # every 30 seconds
         'options': {

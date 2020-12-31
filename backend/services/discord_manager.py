@@ -28,8 +28,6 @@ class DiscordManager:
     def __init__(self):
         self.server_id = settings.DISCORD_CREDENTIALS['server_id']
         self.bot_token = settings.DISCORD_CREDENTIALS['bot_token']
-        self.default_category_id = settings.DISCORD_CREDENTIALS.get('default_category_id')
-        self.deprecated_category_id = settings.DISCORD_CREDENTIALS.get('deprecated_category_id')
 
         self.loop = None
         self.client = None
@@ -53,7 +51,7 @@ class DiscordManager:
     async def __aexit__(self, *args, **kwargs):
         await self.close()
 
-    async def create_channels(self, slug, text=True, voice=True, link=None):
+    async def create_channels(self, slug, *, parent_id=None, text=True, voice=True, link=None):
         await self.setup()
         requests = {}
         if text:
@@ -61,7 +59,7 @@ class DiscordManager:
                 self.server_id,
                 discord.enums.ChannelType.text.value,
                 name=slug,
-                parent_id=self.default_category_id,
+                parent_id=parent_id,
                 topic=link,
             )
         if voice:
@@ -69,12 +67,21 @@ class DiscordManager:
                 self.server_id,
                 discord.enums.ChannelType.voice.value,
                 name=slug,
-                parent_id=self.default_category_id,
+                parent_id=parent_id,
             )
         keys, values = zip(*requests.items())
         results = await asyncio.gather(*values)
         ids = [result['id'] for result in results]
         return dict(zip(keys, ids))
+
+    async def create_category(self, slug):
+        await self.setup()
+        result = await self.client.create_channel(
+            self.server_id,
+            discord.enums.ChannelType.category.value,
+            name=slug,
+        )
+        return result['id']
 
     async def get_member(self, uid):
         await self.setup()

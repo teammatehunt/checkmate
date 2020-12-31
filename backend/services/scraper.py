@@ -9,6 +9,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from structure import models
+from services import scraper_examples
 
 logger = get_task_logger(__name__)
 
@@ -31,12 +32,12 @@ class Session:
             cls.__instance = None
 
 class Client:
-    def __init__(self, hunt_config):
+    def __init__(self, bot_config):
         self.session = Session.instance()
-        self.hunt_config = hunt_config
+        self.bot_config = bot_config
 
     async def login(self):
-        login_page = self.hunt_config.login_page
+        login_page = self.bot_config.login_page
         headers = {}
         if login_page:
             headers['Referrer'] = login_page
@@ -44,7 +45,7 @@ class Client:
             username: settings.SECRETS['LOGIN']['username'],
             password: settings.SECRETS['LOGIN']['password'],
         }
-        login_api = self.hunt_config.login_api_endpoint
+        login_api = self.bot_config.login_api_endpoint
         if not login_api:
             raise RuntimeError('Cannot login without knowing the login endpoint.')
         async with self.session.post(
@@ -55,7 +56,7 @@ class Client:
             resp.raise_for_status()
 
     async def try_fetch(self):
-        puzzles_page = self.hunt_config.puzzles_page
+        puzzles_page = self.bot_config.puzzles_page
         async with self.session.get(
             puzzles_page,
         ) as resp:
@@ -74,7 +75,7 @@ class Client:
             raise RuntimeError('Could not fetch puzzles page')
         return data
 
-
+NOT_CONFIGURED = lambda: None
 async def fetch_site_data():
     '''This function should return a dict of
     {
@@ -82,10 +83,11 @@ async def fetch_site_data():
         'puzzles': Puzzle[],
     }
     '''
-    hunt_config = models.HuntConfig.get()
-    if not hunt_config.puzzles_page:
-        return
-    client = Client(hunt_config)
+    bot_config = models.BotConfig.get()
+    if not bot_config.puzzles_page:
+        logger.warning('Puzzle page not configured')
+        return NOT_CONFIGURED
+    client = Client(bot_config)
     data = await client.fetch()
     json_data = None
     try:
@@ -125,41 +127,8 @@ async def fetch_site_data():
 }
 
 def parse_json(data):
-    results = defaultdict(list)
-    for land in data.get('lands', []):
-        round_name = land['title']
-        round_link = land['url']
-        results['rounds'].append({
-            'name': round_name,
-            'link': round_link,
-        })
-        for puzzle in land.get('puzzles', []):
-            puzzle_name = puzzle['title']
-            puzzle_link = puzzle['url']
-            results['puzzles'].append({
-                'name': puzzle_name,
-                'link': puzzle_link,
-                'round_names': [round_name],
-            })
-    return results
+    return scraper_examples.parse_json_mh19(data)
 
-def parse_html(soup):
-    # MH 2012
-    results = defaultdict(list)
-    for h2 in soup.find_all('h2'):
-        table = h2.find_next_sibling('table')
-        if table is not None:
-            round_name = h2.string
-            _round = {}
-            _round['name'] = round_name
-            for a in table.find_all('a'):
-                if a.string == 'Round page':
-                    _round['link'] = a.get('href')
-                else:
-                    puzzle = {}
-                    puzzle['name'] = a.string
-                    puzzle['link'] = a.get('href')
-                    puzzle['round_names'] = [round_name]
-                    results['puzzles'].append(puzzle)
-            results['rounds'].append(_round)
-    return results
+def parse_html(soup: BeautifulSoup):
+    return scraper_examples.parse_html_gph17(soup)
+

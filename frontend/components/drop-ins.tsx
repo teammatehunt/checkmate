@@ -49,7 +49,7 @@ export const Link = (props) => {
 const inputOnKeyDown = (e) => {
   switch (e.key) {
     case 'Enter':
-      if (!(e.currentTarget.tagName.toLowerCase() === 'textarea' && e.shiftKey)) e.target.blur();
+      if (!(e.target.tagName.toLowerCase() === 'textarea' && e.shiftKey)) e.target.blur();
     break;
     case 'Escape':
       // firefox doesn't blur on escape automatically

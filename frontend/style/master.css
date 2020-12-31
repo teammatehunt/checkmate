@@ -13,11 +13,11 @@
   height: 28px;
 }
 
-.sub-master.name { width: 10ex; }
+.sub-master.name { width: 30ex; }
 .sub-master.answer { width: 20ex; }
-.sub-master.status { width: 20ex; }
-.sub-master.notes { width: 40ex; }
-.sub-master.open-for { width: 20ex; }
+.sub-master.status { width: 15ex; }
+.sub-master.notes { width: 30ex; }
+.sub-master.open-for { width: 15ex; }
 .sub-master.tag { width: 20ex; }
 
 .sub-master.th > div,

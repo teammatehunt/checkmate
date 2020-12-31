@@ -36,7 +36,7 @@ services:
       - ./frontend/.docker.yarnrc:/app/frontend/.yarnrc:ro
       - /app/frontend/node_modules # ignore host node_modules
     ports:
-      - '127.0.0.1:8000:8000'
+      - '127.0.0.1:8000:8000' # django
     depends_on:
       - postgres
       - redis
