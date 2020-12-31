@@ -33,6 +33,56 @@ const setVoiceState = () => {
   if (newState !== currentState) document.body.setAttribute('voice-state', newState);
 };
 
+const asyncClickChannel = async (serverId, channelId) => {
+  if (serverId) {
+    const element = document.querySelector(`[data-list-item-id='guildsnav___${serverId}']`);
+    if (element) {
+      element.click();
+    } else {
+      return false;
+    }
+  }
+  const clickChannel = () => {
+    const element = document.querySelector(`[data-list-item-id='channels___${channelId}']`);
+    if (element) {
+      element.click();
+      return true;
+    } else {
+      return false;
+    }
+  };
+  if (clickChannel()) {
+    return true;
+  } else {
+    // attempt to scroll to find the channel
+    const scroll = async() => {
+      const channelsElement = document.getElementById('channels');
+      if (!channelsElement) return false;
+      for (let top=0; top < channelsElement.scrollHeight; top+=channelsElement.getBoundingClientRect().height) {
+        channelsElement.scroll({top: top, behavior: 'auto'});
+        // let scolling and renders happen
+        await new Promise(r => setTimeout(r, 0));
+        // sometimes rendering is slow to get to top
+        // wait up to 0.5s if not within 10 pixels of top
+        let ms = 0;
+        while (top === 0 && channelsElement.scrollTop > 10 && ms < 500) {
+          const timeout = 100;
+          await new Promise(r => setTimeout(r, timeout));
+          ms += timeout;
+        }
+        if (clickChannel()) return true;
+      }
+      channelsElement.scroll({top: channelsElement.scrollHeight, behaviour: 'auto'});
+      if (clickChannel()) return true;
+      return false;
+    }
+    if (await scroll()) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const asyncOnMessage = async (message, sender) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
@@ -45,45 +95,10 @@ const asyncOnMessage = async (message, sender) => {
         let fail = false;
         // try click events
         if (initialIsDiscord) {
-          if (initialServerId !== message.serverId) {
-            const element = document.querySelector(`[data-list-item-id='guildsnav___${message.serverId}']`);
-            if (element) {
-              element.click();
-            } else {
+          const _serverId = initialServerId === message.serverId ? null : message.serverId;
+          if (initialChannelId !== message.textChannelId && initialChannelId !== message.voiceChannelId) {
+            if (!await asyncClickChannel(_serverId, message.textChannelId)) {
               fail = true;
-            }
-          }
-          if (!fail && initialChannelId !== message.textChannelId && initialChannelId !== message.voiceChannelId) {
-            if (message.textChannelId !== null) {
-              const clickChannel = () => {
-                const element = document.querySelector(`[data-list-item-id='channels___${message.textChannelId}']`);
-                if (element) {
-                  element.click();
-                  return true;
-                } else {
-                  return false;
-                }
-              };
-              if (!clickChannel()) {
-                // attempt to scroll to find the channel
-                const scroll = async() => {
-                  const channelsElement = document.getElementById('channels');
-                  if (!channels) return false;
-                  for (let top=0; top < channelsElement.scrollHeight; top+=window.innerHeight) {
-                    console.log(top);
-                    channelsElement.scroll({top: top, behaviour: 'auto'});
-                    // let scolling and renders happen
-                    await new Promise(r => setTimeout(r, 0));
-                    if (clickChannel()) return true;
-                  }
-                  channelsElement.scroll({top: channelsElement.scrollHeight, behaviour: 'auto'});
-                  if (clickChannel()) return true;
-                  return false;
-                }
-                if (!await scroll()) {
-                  fail = true;
-                }
-              }
             }
           }
         }
@@ -110,24 +125,13 @@ const asyncOnMessage = async (message, sender) => {
         voiceElement.appendChild(svgElement);
         document.body.appendChild(voiceElement);
       }
-      voiceElement.onclick = () => {
+      voiceElement.onclick = async () => {
         const [initialIsDiscord, initialServerId, initialChannelId] = parseDiscordLocation(window.location.href);
         // try click events
+        await asyncClickChannel(message.voiceChannelId)
         if (initialIsDiscord) {
-          if (initialServerId !== serverId) {
-            const element = document.querySelector(`[data-list-item-id='guildsnav___${serverId}']`);
-            if (element) {
-              element.click();
-            }
-          }
-          if (initialChannelId !== voiceChannelId) {
-            if (voiceChannelId !== null) {
-              const element = document.querySelector(`a[data-list-item-id='channels___${message.voiceChannelId}']`);
-              if (element) {
-                element.click();
-              }
-            }
-          }
+          const _serverId = initialServerId === serverId ? null : serverId;
+          await asyncClickChannel(_serverId, message.voiceChannelId)
         }
       };
       setVoiceState();
