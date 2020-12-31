@@ -225,13 +225,14 @@ def process_relation(cls, pk, request):
                 raise exceptions.NotAcceptable(f'order is out of range: {order} is not in [0, {len(relations)})')
             new_order = relations[order].order
             if new_order != existing_relation.order:
-                with transaction.atomic():
-                    if new_order < existing_relation.order:
-                        relations_set.filter(order__gte=new_order, order__lt=existing_relation.order).update(order=F('order')+1)
-                    else:
-                        relations_set.filter(order__gt=existing_relation.order, order__lte=new_order).update(order=F('order')-1)
-                    existing_relation.order = new_order
-                    existing_relation.save()
+                with container_cls.get_lock(pk):
+                    with transaction.atomic():
+                        if new_order < existing_relation.order:
+                            relations_set.filter(order__gte=new_order, order__lt=existing_relation.order).update(order=F('order')+1)
+                        else:
+                            relations_set.filter(order__gt=existing_relation.order, order__lte=new_order).update(order=F('order')-1)
+                        existing_relation.order = new_order
+                        existing_relation.save()
                 return response.Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 raise exceptions.NotAcceptable('Request is a no-op.')

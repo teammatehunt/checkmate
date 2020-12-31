@@ -201,7 +201,7 @@ const Master : React.FC<MasterProps> = ({
       is_pseudoround: true,
     } as Model.Round;
   });
-  const rows = Object.entries(roundsWithExtras).filter(([slug, round]) => round.hidden === false).map(([slug, round]) => {
+  const rows = Object.entries(roundsWithExtras).filter(([slug, round]) => round?.hidden === false).map(([slug, round]) => {
     const roundTags = round?.tagNames ?? null;
     return [
       {
@@ -212,7 +212,7 @@ const Master : React.FC<MasterProps> = ({
           roundTags: roundTags,
         },
       },
-      ...orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle.hidden === false && (!hideSolved || !Model.isSolved(puzzle, colors))), ['is_meta'], ['desc']).map(puzzle => (
+      ...orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle, colors))), ['is_meta'], ['desc']).map(puzzle => (
         {
           key: `${round.slug}--${puzzle.slug}`,
           Component: Puzzle,

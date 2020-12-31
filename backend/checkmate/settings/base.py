@@ -53,6 +53,7 @@ CSRF_COOKIE_SECURE = True
 ORIGIN = os.environ.get('ORIGIN', 'https://localhost')
 POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'localhost')
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+REDIS_PORT = 6379
 
 ALLOWED_HOSTS = [
     '.localhost',
@@ -141,11 +142,15 @@ DATABASES = {
     }
 }
 
+class REDIS_DATABASE_ENUM:
+    CACHE = 1
+    CELERY = 2
+    REDIS_CLIENT = 3
 
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f'redis://{REDIS_HOST}:6379/1',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DATABASE_ENUM.CACHE}',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
@@ -156,7 +161,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [(REDIS_HOST, 6379)],
+            'hosts': [(REDIS_HOST, REDIS_PORT)],
         },
     },
 }
@@ -246,8 +251,8 @@ if 'credentials_file' in DRIVE_SETTINGS:
         DRIVE_SETTINGS['credentials'] = json.load(f)
 
 # Celery
-CELERY_BROKER_URL = f'redis://{REDIS_HOST}:6379/2'
-CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:6379/2'
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DATABASE_ENUM.CELERY}'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DATABASE_ENUM.CELERY}'
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     'visibility_timeout': 5 * 60,
 }

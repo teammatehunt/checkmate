@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 
 from django import forms
 from django.conf import settings
@@ -10,6 +11,10 @@ from django.utils.translation import gettext_lazy as _
 
 import autoslug
 import crum
+
+from services.redis_manager import RedisManager
+
+logger = logging.getLogger(__name__)
 
 MAX_LENGTH = 500
 
@@ -106,6 +111,10 @@ class Entity(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def get_lock(cls, slug, blocking_timeout=5):
+        return RedisManager.instance().lock(f'lock-order-{cls.__name__}-{slug}', blocking_timeout=blocking_timeout)
+
 class Round(Entity):
     puzzles = models.ManyToManyField('Puzzle', through='RoundPuzzle', related_name='rounds')
     auto_assign_puzzles_to_meta = models.BooleanField(
@@ -195,22 +204,26 @@ class BasePuzzleRelation(models.Model):
         except models.ObjectDoesNotExist:
             return 0
 
+    def get_container_lock(self):
+        container_cls = self._meta.get_field(self.CONTAINER).related_model
+        return container_cls.get_lock(getattr(self, f'{self.CONTAINER}_id'))
+
     def save(self, *args, **kwargs):
-        if self.order is None:
-            self.order = self.next_order()
-        adding = self._state.adding
-        super().save(*args, **kwargs)
-        if not adding:
+        with self.get_container_lock():
             with transaction.atomic():
-                self.check_order()
+                if self.order is None:
+                    self.order = self.next_order()
+                super().save(*args, **kwargs)
+        self.touch_related()
 
     def delete(self, *args, **kwargs):
-        with transaction.atomic():
-            super().delete(*args, **kwargs)
-            self.objects_in_container().filter(order__gt=self.order).update(order=models.F('order')-1)
-            self.check_order(deleted=True)
+        with self.get_container_lock():
+            with transaction.atomic():
+                super().delete(*args, **kwargs)
+                self.objects_in_container().filter(order__gt=self.order).update(order=models.F('order')-1)
+        self.touch_related(deleted=True)
 
-    def check_order(self, deleted=False):
+    def touch_related(self, deleted=False):
         relation_was_modified = False
         saved_related_objects = defaultdict(lambda: None) if deleted else self.related_objects
         for key in self.original_related_objects:

@@ -57,6 +57,7 @@ def create_puzzle(
         force=False,
         discord_category_id=None,
 ):
+    name = name.strip()
     hunt_root = models.HuntConfig.get().root
     _canonical_link, relpath = canonical_link_pair(link, hunt_root)
     # Construct a regex for resolving the root optionally and stripping trailing slashes
@@ -193,6 +194,7 @@ def create_round(
         name,
         link=None,
         **kwargs):
+    name = name.strip()
     _round, _ = models.Round.objects.get_or_create(name=name, **({} if link is None else {'link': link}), hidden=False, defaults=kwargs)
     if _round.discord_category_id is None:
         # create discord category
@@ -244,7 +246,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
 
     discord_manager = None
     for site_round in site_rounds:
-        if site_round['name'] in reduced_round_names_to_slugs:
+        if reduced_name(site_round['name']) in reduced_round_names_to_slugs:
             continue
         if site_round.get('link') and canonical_link(site_round['link'], hunt_root) in canonical_round_links_to_slugs:
             continue
@@ -282,11 +284,17 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             updates = {}
             if is_solved and not puzzle['solved']:
                 updates['solved'] = now
-            if answer != puzzle['answer']:
+            if answer is not None and answer != puzzle['answer']:
                 updates['answer'] = answer
             if updates and not dry_run:
-                puzzle_obj = models.Puzzle.get(pk=slug)
+                puzzle_obj = models.Puzzle.objects.get(pk=slug)
                 for key, value in updates.items():
                     setattr(puzzle_obj, key, value)
                 puzzle_obj.save(update_fields=updates.keys())
+    if new_data or manual:
+        logger.warning({
+            'new_data': new_data,
+            'manual': manual,
+            'dry_run': dry_run,
+        })
     return new_data

@@ -130,5 +130,4 @@ def parse_json(data):
     return scraper_examples.parse_json_mh19(data)
 
 def parse_html(soup: BeautifulSoup):
-    return scraper_examples.parse_html_gph17(soup)
-
+    return scraper_examples.parse_html_mh16(soup)

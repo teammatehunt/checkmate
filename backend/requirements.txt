@@ -19,6 +19,7 @@ djangorestframework
 html5lib
 psycopg2
 pyyaml
+redis
 requests
 twisted[tls,http2]
 unidecode
