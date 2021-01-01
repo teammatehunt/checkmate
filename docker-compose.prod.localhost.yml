@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
     environment:
       - BUILD_MODE=prod
-      - SERVER_ORIGIN='https://localhost:8081'
+      - SERVER_ORIGIN=https://localhost:8081
     volumes:
       - build_prod:/build/backend
       - log_prod:/log

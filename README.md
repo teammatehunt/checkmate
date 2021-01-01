@@ -1,3 +1,5 @@
+To start a server or to develop, you will need docker and docker-compose. On Ubuntu, you can install with `sudo apt install docker.io docker-compose`.
+
 After everything is set up, use the following to build the components and start the server.
 
 You will need credentials in Discord and in Drive.

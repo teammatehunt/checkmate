@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
     environment:
       - BUILD_MODE=prod
-      - SERVER_ORIGIN='https://checkmate.teammatehunt.com'
+      - SERVER_ORIGIN=https://checkmate.teammatehunt.com
     volumes:
       - build_prod:/build/backend
       - log_prod:/log
