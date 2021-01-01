@@ -150,7 +150,7 @@ async def populate_puzzle(
     results = dict(zip(keys, _results))
     sheet_id = results.get('sheet')
     if isinstance(sheet_id, Exception):
-        logger.error(f'Sheets Creation Error: {sheet_id}')
+        logger.error(f'Sheets Creation Error: {repr(sheet_id)}')
         sheet_id = None
     update_fields = []
     if sheet_id is not None:
@@ -158,7 +158,7 @@ async def populate_puzzle(
         update_fields.append('sheet_link')
     results_discord = results.get('discord', {})
     if isinstance(results_discord, Exception):
-        logger.error(f'Discord Error: {results_discord}')
+        logger.error(f'Discord Error: {repr(results_discord)}')
         results_discord = {}
     discord_text_channel_id = results_discord.get('text')
     discord_voice_channel_id = results_discord.get('voice')
@@ -186,7 +186,7 @@ async def populate_puzzle(
                 puzzle_link=puzzle.link,
             )
         except Exception as e:
-            logger.error(f'Sheets Edit Error: {results_discord}')
+            logger.error(f'Sheets Edit Error: {repr(e)}')
 
 @app.task
 def create_round(

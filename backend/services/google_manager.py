@@ -55,7 +55,7 @@ class GoogleManager:
             await self.client.as_service_account(
                 self.sheets.spreadsheets.values.update(
                     spreadsheetId=sheet_id,
-                    range='A1:B1',
+                    range='B1:C1',
                     valueInputOption='USER_ENTERED',
                     json={
                         'values': [[
