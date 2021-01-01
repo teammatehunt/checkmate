@@ -1,0 +1,48 @@
+{
+  "manifest_version": 2,
+  "name": "Checkmate Extension",
+  "version": "0.1",
+  "author": "Brian Shimanuki",
+
+  "description": "Helper for iframe management for puzzle solving.",
+
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://localhost/*",
+        "*://checkmate.teammatehunt.com/*"
+      ],
+      "js": [
+        "rootframe.js",
+        "keyhandler.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+
+  "web_accessible_resources": [
+    "discord.css",
+    "drive.css"
+  ],
+
+  "permissions": [
+    "<all_urls>",
+    "tabs",
+    "webNavigation",
+    "webRequest",
+    "webRequestBlocking"
+  ]
+}

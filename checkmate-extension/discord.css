@@ -1,0 +1,223 @@
+/* Move Audio settings to right at top of chat window but below channel header bar */
+section[class^=panels-][aria-label='User area'] {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 102px;
+}
+div[class^=chat-],
+div[class^=content-] > div[class^=sidebar-] + div[class^=container-] {
+  margin-top: 52px;
+}
+body[voice-state*=in-voice] div[class^=chat-],
+body[voice-state*=in-voice] div[class^=content-] > div[class^=sidebar-] + div[class^=container-] {
+  margin-top: 142px;
+}
+
+/* Hide dock of servers */
+nav[class*=guilds-] + div[class*=base-] {
+  left: 12px;
+  transition: left 0.2s;
+}
+nav[class*=guilds-]:hover + div[class*=base-] {
+  left: 72px;
+  transition-delay: 0.5s;
+}
+
+/* Reduce channel sidebar */
+div[class^=sidebar-] {
+  width: min-content;
+}
+div[class^=sidebar-] > nav[class^=container-],
+div[class^=sidebar-] > nav[class^='privateChannels-'] {
+  width: 90px;
+  transition: width 0.2s;
+}
+nav[class*=guilds-]:hover + div[class*=base-] div[class^=sidebar-] > nav[class^=container-],
+nav[class*=guilds-]:hover + div[class*=base-] div[class^=sidebar-] > nav[class^='privateChannels-'] {
+  width: 30px;
+  transition-delay: 0.5s;
+}
+
+/* Split channel header bar into 2 rows */
+div[class^=chat-] > section[class^=title] {
+  height: 72px;
+  flex-direction: column;
+  align-items: initial;
+  padding: 0 0;
+}
+div[class^=chat-] > section[class^=title] > * {
+  flex: 1;
+  padding: 0 8px;
+}
+div[class^=chat-] > section[class^=title] > div[class^=toolbar-] {
+  margin-left: auto;
+}
+div[class^=chat-] > section[class^=title] > div[class^=toolbar-] > div[class^=iconWrapper-] {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+/* Reduce channel chat excess padding */
+div[class^=message-] {
+  padding-right: 0 ! important;
+  padding-left: 0.5rem ! important;
+}
+div[class^=contents-][role=document] {
+  margin-left: 0;
+  padding-left: 0;
+  text-indent: 0;
+}
+span[class*=timestamp-] {
+  float: right;
+  width: min-content ! important;
+  white-space: nowrap;
+  margin-left: 2px;
+  margin-right: 0 ! important;
+}
+
+/* Channel chat spacing and buttons */
+main[class^=chatContent-] > form[class^=form-] {
+  padding: 4px;
+}
+div[class^=channelTextArea-] {
+  margin-bottom: 4px;
+}
+button[class^=attachButton-] {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+div[class^=channelTextArea-] div[class^=buttons-] {
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+}
+button[aria-label='Send a gift'] {
+  display: none;
+}
+div[class^=channelTextArea-] div[class^=buttons-] > * {
+  height: 50%;
+  width: 80%;
+}
+div[class^=channelTextArea-] div[class^=buttons-] div[class^=buttonContainer-] {
+  width: 100%;
+}
+div[class^=channelTextArea-] div[class^=buttons-] div[class^=contents-] {
+  padding: 0;
+  transform: scale(0.8);
+}
+div[class^=channelTextArea-] div[class^=buttons-] button {
+  margin: 0;
+}
+
+/* Reduce channel list padding */
+div[class*='iconVisibility-'] > div[class^=content-] {
+  margin-left: 0px;
+  padding-left: 0px;
+}
+/* Reduce voice channel group members padding */
+div[class^=list-][role=group] {
+  padding-left: 8px;
+}
+/* Shrink hash symbol */
+a[data-list-item-id^='channels___'] > svg {
+  width: 16px ! important;
+  height: 16px ! important;
+  margin-right: 2px;
+}
+
+/* Add channel tooltip */
+a[data-list-item-id^='channels___']:hover::after {
+  content: attr(aria-label);
+  font-size: smaller;
+  position: absolute;
+  padding: 4px 2px;
+  pointer-events: none;
+  left: 0;
+  bottom: 100%;
+
+  color: #fff;
+  background: #000;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  display: inline-block;
+  /* font-size: 13px; */
+  /* padding: 8px 21px; */
+}
+
+/* Hide help button */
+a[href='https://support.discord.com'] {
+  display: none;
+}
+
+/* Quick switcher size */
+div[class^=modal-] > div[class^=inner-] > div[class^=container-] {
+  max-width: 100vw;
+}
+div[class^=quickswitcher-] {
+  max-width: 100vw;
+}
+/* Popup size */
+div[class^=modal-][class*='fullscreenOnMobile'] {
+  max-width: 100vw;
+}
+@media (max-width: 485px) {
+  div[class*='fullscreenOnMobile'] {
+    position: fixed;
+  }
+}
+
+/* Puzzle voice chat button */
+button#voice-chat-for-puzzle {
+  position: fixed;
+  height: 32px;
+  width: 32px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  top: 0;
+  right: 106px;
+  z-index: 100;
+
+  cursor: pointer;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--interactive-normal);
+}
+button#voice-chat-for-puzzle:hover {
+  background: var(--background-modifier-selected);
+}
+button#voice-chat-for-puzzle:hover::after {
+  line-height: initial;
+  content: attr(aria-label);
+  position: absolute;
+  pointer-events: none;
+  margin-top: 6px;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-size: smaller;
+
+  color: #fff;
+  background: #000;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  display: inline-block;
+  font-size: 13px;
+  padding: 8px 21px;
+  white-space: nowrap;
+}
+body[voice-state*=in-voice] button#voice-chat-for-puzzle {
+  top: 89px;
+}
+body[voice-state*=puzzle-not-given] button#voice-chat-for-puzzle,
+body[voice-state*=in-puzzle-channel] button#voice-chat-for-puzzle {
+  pointer-events: none;
+  opacity: 0.2;
+}
+div[class^='nameTag-'] {
+  margin-right: 36px;
+}

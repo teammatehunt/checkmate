@@ -1,0 +1,4 @@
+/* Hide button to open chat window */
+div#docs-chat[role='button'] {
+  display: none;
+}
