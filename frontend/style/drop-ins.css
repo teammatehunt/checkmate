@@ -18,6 +18,10 @@
 }
 .caption { display: table-caption; }
 
+.br {
+  display: table;
+}
+
 a.nostyle,
 a.nostyle:visited {
     text-decoration: inherit;

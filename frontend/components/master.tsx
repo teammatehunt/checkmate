@@ -8,7 +8,6 @@ import React, {
 import produce from 'immer';
 import orderBy from 'lodash/orderBy';
 import humanizeDuration from 'humanize-duration';
-import { FixedSizeList as List, areEqual as listElementsAreEqual } from 'react-window';
 
 import {
   Link,

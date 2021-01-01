@@ -1,0 +1,26 @@
+.root {
+  padding: 2em;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+img {
+  display: block;
+  margin-inline: auto;
+  min-width: 50%;
+  max-width: 100%;
+  border: 1px solid lightgray;
+}
+
+span.link {
+  font-family: monospace;
+  font-size: 16px;
+  background-color: lightgray;
+}
+
+.red {
+  border: 3px solid red;
+}
+.orange {
+  border: 3px solid orange;
+}

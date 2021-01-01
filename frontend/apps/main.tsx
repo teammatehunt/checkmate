@@ -162,6 +162,14 @@ export const Main : React.FC<MainProps> = props => {
     }
   }, [slug, addTab]);
 
+  useEffect(() => {
+    if (slug) {
+      document.title = puzzleData?.name ?? 'Checkmate';
+    } else {
+      document.title = 'Master';
+    }
+  }, [slug]);
+
   // validate slug in tabs
   useEffect(() => {
     if (initialLoad) return;

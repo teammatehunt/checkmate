@@ -141,7 +141,7 @@ export const TdEditable : React.FC<TdEditableProps> = React.memo(({
 
   const valueLines = useMemo(() => value?.split(/\r?\n/).map((line, i) => (
     <React.Fragment key={i}>
-      {i ? <br/> : null}
+      {i ? <span className='br'/> : null}
       <Twemoji>{line}</Twemoji>
     </React.Fragment>
   )), [value]);

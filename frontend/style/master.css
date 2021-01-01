@@ -91,10 +91,10 @@
   filter: none;
 }
 
-.sub-master.td-field.textarea:not(.multiline) > .value > br {
-  content: '';
+.sub-master.td-field.textarea:not(.multiline) > .value > .br {
+  display: inline;
 }
-.sub-master.td-field.textarea:not(.multiline) > .value > br:after {
+.sub-master.td-field.textarea:not(.multiline) > .value > .br:after {
   content: ' ';
   background-color: lightskyblue;
 }

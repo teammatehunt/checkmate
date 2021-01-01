@@ -41,3 +41,8 @@ def puzzle(request, slug):
         'data': data,
     }
     return render_app(request, page, props)
+
+@login_required
+def extension(request):
+    page = 'extension'
+    return render_app(request, page)

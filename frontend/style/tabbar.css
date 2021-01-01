@@ -40,7 +40,8 @@
   padding: 8px;
 }
 .icon {
-  height: 100%;
+  /* firefox has a bug with `height: 100%; width: auto;` */
+  height: calc(var(--header-height) - 2 * 8px);
   width: auto;
   margin: 0 ! important;
   fill: currentColor;
