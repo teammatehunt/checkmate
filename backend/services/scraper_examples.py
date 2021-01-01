@@ -106,7 +106,7 @@ def parse_html_mh20(soup):
     for li_round in soup.find('ul', id='loplist').children:
         if not isinstance(li_round, NavigableString):
             round_name = li_round.a.string
-            if round_name != 'The Grand Castle':
+            if round_name != 'Spaceopolis':
                 continue
             results['rounds'].append({
                 'name': round_name,

@@ -85,7 +85,7 @@ def create_puzzle(
             try:
                 models.RoundPuzzle.objects.get_or_create(round_id=_round, puzzle_id=puzzle.pk)
             except Exception as e:
-                logger.warning(f'Could not create relation RoundPuzzle(round_id={_round}, puzzle_id={puzzle.pk}): {e}')
+                logger.warning(f'Could not create relation RoundPuzzle(round_id={_round}, puzzle_id={puzzle.pk}): {e.__class__.__name__}: {e}')
             else:
                 if discord_category_id is None:
                     discord_category_id = models.Round.objects.get(pk=_round).discord_category_id
