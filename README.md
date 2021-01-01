@@ -23,6 +23,7 @@ To run in `dev` mode, run the following:
 ```
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
+Note that the checkmate-extension zip file is not created in dev mode but it exists (unzipped) in the repository.
 
 To run in `prod` mode, run the following (replace `docker-compose.prod.yml` with `docker-compose.prod.localhost.yml` if running locally):
 ```

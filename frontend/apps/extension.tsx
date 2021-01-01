@@ -11,7 +11,16 @@ import 'style/extension.css';
 export const GetExtension = props => {
   return (
     <Base>
+      <title>Checkmate Extension</title>
       <div className='root'>
+        <p>
+          <strong>
+            Download: <a href='/static/checkmate-extension.zip' download>checkmate-extension.zip</a>
+          </strong>
+        </p>
+        <p>
+          This extension lets webpages load in iframes and performs some integrations, especially with Discord.
+        </p>
         <h2>Instructions for Chrome</h2>
         <img src={InstallationChrome}/>
         <ol>

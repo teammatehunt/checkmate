@@ -13,7 +13,8 @@ RUN apt-get update -qq && apt-get install --no-install-recommends -y \
       python3-dev \
       python3-pip \
       supervisor \
-      yarn
+      yarn \
+      zip
 
 # node_modules generates node_modules
 FROM base as node_modules

@@ -137,7 +137,7 @@ export const DiscordFrame = ({id, src, hasExtension}) => {
   } else {
     return (
       <div className="no-extension">
-        <p>The Checkmate extension was not found.</p>
+        <p>The Checkmate extension was not found. Follow the instructions <a href='/extension' target='_blank'>here</a>.</p>
       </div>
     );
   }
