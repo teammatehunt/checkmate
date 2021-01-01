@@ -86,8 +86,6 @@ def parse_html_mh16(soup):
     results = defaultdict(list)
     for h2 in soup.find_all('h2'):
         round_name = h2.a.string
-        if round_name != 'Opus':
-            continue
         results['rounds'].append({
             'name': round_name,
             'link': h2.a.get('href'),
@@ -102,3 +100,23 @@ def parse_html_mh16(soup):
             results['puzzles'].append(puzzle)
     return results
 
+def parse_html_mh20(soup):
+    # MH 2020
+    results = defaultdict(list)
+    for li_round in soup.find('ul', id='loplist').children:
+        if not isinstance(li_round, NavigableString):
+            round_name = li_round.a.string
+            if round_name != 'The Grand Castle':
+                continue
+            results['rounds'].append({
+                'name': round_name,
+                'link': li_round.a.get('href'),
+            })
+            for li_puzzle in li_round.find_all('li'):
+                puzzle = {
+                    'name': li_puzzle.a.string,
+                    'link': li_puzzle.a.get('href'),
+                    'round_names': [round_name],
+                }
+                results['puzzles'].append(puzzle)
+    return results

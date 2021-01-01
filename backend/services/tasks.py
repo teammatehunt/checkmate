@@ -208,8 +208,9 @@ def create_round(
 
 @app.task
 def auto_create_new_puzzles(dry_run=True, manual=True):
+    bot_config = models.BotConfig.get()
     enable_scraping = models.BotConfig.get().enable_scraping
-    if not manual and not enable_scraping:
+    if not manual and not bot_config.enable_scraping:
         return
     site_data = asyncio.get_event_loop().run_until_complete(scraper.fetch_site_data())
     if site_data is scraper.NOT_CONFIGURED:
@@ -225,6 +226,18 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
     hunt_root = data['hunt']['root']
     now = Now()
     new_data = defaultdict(list)
+
+    puzzles_page = bot_config.puzzles_page
+    if not puzzles_page.startswith(hunt_root) or '/' in puzzles_page[len(hunt_root):].lstrip('/'):
+        # links may not be relative, so convert
+        for site_round in site_rounds:
+            link = site_round.get('link')
+            if link is not None and '://' not in link and not link.startswith('/'):
+                site_round['link'] = urljoin(puzzles_page, link)
+        for site_puzzle in site_puzzles:
+            link = site_puzzle.get('link')
+            if link is not None and '://' not in link and not link.startswith('/'):
+                site_puzzle['link'] = urljoin(puzzles_page, link)
 
     reduced_round_names_to_slugs = {
         reduced_name(_round['name']): slug
