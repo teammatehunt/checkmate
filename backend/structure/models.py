@@ -83,7 +83,7 @@ class Entity(models.Model):
                                     related_name='%(class)s_modified_set')
     hidden = models.BooleanField(default=False, help_text='Hidden objects will not be shown.')
     notes = models.TextField(blank=True)
-    tags = fields.HStoreField(default=dict)
+    tags = fields.HStoreField(default=dict, help_text='Keys with optional values.')
 
     discord_text_channel_id = models.BigIntegerField(null=True, blank=True)
     discord_voice_channel_id = models.BigIntegerField(null=True, blank=True)
@@ -121,6 +121,7 @@ class Round(Entity):
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
     discord_category_id = models.BigIntegerField(null=True, blank=True)
+    round_tags = fields.ArrayField(CharField(), default=list, help_text='Tag categories that should be displayed / set for each puzzle in the round.')
 
 class Puzzle(Entity):
     feeders = models.ManyToManyField('Puzzle', through='MetaFeeder', related_name='metas')

@@ -5,13 +5,12 @@ After everything is set up, use the following to build the components and start 
 You will need credentials in Discord and in Drive.
 Drive:
 1. Create or select a project [here](https://console.developers.google.com/).
-1.
-[Enable the Drive API Instructions.](https://developers.google.com/drive/api/v3/enable-drive-api)
+1. [Enable the Drive API Instructions.](https://developers.google.com/drive/api/v3/enable-drive-api)
 1. Do the same for the Sheets API.
 1. [Create a service account.](https://console.cloud.google.com/iam-admin/serviceaccounts)
 1. Create a key and download the json to `credentials`. Rename or add the filename to `SECRETS.yaml`.
 
-Ensure the database is setup:
+Ensure the database is setup (choose a better password):
 ```
 docker-compose build
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
