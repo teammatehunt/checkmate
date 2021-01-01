@@ -1,11 +1,13 @@
 var serverId = null;
+var categoryId = null;
+var textChannelId = null;
 var voiceChannelId = null;
 
 const parseDiscordLocation = (link) => {
   const url = new URL(link);
   const isDiscord = url.hostname === 'discord.com';
-  const [_, serverId, channelId] = url.pathname.match(/\/channels\/(\d+|@me)(?:\/(\d+))?\/?/) || [];
-  return [isDiscord, serverId, channelId];
+  const [_, _serverId, channelId] = url.pathname.match(/\/channels\/(\d+|@me)(?:\/(\d+))?\/?/) || [];
+  return [isDiscord, _serverId, channelId];
 }
 
 const setVoiceState = () => {
@@ -33,71 +35,53 @@ const setVoiceState = () => {
   if (newState !== currentState) document.body.setAttribute('voice-state', newState);
 };
 
-const asyncClickChannel = async (serverId, channelId) => {
-  if (serverId) {
-    const element = document.querySelector(`[data-list-item-id='guildsnav___${serverId}']`);
-    if (element) {
-      element.click();
+const asyncClickChannel = async (_serverId, _categoryId, channelId) => {
+  if (_serverId) {
+    const serverElement = document.querySelector(`[data-list-item-id='guildsnav___${_serverId}']`);
+    if (serverElement) {
+      serverElement.click();
+      // rerender
+      await new Promise(r => setTimeout(r, 0));
     } else {
       return false;
     }
   }
-  const clickChannel = () => {
-    const element = document.querySelector(`[data-list-item-id='channels___${channelId}']`);
-    if (element) {
-      element.click();
-      return true;
-    } else {
-      return false;
-    }
-  };
-  if (clickChannel()) {
+  const categoryElement = document.querySelector(`[data-list-item-id='channels___${_categoryId}']`);
+  if (categoryElement && categoryElement.getAttribute('aria-expanded') === 'false') {
+    categoryElement.click();
+    // rerender
+    await new Promise(r => setTimeout(r, 0));
+  }
+  const channelElement = document.querySelector(`[data-list-item-id='channels___${channelId}']`);
+  if (channelElement) {
+    channelElement.click();
+    channelElement.scrollIntoView({
+      block: 'center',
+    });
     return true;
   } else {
-    // attempt to scroll to find the channel
-    const scroll = async() => {
-      const channelsElement = document.getElementById('channels');
-      if (!channelsElement) return false;
-      for (let top=0; top < channelsElement.scrollHeight; top+=channelsElement.getBoundingClientRect().height) {
-        channelsElement.scroll({top: top, behavior: 'auto'});
-        // let scolling and renders happen
-        await new Promise(r => setTimeout(r, 0));
-        // sometimes rendering is slow to get to top
-        // wait up to 0.5s if not within 10 pixels of top
-        let ms = 0;
-        while (top === 0 && channelsElement.scrollTop > 10 && ms < 500) {
-          const timeout = 100;
-          await new Promise(r => setTimeout(r, timeout));
-          ms += timeout;
-        }
-        if (clickChannel()) return true;
-      }
-      channelsElement.scroll({top: channelsElement.scrollHeight, behaviour: 'auto'});
-      if (clickChannel()) return true;
-      return false;
-    }
-    if (await scroll()) {
-      return true;
-    }
+    return false;
   }
-  return false;
 };
 
 const asyncOnMessage = async (message, sender) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'load-discord':
-      // set voiceChannelId
+      // set globals
       serverId = message.serverId;
+      categoryId = message.categoryId;
+      textChannelId = message.textChannelId;
       voiceChannelId = message.voiceChannelId;
-      if (message.serverId !== null && (message.textChannelId !== null || message.voiceChannelId !== null)) {
+      // load the channel
+      if (serverId !== null && (textChannelId !== null || voiceChannelId !== null)) {
         const [initialIsDiscord, initialServerId, initialChannelId] = parseDiscordLocation(window.location.href);
         let fail = false;
         // try click events
         if (initialIsDiscord) {
-          const _serverId = initialServerId === message.serverId ? null : message.serverId;
-          if (initialChannelId !== message.textChannelId && initialChannelId !== message.voiceChannelId) {
-            if (!await asyncClickChannel(_serverId, message.textChannelId)) {
+          const _serverId = initialServerId === serverId ? null : serverId;
+          if (initialChannelId !== textChannelId && initialChannelId !== voiceChannelId) {
+            if (!await asyncClickChannel(_serverId, categoryId, textChannelId)) {
               fail = true;
             }
           }
@@ -105,12 +89,12 @@ const asyncOnMessage = async (message, sender) => {
         if (!fail) {
           const [currentIsDiscord, currentServerId, currentChannelId] = parseDiscordLocation(window.location.href);
           if (!currentIsDiscord) fail = true;
-          if (currentServerId !== message.serverId) fail = true;
-          if (currentChannelId !== message.textChannelId && currentChannelId !== message.voiceChannelId) fail = true;
+          if (currentServerId !== serverId) fail = true;
+          if (currentChannelId !== textChannelId && currentChannelId !== voiceChannelId) fail = true;
         }
         // hard refresh
         if (fail) {
-          window.location.href = `https://discord.com/channels/${message.serverId}/${message.textChannelId}`;
+          window.location.href = `https://discord.com/channels/${serverId}/${textChannelId}`;
         }
       }
       // load CSS
@@ -128,10 +112,9 @@ const asyncOnMessage = async (message, sender) => {
       voiceElement.onclick = async () => {
         const [initialIsDiscord, initialServerId, initialChannelId] = parseDiscordLocation(window.location.href);
         // try click events
-        await asyncClickChannel(message.voiceChannelId)
         if (initialIsDiscord) {
           const _serverId = initialServerId === serverId ? null : serverId;
-          await asyncClickChannel(_serverId, message.voiceChannelId)
+          await asyncClickChannel(_serverId, categoryId, voiceChannelId)
         }
       };
       setVoiceState();

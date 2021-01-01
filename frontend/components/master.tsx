@@ -100,7 +100,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   const createdTimestamp = hasCreated ? Date.parse(puzzle.created) : now;
   const solvedTimestamp = hasSolved ? Date.parse(puzzle.solved) : now;
   const duration = solvedTimestamp - createdTimestamp;
-  const humanDuration = duration < 60 * 1000 ? 'just now' : humanizeDuration(
+  const humanDuration = duration < 60 * 1000 ? 'just now' : shortEnglishHumanizer(
     duration,
     {
       largest: 2,
@@ -153,6 +153,22 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
       ))}
     </div>
   );
+});
+
+const shortEnglishHumanizer = humanizeDuration.humanizer({
+  language: 'shortEn',
+  languages: {
+    shortEn: {
+      y: (c) => 'yr' + (c === 1 ? '' : 's'),
+      mo: (c) => 'mo' + (c === 1 ? '' : 's'),
+      w: (c) => 'wk' + (c === 1 ? '' : 's'),
+      d: (c) => 'day' + (c === 1 ? '' : 's'),
+      h: (c) => 'hr' + (c === 1 ? '' : 's'),
+      m: (c) => 'min' + (c === 1 ? '' : 's'),
+      s: (c) => 'sec' + (c === 1 ? '' : 's'),
+      ms: (c) => 'msec' + (c === 1 ? '' : 's'),
+    },
+  },
 });
 
 

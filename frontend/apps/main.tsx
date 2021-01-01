@@ -96,20 +96,23 @@ export const Main : React.FC<MainProps> = props => {
   const puzzles = data.puzzles;
   const puzzleData = puzzles[slug];
 
-  const puzzlesRef = useRef(puzzles);
+  const dataRef = useRef(data);
   const siteCtxRef = useRef(siteCtx);
   const iframeDetailsRef = useRef(iframeDetails);
-  useEffect(() => { puzzlesRef.current = puzzles; }, [puzzles]);
+  useEffect(() => { dataRef.current = data; }, [data]);
   useEffect(() => { siteCtxRef.current = siteCtx; }, [siteCtx]);
   useEffect(() => { iframeDetailsRef.current = iframeDetails; }, [iframeDetails]);
   const loadDiscord = useCallback((_slug, frameId) => {
     // BigInt doesn't fit in JSON types
     const nullOrString = x => isBlank(x) ? null : x.toString();
+    const puzzle = dataRef.current.puzzles[_slug];
+    const round = dataRef.current.rounds[puzzle?.rounds?.[0]];
     const e = new CustomEvent('load-discord', {detail: {
       frameId: frameId,
       serverId: nullOrString(siteCtxRef.current.discord_server_id),
-      voiceChannelId: nullOrString(puzzlesRef.current[_slug]?.discord_voice_channel_id),
-      textChannelId: nullOrString(puzzlesRef.current[_slug]?.discord_text_channel_id),
+      categoryId: nullOrString(round?.discord_category_id),
+      voiceChannelId: nullOrString(puzzle?.discord_voice_channel_id),
+      textChannelId: nullOrString(puzzle?.discord_text_channel_id),
     }});
     window.dispatchEvent(e);
   }, []);
@@ -140,7 +143,7 @@ export const Main : React.FC<MainProps> = props => {
   }, []);
 
   const addTab = useCallback(_slug => {
-    if (puzzlesRef.current[_slug]?.hidden === false) {
+    if (dataRef.current.puzzles[_slug]?.hidden === false) {
       const _tabIndex = tabs.indexOf(_slug);
       if (_tabIndex === -1) {
         setTabs([_slug, ...tabs]);

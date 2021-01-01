@@ -49,6 +49,7 @@ export interface Entity {
 export interface Round extends Entity {
   auto_assign_puzzles_to_meta: boolean;
 
+  discord_category_id: number;
   puzzles: string[]; // puzzle slugs
 
   tagNames?: string[]; // TODO

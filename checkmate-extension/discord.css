@@ -23,6 +23,9 @@ nav[class*=guilds-]:hover + div[class*=base-] {
   left: 72px;
   transition-delay: 0.5s;
 }
+div[class^=pill-] {
+  opacity: 0.25 ! important;
+}
 
 /* Reduce channel sidebar */
 div[class^=sidebar-] {
@@ -37,6 +40,74 @@ nav[class*=guilds-]:hover + div[class*=base-] div[class^=sidebar-] > nav[class^=
 nav[class*=guilds-]:hover + div[class*=base-] div[class^=sidebar-] > nav[class^='privateChannels-'] {
   width: 30px;
   transition-delay: 0.5s;
+}
+
+/* Don't hide channel links */
+div[class^=sidebar-] > nav[class^=container-] > div:first-child {
+  position: sticky;
+  top: 0;
+  background-color: var(--background-secondary);
+  z-index: 2;
+}
+div[class^=sidebar-] > nav[class^=container-] {
+  display: block;
+  overflow: hidden auto;
+  /* scrollbar properties for firefox */
+  scrollbar-color: var(--scrollbar-thin-thumb) var(--scrollbar-thin-track);
+  scrollbar-width: thin;
+}
+/* scrollbar properties for chrome */
+div[class^=sidebar-] > nav[class^=container-]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+div[class^=sidebar-] > nav[class^=container-]::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+div[class^=sidebar-] > nav[class^=container-]::-webkit-scrollbar-thumb {
+  visibility: hidden;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background-color: var(--scrollbar-thin-thumb);
+  min-height: 40px;
+}
+div[class^=sidebar-] > nav[class^=container-]::-webkit-scrollbar-track {
+    visibility: hidden;
+    border-color: var(--scrollbar-thin-track);
+    background-color: var(--scrollbar-thin-track);
+    border: 2px solid var(--scrollbar-thin-track);
+}
+div[class^=sidebar-] > nav[class^=container-]:hover::-webkit-scrollbar-thumb,
+div[class^=sidebar-] > nav[class^=container-]:hover::-webkit-scrollbar-track {
+  visibility: visible;
+}
+
+/* Reduce channel chat excess padding */
+div#channels {
+  overflow: initial ! important;
+}
+div#channels div[role=listtem] > div[class^=content-] {
+  padding: 0;
+}
+div#channels div[class^=children-] > div[class^=iconItem-] {
+  margin: 0;
+}
+div[class^=message-] {
+  padding-right: 0 ! important;
+  padding-left: 0.5rem ! important;
+}
+div[class^=contents-][role=document] {
+  margin-left: 0;
+  padding-left: 0;
+  text-indent: 0;
+}
+span[class*=timestamp-] {
+  float: right;
+  width: min-content ! important;
+  white-space: nowrap;
+  margin-left: 2px;
+  margin-right: 0 ! important;
 }
 
 /* Split channel header bar into 2 rows */
@@ -56,24 +127,6 @@ div[class^=chat-] > section[class^=title] > div[class^=toolbar-] {
 div[class^=chat-] > section[class^=title] > div[class^=toolbar-] > div[class^=iconWrapper-] {
   margin-left: 2px;
   margin-right: 2px;
-}
-
-/* Reduce channel chat excess padding */
-div[class^=message-] {
-  padding-right: 0 ! important;
-  padding-left: 0.5rem ! important;
-}
-div[class^=contents-][role=document] {
-  margin-left: 0;
-  padding-left: 0;
-  text-indent: 0;
-}
-span[class*=timestamp-] {
-  float: right;
-  width: min-content ! important;
-  white-space: nowrap;
-  margin-left: 2px;
-  margin-right: 0 ! important;
 }
 
 /* Channel chat spacing and buttons */
