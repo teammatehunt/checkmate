@@ -42,6 +42,7 @@ interface TdEditableProps {
   colors?: {[value: string]: string};
   className?: string;
   valueClassName?: string;
+  valueStyle?: any;
 }
 
 export const TdEditable : React.FC<TdEditableProps> = React.memo(({
@@ -56,6 +57,7 @@ export const TdEditable : React.FC<TdEditableProps> = React.memo(({
   colors,
   className='',
   valueClassName='',
+  valueStyle,
 }) => {
   const [uid] = useState(uniqueId('datalist-uid-'));
   const prevValue = usePrevious(value);
@@ -171,6 +173,7 @@ export const TdEditable : React.FC<TdEditableProps> = React.memo(({
       }
       <div
         className={`value ${valueClassName} ${displayStatic ? '' : 'hidden'}`}
+        style={valueStyle}
       >
         {valueLines}
       </div>

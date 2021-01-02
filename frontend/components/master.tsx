@@ -33,6 +33,22 @@ const emptyRow = () => {
   );
 };
 
+const SizingRow = ({maxRoundTags}) => {
+  // zero height row to set widths
+  return (
+    <div className='tr sub-master sizer'>
+      <div className='td sub-master sizer name'/>
+      <div className='td sub-master sizer answer answerize'/>
+      <div className='td sub-master sizer status'/>
+      <div className='td sub-master sizer notes'/>
+      <div className='td sub-master sizer open-for'/>
+      {Array.from({length: maxRoundTags}).map(() => (
+        <div className='td sub-master sizer tag'/>
+      ))}
+    </div>
+  );
+}
+
 interface RoundProps {
   round: Model.Round;
   roundTags: string[] | null;
@@ -108,9 +124,11 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
       round: true,
     },
   );
-  const openForStyle = useMemo(() => Model.isSolved(puzzle, colors) ? {backgroundColor: colors?.solved} : undefined, [puzzle, colors]);
+  const openForStyle = useMemo(() => Model.isSolved(puzzle) ? {backgroundColor: colors?.solved} : undefined, [puzzle, colors]);
 
   if (!visible) return emptyRow();
+  const answerWidth = 25; // should max with css
+  const answerStyle = puzzle.answer.length < answerWidth ? undefined : {transform: `scale(${answerWidth / puzzle.answer.length})`};
 
   return (
     <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
@@ -130,6 +148,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
         className='sub-master answerize answer'
         value={puzzle.answer}
         patch={patchAnswer}
+        valueStyle={answerStyle}
       />
       <TdEditable
         className='sub-master'
@@ -216,7 +235,8 @@ const Master : React.FC<MasterProps> = ({
       is_pseudoround: true,
     } as Model.Round;
   });
-  const rows = Object.entries(roundsWithExtras).filter(([slug, round]) => round?.hidden === false).map(([slug, round]) => {
+
+  let rows = Object.entries(roundsWithExtras).filter(([slug, round]) => round?.hidden === false).map(([slug, round]) => {
     const roundTags = round?.tagNames ?? null;
     return [
       {
@@ -227,7 +247,7 @@ const Master : React.FC<MasterProps> = ({
           roundTags: roundTags,
         },
       },
-      ...orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle, colors))), ['is_meta'], ['desc']).map(puzzle => (
+      ...orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle))), ['is_meta'], ['desc']).map(puzzle => (
         {
           key: `${round.slug}--${puzzle.slug}`,
           Component: Puzzle,
@@ -243,6 +263,7 @@ const Master : React.FC<MasterProps> = ({
       )),
     ];
   }).flat();
+  const maxRoundTags = Math.max(...rows.map(row => row.props.roundTags?.length ?? 0));
 
   const rowHeight = masterRef.current ? masterRef.current.scrollHeight / Math.max(1, rows.length) : 28;
   const padding = masterRef.current && yDims.scrollHeight ? yDims.scrollHeight - masterRef.current.scrollHeight : 0;
@@ -254,6 +275,7 @@ const Master : React.FC<MasterProps> = ({
     <div className='master' ref={masterRef}>
       <Table className='sub-master'>
         <Tbody className='sub-master'>
+          {SizingRow({maxRoundTags})}
           {rows.map(({Component, key, props}, i) => (
             <Component
               key={key}

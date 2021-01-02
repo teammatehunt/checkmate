@@ -1,5 +1,6 @@
 .header {
   display: flex;
+  width: 100%;
   align-items: stretch;
   --header-height: 48px;
   height: var(--header-height);
@@ -24,10 +25,10 @@
   display: flex;
 }
 .nav-item-link > * > :not(:last-child) {
-  margin-right: 0.5ex;
+  margin-right: 0.5ch;
 }
 .nav-item-link > * > :not(:first-child) {
-  margin-left: 0.5ex;
+  margin-left: 0.5ch;
 }
 .nav-item-link:hover {
   color: purple;
@@ -48,8 +49,10 @@
 }
 
 .tabs {
+  min-width: 0;
   display: flex;
   align-items: flex-end;
+  overflow: hidden;
 }
 
 .tab-container {
@@ -60,7 +63,7 @@
   position: relative;
   height: 32px;
   width: 180px;
-  border: 1px solid black;
+  border: 1px solid dimgray;
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   background-color: silver;
@@ -83,6 +86,7 @@
 .tab-content {
   width: 100%;
   margin: auto 4px;
+  padding-right: 20px; /* width of .tab-remove */
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -106,7 +110,6 @@
   width: 16px;
 }
 
-
 .nav-settings {
   position: relative;
   width: var(--header-height);
@@ -119,6 +122,7 @@
 .nav-dropdown {
   display: none;
   position: absolute;
+  overflow: hidden;
   top: 100%;
   right: 0;
   z-index: 100;
@@ -134,6 +138,11 @@
 .nav-dropdown > * {
   padding: 8px;
 }
+/* is needing to specify both of these a bug? */
+.nav-dropdown > div:hover,
 .nav-dropdown > :hover {
   backdrop-filter: brightness(90%);
+}
+.logout:hover {
+  color: purple;
 }

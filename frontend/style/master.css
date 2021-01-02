@@ -13,16 +13,27 @@
   height: 28px;
 }
 
-.sub-master.name { width: 30ex; }
-.sub-master.answer { width: 20ex; }
-.sub-master.status { width: 15ex; }
-.sub-master.notes { width: 30ex; }
-.sub-master.open-for { width: 15ex; }
-.sub-master.tag { width: 20ex; }
+.sub-master.sizer {
+  height: 0px ! important;
+  padding-block: 0 ! important;
+  border: none ! important;
+  box-sizing: content-box;
+}
+
+.sub-master.sizer.name { width: 30ch; }
+.sub-master.sizer.answer { width: 25ch; }
+.sub-master.sizer.status { width: 13ch; }
+.sub-master.sizer.notes { width: 30ch; }
+.sub-master.sizer.open-for { width: 13ch; }
+.sub-master.sizer.tag { width: 13ch; }
 
 .sub-master.th > div,
-.sub-master.td > div{
+.sub-master.td > div {
   display: inline;
+  transform-origin: left;
+}
+.sub-master.td.answer > div {
+  display: inline-block;
 }
 
 .sub-master.th,
@@ -34,6 +45,7 @@
   padding: var(--td-field-padding);
   overflow: hidden;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .sub-master.th {
   border-top: 2px solid gray;
@@ -99,6 +111,6 @@
   background-color: lightskyblue;
 }
 
-.sub-master.td-field.answer {
+.sub-master.td.answer {
   font-size: inherit;
 }

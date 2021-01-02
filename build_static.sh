@@ -7,4 +7,4 @@ rm -rf /build/backend/*
 # collect static files
 /app/backend/manage.py collectstatic
 # zip extension
-(cd /app && zip -r /build/backend/static/checkmate-extension.zip checkmate-extension)
+(cd /app/checkmate-extension && zip /build/backend/static/checkmate-extension.zip *)

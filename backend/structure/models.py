@@ -58,7 +58,7 @@ class BotConfig(SingletonModel):
     puzzles_page = CharField(blank=True, help_text='Page with puzzles list (or data endpoint) to be queried by scraper.')
     login_page = CharField(blank=True, help_text='Login page (used by scraper).')
     login_api_endpoint = CharField(blank=True, help_text='Login endpoint (used by scraper).')
-    enable_scraping = models.BooleanField(default=False, help_text='Enable scraping for new puzzles.')
+    enable_scraping = models.BooleanField(default=False, help_text='Enable auto scraping for new puzzles.')
 
     # Discord settings
     # server_id in SECRETS and HuntConfig
@@ -134,10 +134,16 @@ class Puzzle(Entity):
     is_meta = models.BooleanField(
         default=False, help_text='Can only be edited directly when there are no feeder puzzles. Adding feeder puzzles will also set this field.')
 
+    # should match statuses in `colors.tsx` in the frontend
+    SOLVED_STATUSES = set(['solved', 'backsolved', 'bought'])
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.original_is_meta = self.is_meta
         self.original_solved = self.solved
+
+    def is_solved(self):
+        return self.status in self.SOLVED_STATUSES
 
     def save(self, *args, **kwargs):
         feeder_ids = set(self.feeders.through.objects.filter(meta_id=self.pk))

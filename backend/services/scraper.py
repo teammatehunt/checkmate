@@ -64,7 +64,7 @@ class Client:
                 # 401=UNAUTHORIZED and 403=FORBIDDEN
                 return None
             resp.raise_for_status()
-            return await resp.text()
+            return await resp.read()
 
     async def fetch(self):
         data = await self.try_fetch()

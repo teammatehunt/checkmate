@@ -1,3 +1,9 @@
+export const solvedStatuses = [
+  'solved',
+  'backsolved',
+  'bought',
+];
+
 export const statuses = {
   new: 'whitesmoke',
   working: 'lightgray',

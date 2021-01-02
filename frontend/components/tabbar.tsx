@@ -1,4 +1,6 @@
-import React from 'react';
+import React, {
+  useCallback,
+} from 'react';
 
 import * as Context from 'components/context';
 import {
@@ -36,7 +38,6 @@ interface TabProps {
   activateTab: any;
   removeTab: any;
   puzzleData: Model.Puzzle;
-  colors: {[value: string]: string};
 }
 
 const Tab = ({
@@ -45,11 +46,10 @@ const Tab = ({
   activateTab,
   removeTab,
   puzzleData,
-  colors,
 }) => {
   const removeThisTab = (e) => removeTab(tab);
   return (
-    <div className={`tab-container ${Model.isSolved(puzzleData, colors) ? 'solved' : ''}`}>
+    <div className={`tab-container ${Model.isSolved(puzzleData) ? 'solved' : ''}`}>
       <Link
         key={tab}
         href={`/puzzles/${tab}`}
@@ -76,10 +76,19 @@ const Tab = ({
   );
 }
 
-const NavSettings = () => (
+const NavSettings = ({
+  removeSolvedTabs,
+  removeAllTabs,
+}) => (
   <div className='nav-item nav-settings'>
     <Menu className='nav-menu'/>
     <div className='nav-dropdown'>
+      <div className='nav-item-link clickable' onClick={removeSolvedTabs}>
+        Close solved tabs
+      </div>
+      <div className='nav-item-link clickable' onClick={removeAllTabs}>
+        Close all tabs
+      </div>
       <Link
         href='/accounts/logout'
         className='nav-item-link nostyle'
@@ -97,23 +106,33 @@ interface TabBarProps {
   tabs: string[];
   slug: string;
   activateTab: any;
-  removeTab: any;
+  setTabs: any;
   siteCtx: Context.SiteContextType;
   puzzles: Model.Puzzles;
   uid: number;
-  colors: {[value: string]: string};
 }
 
 const TabBar : React.FC<TabBarProps> = ({
   tabs,
   slug,
   activateTab,
-  removeTab,
+  setTabs,
   siteCtx,
   puzzles,
   uid,
-  colors,
 }) => {
+  const removeTab = useCallback((_slug) => {
+    if (tabs.includes(_slug)) {
+      const newTabs = tabs.filter(x => x !== _slug);
+      setTabs(newTabs);
+    }
+  }, [tabs, setTabs]);
+
+  const removeSolvedTabs = useCallback(() => {
+    setTabs(tabs.filter(tab => !Model.isSolved(puzzles[tab])));
+  }, [puzzles, tabs, setTabs]);
+  const removeAllTabs = useCallback(() => setTabs([]), [setTabs]);
+
   return (
     <>
       <div className='header'>
@@ -127,12 +146,14 @@ const TabBar : React.FC<TabBarProps> = ({
               activateTab={activateTab}
               removeTab={removeTab}
               puzzleData={puzzles[tab]}
-              colors={colors}
             />
           ))}
         </div>
         <div className='flex'/>
-        <NavSettings/>
+        <NavSettings
+          removeSolvedTabs={removeSolvedTabs}
+          removeAllTabs={removeAllTabs}
+        />
       </div>
     </>
   );

@@ -47,6 +47,10 @@ body {
   visibility: hidden;
 }
 
+.clickable {
+  cursor: pointer;
+}
+
 .capitalize {
   text-transform: capitalize;
 }

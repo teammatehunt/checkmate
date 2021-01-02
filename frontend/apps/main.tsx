@@ -190,12 +190,6 @@ export const Main : React.FC<MainProps> = props => {
   }, [tabs, data]);
 
   const activateTab = loadSlug;
-  const removeTab = useCallback((_slug) => {
-    if (tabs.includes(_slug)) {
-      const newTabs = tabs.filter(x => x !== _slug);
-      setTabs(newTabs);
-    }
-  }, [tabs]);
 
   // connect to websocket for updates
   const socketRef = useRef(null);
@@ -254,11 +248,10 @@ export const Main : React.FC<MainProps> = props => {
           tabs,
           slug,
           activateTab,
-          removeTab,
+          setTabs,
           siteCtx,
           puzzles,
           uid,
-          colors,
         }}/>
         <div className='flex'>
           <SplitPane

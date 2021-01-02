@@ -1,13 +1,17 @@
+.td-field {
+  padding: var(--td-field-padding);
+}
+
 .td-field > .input {
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
   width: 100%;
+  padding: var(--td-field-padding);
   background-color: transparent;
 
   border: none;
-  padding: var(--td-field-padding);
 }
 .editable:not(.editing):hover {
   background-color: lightcyan;
@@ -17,7 +21,6 @@
 }
 
 .td-field > .value {
-  padding: var(--td-field-padding);
   min-height: 1em;
 }
 .td-field > textarea {

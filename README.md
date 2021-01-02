@@ -3,6 +3,7 @@ To start a server or to develop, you will need docker and docker-compose. On Ubu
 After everything is set up, use the following to build the components and start the server.
 
 You will need credentials in Discord and in Drive.
+
 Drive:
 1. Create or select a project [here](https://console.developers.google.com/).
 1. [Enable the Drive API Instructions.](https://developers.google.com/drive/api/v3/enable-drive-api)

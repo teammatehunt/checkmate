@@ -18,6 +18,7 @@
   margin: 1em 0;
 }
 .puzzleinfo .td {
+  padding: var(--td-field-padding);
   vertical-align: middle;
 }
 

@@ -1,5 +1,7 @@
 import produce, { Draft } from 'immer';
 
+import { solvedStatuses } from 'utils/colors';
+
 export interface HuntConfig {
   root: string;
   auto_assign_puzzles_to_meta: boolean;
@@ -68,7 +70,7 @@ export interface Puzzle extends Entity {
   feeders: string[]; // feeder puzzle slugs
 }
 
-export const isSolved = (puzzle, colors) => colors?.solved && colors[puzzle.status] === colors.solved;
+export const isSolved = (puzzle) => solvedStatuses.includes(puzzle?.status);
 
 
 export interface Users {
