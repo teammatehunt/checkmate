@@ -2,6 +2,7 @@ import datetime
 import inspect
 import logging
 
+import discord
 from django import db
 from django.contrib.auth.decorators import login_required
 from django.db import transaction

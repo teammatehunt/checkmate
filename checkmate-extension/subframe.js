@@ -113,8 +113,34 @@ const asyncOnMessage = async (message, sender) => {
         const [initialIsDiscord, initialServerId, initialChannelId] = parseDiscordLocation(window.location.href);
         // try click events
         if (initialIsDiscord) {
-          const _serverId = initialServerId === serverId ? null : serverId;
-          await asyncClickChannel(_serverId, categoryId, voiceChannelId)
+          const promise = new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(
+              {
+                action: 'move-discord-voice',
+                channelId: voiceChannelId,
+              },
+              {},
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  console.log('Error:', chrome.runtime.lastError.message);
+                } else {
+                  if (200 <= response.status && response.status < 300) {
+                    // success
+                    resolve();
+                  } else {
+                    // failed
+                    reject();
+                  }
+                }
+              },
+            );
+          });
+          const timeout = 2000; // ms
+          const tle = new Promise((resolve, reject) => setTimeout(reject, timeout));
+          Promise.race([promise, tle]).catch(async () => {
+            const _serverId = initialServerId === serverId ? null : serverId;
+            await asyncClickChannel(_serverId, categoryId, voiceChannelId);
+          });
         }
       };
       setVoiceState();

@@ -177,7 +177,38 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender) => {
+const moveDiscordVoiceHandler = async (message, sender, sendResponse) => {
+  if (sender.tab) {
+    chrome.webNavigation.getFrame(
+      {
+        tabId: sender.tab.id,
+        frameId: sender.frameId,
+      },
+      frame => {
+        if (logError() || !frame) {
+          sendResponse({status: 500});
+          return;
+        }
+        chrome.tabs.sendMessage(
+          sender.tab.id,
+          message,
+          {
+            frameId: frame.parentFrameId,
+          },
+          (response) => {
+            if (logError()) {
+              sendResponse({status: 500});
+              return;
+            }
+            sendResponse(response);
+          },
+        );
+      },
+    );
+  }
+};
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id === chrome.runtime.id) {
     switch (message.action) {
     case 'load-discord':
@@ -197,6 +228,9 @@ chrome.runtime.onMessage.addListener((message, sender) => {
         );
       }
       break;
+    case 'move-discord-voice':
+      moveDiscordVoiceHandler(message, sender, sendResponse);
+      return true; // respond asynchronously
     }
   }
 });
