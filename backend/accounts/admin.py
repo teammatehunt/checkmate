@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import admin
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -9,6 +11,8 @@ from allauth.exceptions import ImmediateHttpResponse
 
 from services.discord_manager import DiscordManager
 from structure import models
+
+logger = logging.getLogger(__name__)
 
 
 class AccountAdapter(DefaultAccountAdapter):

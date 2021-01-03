@@ -71,6 +71,8 @@ class BotConfig(SingletonModel):
         null=True, blank=True, help_text='Discord channel for new puzzle alerts.')
     alert_solved_puzzle_id = models.BigIntegerField(
         null=True, blank=True, help_text='Discord channel for solved puzzle alerts.')
+    afk_voice_channel_id = models.BigIntegerField(
+        null=True, blank=True, help_text='Discord channel to put people in when deleting channels.')
 
 class Entity(models.Model):
     slug = autoslug.AutoSlugField(max_length=MAX_LENGTH, primary_key=True,

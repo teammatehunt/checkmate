@@ -11,6 +11,7 @@ from rest_framework import decorators, exceptions, permissions, response, serial
 from allauth.socialaccount.models import SocialAccount
 
 from services import tasks
+from services.discord_manager import DiscordManager
 from . import models
 
 logger = logging.getLogger(__name__)
@@ -304,3 +305,22 @@ def data_everything_with_uid(request):
     data = data_everything()
     data['uid'] = request.user.id
     return data
+
+@decorators.api_view(['POST'])
+@login_required
+def discord_voice_move(request):
+    socialaccount = SocialAccount.objects.filter(provider='discord', user_id=request.user.id).first()
+    if socialaccount is None:
+        raise exceptions.NotAcceptable()
+    uid = socialaccount.uid
+    channel_id = request.data.get('channel_id')
+    try:
+        channel_id = int(channel_id)
+    except:
+        raise exceptions.ValidationError()
+    try:
+        DiscordManager.sync_threadsafe_move_member(uid, channel_id)
+    except discord.HTTPException:
+        raise exceptions.NotAcceptable()
+    else:
+        return response.Response(status=status.HTTP_204_NO_CONTENT)

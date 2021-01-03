@@ -4,6 +4,7 @@ from rest_framework import routers as rest_routers
 
 from . import api
 from . import views
+from services import discord_manager
 
 class OptionalSlashRouter(rest_routers.DefaultRouter):
     def __init__(self, *args, **kwargs):
@@ -20,6 +21,7 @@ urlpatterns = [
     path('accounts/', include('rest_framework.urls', namespace='rest_framework')),
     path('api/', include(rest_router.urls)),
     path('api/everything', api.everything),
+    path('api/discord_voice_move', api.discord_voice_move),
     path('', views.master),
     path('puzzles/', lambda req: redirect('/')),
     path('puzzles/<slug:slug>', views.puzzle),

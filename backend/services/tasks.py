@@ -57,7 +57,13 @@ def cleanup_puzzle(slug):
     'Cleanup discord actions.'
     puzzle = models.Puzzle.get(pk=slug)
     if puzzle.is_solved():
-        pass
+        asyncio.get_event_loop().run_until_complete(async_cleanup_puzzle(puzzle))
+
+async def async_cleanup_puzzle(puzzle):
+    if puzzle.discord_voice_channel_id is not None:
+        dmgr = DiscordManager.instance()
+        await dmgr.move_members_to_afk(puzzle.discord_voice_channel_id)
+        await dmgr.delete_channel(puzzle.discord_voice_channel_id)
 
 @app.task
 def unsolve_puzzle(slug):
@@ -112,7 +118,7 @@ def create_puzzle(
             else:
                 if discord_category_id is None:
                     discord_category_id = models.Round.objects.get(pk=_round).discord_category_id
-    sync_populate_puzzle(
+    populate_puzzle(
         puzzle=puzzle,
         sheet=sheet,
         text=text,
@@ -122,7 +128,7 @@ def create_puzzle(
     )
 
 @app.task
-def sync_populate_puzzle(
+def populate_puzzle(
         puzzle=None,
         slug=None,
         hunt_root=None,
@@ -135,14 +141,14 @@ def sync_populate_puzzle(
         hunt_root = models.HuntConfig.get().root
     if discord_category_id is None and (kwargs.get('text') or kwargs.get('voice')):
         discord_category_id = models.BotConfig.get().default_category_id
-    asyncio.get_event_loop().run_until_complete(populate_puzzle(
+    asyncio.get_event_loop().run_until_complete(async_populate_puzzle(
         puzzle,
         hunt_root=hunt_root,
         discord_category_id=discord_category_id,
         **kwargs,
     ))
 
-async def populate_puzzle(
+async def async_populate_puzzle(
     puzzle,
     *,
     hunt_root,
