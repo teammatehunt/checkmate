@@ -7,7 +7,6 @@ import React, {
 import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane, { Pane } from 'react-split-pane';
 
-import * as Context from 'components/context';
 import {
   ShowIf,
   PuzzleFrame,
@@ -27,7 +26,7 @@ interface PuzzlesProps {
   tabs: string[];
   slug: string;
   puzzles: Model.Puzzles;
-  siteCtx: Context.SiteContextType;
+  hunt: Model.HuntConfig;
   iframeDetails: {[name: string]: IframeDetails};
   onDragStarted: any;
   onDragFinishedSet: any;
@@ -38,7 +37,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
   tabs,
   slug,
   puzzles,
-  siteCtx,
+  hunt,
   iframeDetails,
   onDragStarted,
   onDragFinishedSet,
@@ -69,7 +68,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
           <div key={tab}>
             <PuzzleFrame
               id={`puzzle/${tab}`}
-              siteCtx={siteCtx}
+              hunt={hunt}
               isActive={isActive && tab === slug}
               puzzleData={puzzles[tab]}
               currentUrl={iframeDetails[`puzzle/${tab}`]?.url}

@@ -6,7 +6,7 @@ import React, {
 import produce from 'immer';
 import Collapsible from 'react-collapsible';
 
-import { LocalStorageObject } from 'components/context';
+import { LocalStorageObject } from 'utils/hooks';
 import {
   Table,
   Tbody,

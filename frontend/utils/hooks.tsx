@@ -6,6 +6,18 @@ import React, {
 } from 'react';
 
 import isEqual from 'lodash/isEqual';
+import { useLocalStorage } from '@rehooks/local-storage';
+
+export interface LocalStorageObject<T> {
+  value: T;
+  set(value: T): void;
+  delete(): void;
+}
+
+export function useLocalStorageObject<T>(key: string, defaultValue: T) : LocalStorageObject<T> {
+  const [value, set, _delete] = useLocalStorage<T>(key, defaultValue);
+  return {value, set, delete: _delete};
+}
 
 export const usePrevious = (value) => {
   const ref = useRef(null);

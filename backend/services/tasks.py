@@ -10,7 +10,6 @@ from celery.utils.log import get_task_logger
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.db import transaction
-from django.db.models.functions import Now
 from django.utils import timezone
 from unidecode import unidecode
 
@@ -43,6 +42,30 @@ def canonical_link(*args, **kwargs):
 alphanumeric_regex = re.compile('[\W_]+', re.UNICODE)
 def reduced_name(name):
     return alphanumeric_regex.sub('', unidecode(name)).lower()
+
+@app.task
+def post_autodetected_solve_puzzle(slug):
+    pass
+
+@app.task
+def post_solve_puzzle(slug):
+    cleanup_puzzle.apply_async(args=[slug], countdown=5*60.)
+    pass
+
+@app.task
+def cleanup_puzzle(slug):
+    'Cleanup discord actions.'
+    puzzle = models.Puzzle.get(pk=slug)
+    if puzzle.is_solved():
+        pass
+
+@app.task
+def unsolve_puzzle(slug):
+    'Delayed check to reset puzzle solve status.'
+    puzzle = models.Puzzle.get(pk=slug)
+    if not puzzle.is_solved() and puzzle.solved is not None:
+        puzzle.solved = None
+        puzzle.save()
 
 @app.task
 def create_puzzle(
@@ -224,7 +247,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
         return
     data = api.data_everything()
     hunt_root = data['hunt']['root']
-    now = Now()
+    now = timezone.now()
     new_data = defaultdict(list)
 
     puzzles_page = bot_config.puzzles_page
@@ -304,6 +327,8 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
                 for key, value in updates.items():
                     setattr(puzzle_obj, key, value)
                 puzzle_obj.save(update_fields=updates.keys())
+                if updates.get('solved') is not None:
+                    post_autodetected_solve_puzzle.delay(slug)
     if new_data or manual:
         logger.warning({
             'new_data': new_data,

@@ -1,4 +1,5 @@
 .header {
+  position: relative;
   display: flex;
   width: 100%;
   align-items: stretch;
@@ -7,6 +8,7 @@
   user-select: none;
   border-bottom: 2px solid silver;
   background-color: floralwhite;
+  align-items: center;
 }
 
 .nav-item {
@@ -52,7 +54,7 @@
   min-width: 0;
   display: flex;
   align-items: flex-end;
-  overflow: hidden;
+  align-self: flex-end;
 }
 
 .tab-container {
@@ -61,14 +63,22 @@
 }
 .tab {
   position: relative;
-  height: 32px;
   width: 180px;
-  border: 1px solid dimgray;
   border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  background-color: silver;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
+}
+.tab.across {
+  height: 32px;
+  border-radius: 8px 8px 0 0;
+  background-color: silver;
+  border: 1px solid dimgray;
+}
+.tab.down {
+  height: 24px;
+  background-color: lavender;
+  border: 1px solid lightgray;
 }
 .tab-container.solved .tab {
   background-color: lightgreen;
@@ -86,10 +96,15 @@
 .tab-content {
   width: 100%;
   margin: auto 4px;
-  padding-right: 20px; /* width of .tab-remove */
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.tab-content.across {
+  padding-right: 20px; /* width of .tab-remove */
+}
+.tab-content.down {
+  padding-right: 16px; /* width of .tab-remove */
 }
 .tab-remove {
   position: absolute;
@@ -105,9 +120,26 @@
 .tab-remove:hover {
   background-color: rgba(0,0,0,0.15);
 }
-.tab-remove > svg {
+.tab-remove.across > svg {
   height: 16px;
   width: 16px;
+}
+
+.tab-remove.down > svg {
+  height: 12px;
+  width: 12px;
+}
+
+.tabs-dropdown-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: none;
+  z-index: 100;
+}
+.tabs-dropdown:hover > .tabs-dropdown-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .nav-settings {
@@ -119,7 +151,7 @@
   height: 100%;
   width: 100%;
 }
-.nav-dropdown {
+.nav-settings-dropdown {
   display: none;
   position: absolute;
   overflow: hidden;
@@ -130,19 +162,77 @@
   border-left: 1px solid purple;
   border-bottom: 1px solid purple;
 }
-.nav-settings:hover .nav-dropdown {
+.nav-settings:hover .nav-settings-dropdown {
   display: flex;
   flex-direction: column;
   background-color: inherit;
 }
-.nav-dropdown > * {
+.nav-settings-dropdown > * {
   padding: 8px;
 }
 /* is needing to specify both of these a bug? */
-.nav-dropdown > div:hover,
-.nav-dropdown > :hover {
+.nav-settings-dropdown > div:hover,
+.nav-settings-dropdown > :hover {
   backdrop-filter: brightness(90%);
 }
 .logout:hover {
   color: purple;
+}
+
+.nav-status {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.tabs-dropdown {
+  position: relative;
+  height: 32px;
+  width: 40px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tabs-dropdown > svg {
+  height: 24px;
+  width: 24px;
+}
+
+.connection-indicator-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.connection-indicator {
+  position: relative;
+  height: calc(0.2 * var(--header-height));
+  width: calc(0.2 * var(--header-height));
+  margin-inline: calc(0.2 * var(--header-height));
+  border-radius: 50%;
+  border: calc(0.05 * var(--header-height)) solid gray;
+  transition: background-color 0.5s;
+}
+.connection-indicator.connected {
+  background-color: #0f0;
+}
+.connection-indicator.disconnected {
+  background-color: #f00;
+}
+.connection-indicator:hover:after {
+  content: attr(aria-label);
+  white-space: pre;
+  position: absolute;
+  pointer-events: none;
+  top: 100%;
+  right: 0;
+  margin-top: 50%;
+  padding: 3px;
+  background-color: black;
+  color: lightgray;
+  border: 1px solid gray;
+  z-index: 100;
+  opacity: 0.75;
 }

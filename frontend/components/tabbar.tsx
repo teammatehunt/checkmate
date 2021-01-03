@@ -1,12 +1,19 @@
 import React, {
   useCallback,
+  useEffect,
+  useReducer,
+  useRef,
 } from 'react';
 
-import * as Context from 'components/context';
 import {
   Link,
 } from 'components/drop-ins';
-import { LogOut, Menu, X } from 'components/react-feather';
+import {
+  LogOut,
+  Menu,
+  MoreHorizontal,
+  X,
+} from 'components/react-feather';
 import Twemoji from 'components/twemoji';
 import * as Model from 'utils/model';
 
@@ -20,7 +27,7 @@ const NavHome = ({slug, activateTab}) => {
     <Link
       href='/'
       className='nav-item-link nostyle'
-      load={() => activateTab(undefined)}
+      load={activateTab}
     >
       <div
         className={`logo nav-item ${isActive ? 'active' : ''}`}
@@ -38,6 +45,7 @@ interface TabProps {
   activateTab: any;
   removeTab: any;
   puzzleData: Model.Puzzle;
+  className: string;
 }
 
 const Tab = ({
@@ -46,20 +54,20 @@ const Tab = ({
   activateTab,
   removeTab,
   puzzleData,
+  className,
 }) => {
-  const removeThisTab = (e) => removeTab(tab);
   return (
-    <div className={`tab-container ${Model.isSolved(puzzleData) ? 'solved' : ''}`}>
+    <div className={`tab-container ${className} ${Model.isSolved(puzzleData) ? 'solved' : ''}`}>
       <Link
         key={tab}
         href={`/puzzles/${tab}`}
         className='nostyle'
-        load={() => activateTab(tab)}
+        load={activateTab}
       >
         <div
-          className={`tab ${isActive ? 'active' : ''}`}
+          className={`tab ${className} ${isActive ? 'active' : ''}`}
         >
-          <div className='tab-content'>
+          <div className={`tab-content ${className}`}>
             <Twemoji>
               {puzzleData.name}
             </Twemoji>
@@ -67,8 +75,9 @@ const Tab = ({
         </div>
       </Link>
       <div
-        className='tab-remove'
-        onClick={removeThisTab}
+        className={`tab-remove ${className}`}
+        data-tab={tab}
+        onClick={removeTab}
       >
         <X/>
       </div>
@@ -82,7 +91,7 @@ const NavSettings = ({
 }) => (
   <div className='nav-item nav-settings'>
     <Menu className='nav-menu'/>
-    <div className='nav-dropdown'>
+    <div className='nav-settings-dropdown'>
       <div className='nav-item-link clickable' onClick={removeSolvedTabs}>
         Close solved tabs
       </div>
@@ -107,9 +116,11 @@ interface TabBarProps {
   slug: string;
   activateTab: any;
   setTabs: any;
-  siteCtx: Context.SiteContextType;
   puzzles: Model.Puzzles;
   uid: number;
+  isConnected: boolean;
+  maxVisibleTabs: number;
+  setMaxVisibleTabs: any;
 }
 
 const TabBar : React.FC<TabBarProps> = ({
@@ -117,11 +128,14 @@ const TabBar : React.FC<TabBarProps> = ({
   slug,
   activateTab,
   setTabs,
-  siteCtx,
   puzzles,
   uid,
+  isConnected,
+  maxVisibleTabs,
+  setMaxVisibleTabs,
 }) => {
-  const removeTab = useCallback((_slug) => {
+  const removeTab = useCallback((e) => {
+    const _slug = e.currentTarget.getAttribute('data-tab');
     if (tabs.includes(_slug)) {
       const newTabs = tabs.filter(x => x !== _slug);
       setTabs(newTabs);
@@ -133,12 +147,31 @@ const TabBar : React.FC<TabBarProps> = ({
   }, [puzzles, tabs, setTabs]);
   const removeAllTabs = useCallback(() => setTabs([]), [setTabs]);
 
+  const ref = useRef(null);
+  const resetMaxVisibleTabs = useCallback(() => {
+    const _totalWidth = ref.current.getBoundingClientRect().width;
+    const tabWidth = 180; // css .tab width
+    const dropdownWidth = 40; // css .tabs-dropdown width
+    const _maxVisibleTabs = Math.floor((_totalWidth - dropdownWidth) / tabWidth);
+    setMaxVisibleTabs(_maxVisibleTabs);
+  }, [setMaxVisibleTabs]);
+  useEffect(() => {
+    resetMaxVisibleTabs();
+    window.addEventListener('resize', resetMaxVisibleTabs);
+    return () => {
+      window.removeEventListener('resize', resetMaxVisibleTabs);
+    };
+  }, []);
+
+  // calculate tabs for dropdown
+  const numVisibleTabs = Math.min(tabs.length, maxVisibleTabs ?? Infinity);
+
   return (
     <>
       <div className='header'>
         <NavHome slug={slug} activateTab={activateTab}/>
-        <div className='tabs'>
-          {tabs.map(tab => (
+        <div className='tabs flex' ref={ref}>
+          {tabs.slice(0, numVisibleTabs).map(tab => (
             <Tab
               key={tab}
               tab={tab}
@@ -146,10 +179,32 @@ const TabBar : React.FC<TabBarProps> = ({
               activateTab={activateTab}
               removeTab={removeTab}
               puzzleData={puzzles[tab]}
+              className='across'
             />
           ))}
+          {(numVisibleTabs < tabs.length || null) && (
+            <div className='tabs-dropdown nav-item'>
+              <MoreHorizontal/>
+              <div className='tabs-dropdown-list'>
+                {tabs.slice(numVisibleTabs).map(tab => (
+                  <Tab
+                    key={tab}
+                    tab={tab}
+                    isActive={tab === slug}
+                    activateTab={activateTab}
+                    removeTab={removeTab}
+                    puzzleData={puzzles[tab]}
+                    className='down'
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <div className='flex'/>
+        <div
+          className={`connection-indicator ${isConnected ? 'connected' : 'disconnected'}`}
+          aria-label={`${isConnected ? 'Connected to server' : 'Disconnected from server'}`}
+        />
         <NavSettings
           removeSolvedTabs={removeSolvedTabs}
           removeAllTabs={removeAllTabs}

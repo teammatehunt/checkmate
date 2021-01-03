@@ -7,11 +7,13 @@ from django.contrib.postgres import fields
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from django import dispatch
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 import autoslug
 import crum
 
+from services.celery import app
 from services.redis_manager import RedisManager
 
 logger = logging.getLogger(__name__)
@@ -50,7 +52,7 @@ class HuntConfig(SingletonModel):
     discord_server_id = models.BigIntegerField(
         null=True, blank=True,
         default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))
-
+    tag_colors = fields.HStoreField(default=dict, help_text='Tag value to (CSS) color mapping.')
 
 class BotConfig(SingletonModel):
     '''Settings for bot that don't need to be passed to web users.'''
@@ -64,7 +66,11 @@ class BotConfig(SingletonModel):
     # server_id in SECRETS and HuntConfig
     default_category_id = models.BigIntegerField(
         null=True, blank=True,
-        help_text='Category for puzzles to be placed if not in round category.')
+        help_text='Discord category for puzzles to be placed if not in round category.')
+    alert_new_puzzle_id = models.BigIntegerField(
+        null=True, blank=True, help_text='Discord channel for new puzzle alerts.')
+    alert_solved_puzzle_id = models.BigIntegerField(
+        null=True, blank=True, help_text='Discord channel for solved puzzle alerts.')
 
 class Entity(models.Model):
     slug = autoslug.AutoSlugField(max_length=MAX_LENGTH, primary_key=True,
@@ -141,6 +147,7 @@ class Puzzle(Entity):
         super().__init__(*args, **kwargs)
         self.original_is_meta = self.is_meta
         self.original_solved = self.solved
+        self.original_is_solved = self.is_solved()
 
     def is_solved(self):
         return self.status in self.SOLVED_STATUSES
@@ -151,8 +158,14 @@ class Puzzle(Entity):
         if feeder_ids:
             self.is_meta = True
             auto_fields.append('is_meta')
-        if self.solved is not None and self.solved != self.original_solved:
-            self.solved_by = crum.get_current_user()
+        if self.solved is None and not self.original_is_solved and self.is_solved():
+            self.solved = timezone.now()
+            auto_fields.append('solved')
+        if self.solved != self.original_solved:
+            if self.solved is None:
+                self.solved_by = None
+            else:
+                self.solved_by = crum.get_current_user()
             auto_fields.append('solved_by')
         if 'update_fields' in kwargs:
             kwargs['update_fields'] = list({*kwargs['update_fields'], *auto_fields})
@@ -167,6 +180,12 @@ class Puzzle(Entity):
                             if puzzle_id not in feeder_ids and puzzle_id != self.pk:
                                 self.feeders.through(meta_id=self.pk, feeder_id=puzzle_id).save()
                                 feeder_ids.add(puzzle_id)
+        if not self.original_is_solved and self.is_solved():
+            # cleanup
+            app.send_task('services.tasks.post_solve_puzzle', args=[self.pk])
+        if self.original_is_solved and not self.is_solved() and self.solved is not None:
+            # unsolve
+            app.send_task('services.tasks.unsolve_puzzle', args=[self.pk], countdown=60.)
 
 
 class BasePuzzleRelation(models.Model):

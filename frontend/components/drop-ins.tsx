@@ -36,7 +36,7 @@ export const Link = (props) => {
         if (e.altKey || e.ctrlKey || e.shiftKey) return;
         if (load) {
           e.preventDefault();
-          load();
+          load(e);
         }
       }}
       {...rest}

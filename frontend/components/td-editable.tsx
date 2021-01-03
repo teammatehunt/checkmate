@@ -125,11 +125,8 @@ export const TdEditable : React.FC<TdEditableProps> = React.memo(({
   const onFocus = useCallback((e) => setEditState(EditState.EDITING), []);
 
   const onBlur = useCallback((e) => {
-    setEditState(editState => {
-      if (editState === EditState.EDITING) return EditState.CHECKING;
-      return editState;
-    });
-  }, []);
+    if (editState === EditState.EDITING) setEditState(EditState.CHECKING);
+  }, [editState]);
 
   const color = editState === EditState.DEFAULT && colors?.[value];
   let backgroundColor = undefined;

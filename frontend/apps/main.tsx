@@ -15,7 +15,7 @@ import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
 
 import Base from 'components/base';
-import { useLocalStorageObject } from 'components/context';
+import { useLocalStorageObject } from 'utils/hooks';
 import Master from 'components/master';
 import MasterInfo from 'components/master-info';
 import Puzzles from 'components/puzzle';
@@ -86,21 +86,21 @@ export const Main : React.FC<MainProps> = props => {
   const hideSolved = useLocalStorageObject<boolean>('master/hide-solved', false);
 
   // because tabs can update outside of this window
-  const [tabIndex, setTabIndex] = useState(null);
-  const [initialLoad, setInitialLoad] = useState(true);
+  const initialLoad = useRef(true);
+  const [maxVisibleTabs, setMaxVisibleTabs] = useState(null);
 
   const [hasExtension, setHasExtension] = useState(false);
 
   const uid = data.uid;
-  const siteCtx = data.hunt;
+  const hunt = data.hunt;
   const puzzles = data.puzzles;
   const puzzleData = puzzles[slug];
 
   const dataRef = useRef(data);
-  const siteCtxRef = useRef(siteCtx);
+  const huntRef = useRef(hunt);
   const iframeDetailsRef = useRef(iframeDetails);
   useEffect(() => { dataRef.current = data; }, [data]);
-  useEffect(() => { siteCtxRef.current = siteCtx; }, [siteCtx]);
+  useEffect(() => { huntRef.current = hunt; }, [hunt]);
   useEffect(() => { iframeDetailsRef.current = iframeDetails; }, [iframeDetails]);
   const loadDiscord = useCallback((_slug, frameId) => {
     // BigInt doesn't fit in JSON types
@@ -109,7 +109,7 @@ export const Main : React.FC<MainProps> = props => {
     const round = dataRef.current.rounds[puzzle?.rounds?.[0]];
     const e = new CustomEvent('load-discord', {detail: {
       frameId: frameId,
-      serverId: nullOrString(siteCtxRef.current.discord_server_id),
+      serverId: nullOrString(huntRef.current.discord_server_id),
       categoryId: nullOrString(round?.discord_category_id),
       voiceChannelId: nullOrString(puzzle?.discord_voice_channel_id),
       textChannelId: nullOrString(puzzle?.discord_text_channel_id),
@@ -144,21 +144,23 @@ export const Main : React.FC<MainProps> = props => {
 
   const addTab = useCallback(_slug => {
     if (dataRef.current.puzzles[_slug]?.hidden === false) {
-      const _tabIndex = tabs.indexOf(_slug);
-      if (_tabIndex === -1) {
+      const tabIndex = tabs.indexOf(_slug);
+      if (tabIndex === -1) {
         setTabs([_slug, ...tabs]);
         return 0;
+      } else if (maxVisibleTabs > 0 && tabIndex >= maxVisibleTabs) {
+        setTabs([...tabs.slice(0, maxVisibleTabs - 1), _slug, ...tabs.slice(maxVisibleTabs - 1, tabIndex), ...tabs.slice(tabIndex + 1)]);
+        return maxVisibleTabs - 1;
       } else {
-        return _tabIndex;
+        return tabIndex;
       }
     }
     return null;
-  }, [tabs]);
+  }, [tabs, maxVisibleTabs]);
   const loadSlug = useCallback(_slug => {
     if (_slug !== slug) {
-      const _tabIndex = addTab(_slug);
+      const tabIndex = addTab(_slug);
       setSlug(_slug);
-      setTabIndex(_tabIndex);
       const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
       history.pushState({slug: _slug}, '', url);
       loadDiscord(_slug, iframeDetailsRef.current.discord?.frameId);
@@ -175,26 +177,31 @@ export const Main : React.FC<MainProps> = props => {
 
   // validate slug in tabs
   useEffect(() => {
-    if (initialLoad) return;
+    if (initialLoad.current) return;
     if (isBlank(slug)) return;
     if (!tabs.includes(slug)) loadSlug(undefined);
   }, [tabs, slug]);
   useEffect(() => {
     addTab(slug);
-    setInitialLoad(false);
-  }, []);
+    initialLoad.current = false;
+  }, [maxVisibleTabs]);
   useEffect(() => {
     if (tabs.some(slug => data.puzzles[slug]?.hidden !== false)) {
       setTabs(tabs.filter(slug => data.puzzles[slug]?.hidden === false));
     }
   }, [tabs, data]);
 
-  const activateTab = loadSlug;
+  const activateTab = useCallback((e) => {
+    const href = e.currentTarget.getAttribute('href');
+    const _slug = href.substring(href.lastIndexOf('/') + 1);
+    loadSlug(_slug);
+  }, [loadSlug]);
 
   // connect to websocket for updates
   const socketRef = useRef(null);
   const reconnectDelayRef = useRef<number>(1);
   const updateCacheRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(false);
   useEffect(() => {
     const closeWebsocket = () => {
       try {
@@ -212,9 +219,11 @@ export const Main : React.FC<MainProps> = props => {
         });
       });
       socket.addEventListener('open', (e) => {
+        setIsConnected(true);
         reconnectDelayRef.current = 1;
       });
       socket.addEventListener('close', (e) => {
+        setIsConnected(false);
         setTimeout(openWebsocket, reconnectDelayRef.current * 1000);
         reconnectDelayRef.current += 1;
       });
@@ -226,7 +235,7 @@ export const Main : React.FC<MainProps> = props => {
   }, []);
 
   const [initialDiscordUrl] = useState(Model.discordLink(
-    siteCtx?.discord_server_id, puzzleData?.discord_text_channel_id));
+    hunt?.discord_server_id, puzzleData?.discord_text_channel_id));
 
   const [resizingClass, setResizingClass] = useState('');
   const onDragStarted = useCallback(() => setResizingClass('resizing'), []);
@@ -239,7 +248,10 @@ export const Main : React.FC<MainProps> = props => {
 
   // TODO: extend with colors from database
   const statuses = baseStatuses;
-  const colors = baseColors;
+  const colors = useMemo(() => ({
+    ...baseColors,
+    ...hunt.tag_colors,
+  }), [hunt.tag_colors]);
 
   return (
     <Base>
@@ -249,9 +261,12 @@ export const Main : React.FC<MainProps> = props => {
           slug,
           activateTab,
           setTabs,
-          siteCtx,
+          hunt,
           puzzles,
           uid,
+          isConnected,
+          maxVisibleTabs,
+          setMaxVisibleTabs,
         }}/>
         <div className='flex'>
           <SplitPane
@@ -280,7 +295,7 @@ export const Main : React.FC<MainProps> = props => {
                   tabs={tabs}
                   slug={slug}
                   puzzles={puzzles}
-                  siteCtx={siteCtx}
+                  hunt={hunt}
                   iframeDetails={iframeDetails}
                   onDragStarted={onDragStarted}
                   onDragFinishedSet={onDragFinishedSet}

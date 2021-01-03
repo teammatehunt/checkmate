@@ -89,13 +89,13 @@ export const CachedIFrame : React.FC<CachedIFrameProps> = ({isActive, currentUrl
   );
 };
 
-export const PuzzleFrame = ({id, siteCtx, isActive, puzzleData, currentUrl}) => {
+export const PuzzleFrame = ({id, hunt, isActive, puzzleData, currentUrl}) => {
   let hasOrigin = false;
   try {
     hasOrigin = Boolean(new URL(puzzleData?.link).origin);
   } catch (error) {
   }
-  const root_stripped = (siteCtx?.root ?? '').slice(-1) === '/' ? siteCtx.root.slice(0, -1) : (siteCtx?.root ?? '');
+  const root_stripped = (hunt?.root ?? '').slice(-1) === '/' ? hunt.root.slice(0, -1) : (hunt?.root ?? '');
   const link_stripped = puzzleData.link[0] === '/' ? puzzleData.link.slice(1) : puzzleData.link;
   const puzzleUrl = puzzleData?.link ? hasOrigin ? puzzleData.link : `${root_stripped}/${link_stripped}` : undefined;
   return (
