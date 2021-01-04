@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "author": "Brian Shimanuki",
 
-  "description": "Helper for iframe management for puzzle solving.",
+  "description": "Helper enabling iframe management for puzzle solving using Checkmate, a puzzle management tool for teammate in the MIT Mystery Hunt.",
 
   "icons": {
     "16": "icon16.png",

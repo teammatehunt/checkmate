@@ -102,6 +102,9 @@ div[class^=contents-][role=document] {
   padding-left: 0;
   text-indent: 0;
 }
+div[class^=contents-][role=document] > img[class^=avatar-] {
+  display: none;
+}
 span[class*=timestamp-] {
   float: right;
   width: min-content ! important;
