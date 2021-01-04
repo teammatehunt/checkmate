@@ -1,5 +1,7 @@
 import React, {
   useEffect,
+  useReducer,
+  useRef,
   useState,
 } from 'react';
 
@@ -45,8 +47,8 @@ export const IFrame : React.FC<IFrameProps> = ({
       {src ?
         <iframe
           name={id}
-          width="100%"
-          height="100%"
+          width='100%'
+          height='100%'
           title={title}
           src={src}
           allow={featureList}
@@ -58,10 +60,12 @@ export const IFrame : React.FC<IFrameProps> = ({
   );
 };
 
-const canonicalPath = (url: string) => {
+const canonicalUrl = (url: string) => {
   if (!url) return null;
   const _url = new URL(url);
-  return (_url.origin + _url.pathname).replace(/\/+$/, '');
+  let combined = (_url.origin + _url.pathname).replace(/\/+$/, '');
+  if (_url.host === 'docs.google.com') combined = combined.replace(/\/edit$/, '')
+    return combined;
 };
 
 interface CachedIFrameProps {
@@ -71,25 +75,53 @@ interface CachedIFrameProps {
   title: string;
   isActive: boolean;
   currentUrl: string;
+  reloadIfChangedTrigger: number;
+  reloadTrigger: number;
 }
 
-export const CachedIFrame : React.FC<CachedIFrameProps> = ({isActive, currentUrl, ...props}) => {
+export const CachedIFrame : React.FC<CachedIFrameProps> = ({
+  isActive,
+  currentUrl,
+  reloadIfChangedTrigger,
+  reloadTrigger,
+  ...props
+}) => {
   const [cached, setCached] = useState(DisplayType.NO_RENDER);
+  const [ownReloadTrigger, dispatchOwnReloadTrigger] = useReducer(state => state + 1, 0);
+  const isActiveRef = useRef(isActive);
+  const isChangedRef = useRef(false);
+  isActiveRef.current = isActive;
+  isChangedRef.current = canonicalUrl(currentUrl) !== canonicalUrl(props.src);
   useEffect(() => {
-    if (canonicalPath(currentUrl) !== canonicalPath(props.src)) {
-      setCached(DisplayType.NO_RENDER);
-    } else {
+    if (canonicalUrl(currentUrl) === canonicalUrl(props.src)) {
       if (isActive) setCached(DisplayType.HIDE);
+    } else {
+      setCached(DisplayType.NO_RENDER);
     }
-  }, [isActive]);
+  }, [isActive, currentUrl, props.src]);
+
+  useEffect(() => {
+    if (isActiveRef.current && isChangedRef.current) dispatchOwnReloadTrigger();
+  }, [reloadIfChangedTrigger]);
+  useEffect(() => {
+    if (isActiveRef.current) dispatchOwnReloadTrigger();
+  }, [reloadTrigger]);
 
   const display = isActive ? DisplayType.DISPLAY : cached;
   return (
-    <IFrame display={display} {...props}/>
+    <IFrame key={ownReloadTrigger} display={display} {...props}/>
   );
 };
 
-export const PuzzleFrame = ({id, hunt, isActive, puzzleData, currentUrl}) => {
+export const PuzzleFrame = ({
+  id,
+  hunt,
+  isActive,
+  puzzleData,
+  currentUrl,
+  reloadIfChangedTrigger,
+  reloadTrigger,
+}) => {
   let hasOrigin = false;
   try {
     hasOrigin = Boolean(new URL(puzzleData?.link).origin);
@@ -101,24 +133,35 @@ export const PuzzleFrame = ({id, hunt, isActive, puzzleData, currentUrl}) => {
   return (
     <CachedIFrame
       id={id}
-      kind="puzzle"
+      kind='puzzle'
       src={puzzleUrl}
       title={puzzleData?.name}
       isActive={isActive}
       currentUrl={currentUrl}
+      reloadIfChangedTrigger={reloadIfChangedTrigger}
+      reloadTrigger={reloadTrigger}
     />
   );
 };
 
-export const SheetFrame = ({id, isActive, puzzleData, currentUrl}) => {
+export const SheetFrame = ({
+  id,
+  isActive,
+  puzzleData,
+  currentUrl,
+  reloadIfChangedTrigger,
+  reloadTrigger,
+}) => {
   return (
     <CachedIFrame
       id={id}
-      kind="sheet"
+      kind='sheet'
       src={puzzleData?.sheet_link}
       title={puzzleData?.name && `Spreadsheet for ${puzzleData?.name}`}
       isActive={isActive}
       currentUrl={currentUrl}
+      reloadIfChangedTrigger={reloadIfChangedTrigger}
+      reloadTrigger={reloadTrigger}
     />
   );
 }
@@ -128,15 +171,15 @@ export const DiscordFrame = ({id, src, hasExtension}) => {
     return (
       <IFrame
         id={id}
-        kind="discord"
+        kind='discord'
         src={src}
-        title="Discord"
+        title='Discord'
         display={DisplayType.DISPLAY}
       />
     );
   } else {
     return (
-      <div className="no-extension">
+      <div className='no-extension'>
         <p>The Checkmate extension was not found. Follow the instructions <a href='/extension' target='_blank'>here</a>.</p>
       </div>
     );

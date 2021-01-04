@@ -154,3 +154,11 @@ input, select, textarea, button {
   writing-mode: vertical-rl;
   white-space: nowrap;
 }
+
+.sidebar-icon {
+  cursor: pointer;
+}
+.sidebar-icon:hover {
+  color: purple;
+  filter: drop-shadow(0 0 1px);
+}

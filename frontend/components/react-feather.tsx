@@ -9,5 +9,6 @@ export { default as LogOut } from 'react-feather/dist/icons/log-out';
 export { default as Menu } from 'react-feather/dist/icons/menu';
 export { default as MoreHorizontal } from 'react-feather/dist/icons/more-horizontal';
 export { default as Plus } from 'react-feather/dist/icons/plus';
+export { default as RefreshCw } from 'react-feather/dist/icons/refresh-cw';
 export { default as Tool } from 'react-feather/dist/icons/tool';
 export { default as X } from 'react-feather/dist/icons/x';

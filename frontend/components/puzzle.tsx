@@ -32,6 +32,9 @@ interface PuzzlesProps {
   onDragFinishedSet: any;
   puzzleVisible: boolean;
   sheetVisible: boolean;
+  reloadIfChangedTrigger: number;
+  reloadPuzzleTrigger: number;
+  reloadSheetTrigger: number;
 }
 
 const Puzzles : React.FC<PuzzlesProps> = ({
@@ -45,6 +48,9 @@ const Puzzles : React.FC<PuzzlesProps> = ({
   onDragFinishedSet,
   puzzleVisible,
   sheetVisible,
+  reloadIfChangedTrigger,
+  reloadPuzzleTrigger,
+  reloadSheetTrigger,
 }) => {
   const [lhsplitter, setLhsplitter] = useLocalStorage<number>('frames/lhsplitter', null);
 
@@ -55,6 +61,8 @@ const Puzzles : React.FC<PuzzlesProps> = ({
       onDragStarted={onDragStarted}
       onDragFinished={onDragFinishedSet(setLhsplitter)}
       resizerClassName={puzzleVisible && sheetVisible ? 'Resizer' : 'nodisplay'}
+      pane1Style={sheetVisible ? undefined : {height: '100%'}}
+      pane2Style={puzzleVisible ? undefined : {height: '100%'}}
       /* @ts-ignore */
       pane1ClassName={puzzleVisible ? '' : 'nodisplay'}
       pane2ClassName={sheetVisible ? '' : 'nodisplay'}
@@ -68,6 +76,8 @@ const Puzzles : React.FC<PuzzlesProps> = ({
               isActive={isActive && tab === slug}
               puzzleData={puzzles[tab]}
               currentUrl={iframeDetails[`puzzle/${tab}`]?.url}
+              reloadIfChangedTrigger={reloadIfChangedTrigger}
+              reloadTrigger={reloadPuzzleTrigger}
             />
           </div>
         ))}
@@ -80,6 +90,8 @@ const Puzzles : React.FC<PuzzlesProps> = ({
               isActive={isActive && tab === slug}
               puzzleData={puzzles[tab]}
               currentUrl={iframeDetails[`sheet/${tab}`]?.url}
+              reloadIfChangedTrigger={reloadIfChangedTrigger}
+              reloadTrigger={reloadSheetTrigger}
             />
           </div>
         ))}

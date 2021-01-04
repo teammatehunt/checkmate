@@ -25,6 +25,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  RefreshCw,
 } from 'components/react-feather';
 import TabBar from 'components/tabbar';
 import {
@@ -102,6 +103,9 @@ export const Main : React.FC<MainProps> = props => {
   const [sheetVisible, setSheetVisible] = useState(true);
   const [infoVisible, setInfoVisible] = useState(true);
   const [discordVisible, setDiscordVisible] = useState(true);
+  const [reloadIfChangedTrigger, dispatchReloadIfChangedTrigger] = useReducer(state => state + 1, 0);
+  const [reloadPuzzleTrigger, dispatchReloadPuzzleTrigger] = useReducer(state => state + 1, 0);
+  const [reloadSheetTrigger, dispatchReloadSheetTrigger] = useReducer(state => state + 1, 0);
 
   const uid = data.uid;
   const hunt = data.hunt;
@@ -111,16 +115,16 @@ export const Main : React.FC<MainProps> = props => {
   const dataRef = useRef(data);
   const huntRef = useRef(hunt);
   const iframeDetailsRef = useRef(iframeDetails);
-  useEffect(() => { dataRef.current = data; }, [data]);
-  useEffect(() => { huntRef.current = hunt; }, [hunt]);
-  useEffect(() => { iframeDetailsRef.current = iframeDetails; }, [iframeDetails]);
-  const loadDiscord = useCallback((_slug, frameId) => {
+  dataRef.current = data;
+  huntRef.current = hunt;
+  iframeDetailsRef.current = iframeDetails;
+  const loadDiscord = useCallback((_slug, frameId?) => {
     // BigInt doesn't fit in JSON types
     const nullOrString = x => isBlank(x) ? null : x.toString();
     const puzzle = dataRef.current.puzzles[_slug];
     const round = dataRef.current.rounds[puzzle?.rounds?.[0]];
     const e = new CustomEvent('load-discord', {detail: {
-      frameId: frameId,
+      frameId: frameId ?? iframeDetailsRef.current.discord?.frameId,
       serverId: nullOrString(huntRef.current.discord_server_id),
       categoryId: nullOrString(round?.discord_category_id),
       voiceChannelId: nullOrString(puzzle?.discord_voice_channel_id),
@@ -169,13 +173,17 @@ export const Main : React.FC<MainProps> = props => {
     }
     return null;
   }, [tabs, maxVisibleTabs]);
-  const loadSlug = useCallback(_slug => {
-    if (_slug !== slug) {
+  const loadSlug = useCallback((_slug, reset=false) => {
+    if (reset || _slug !== slug) {
       const tabIndex = addTab(_slug);
-      setSlug(_slug);
-      const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
-      history.pushState({slug: _slug}, '', url);
-      loadDiscord(_slug, iframeDetailsRef.current.discord?.frameId);
+      if (_slug === slug && _slug) {
+        dispatchReloadIfChangedTrigger();
+      } else {
+        const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
+        history.pushState({slug: _slug}, '', url);
+        setSlug(_slug);
+      }
+      loadDiscord(_slug);
     }
   }, [slug, addTab]);
 
@@ -206,8 +214,8 @@ export const Main : React.FC<MainProps> = props => {
   const activateTab = useCallback((e) => {
     const href = e.currentTarget.getAttribute('href');
     const _slug = href.substring(href.lastIndexOf('/') + 1);
-    loadSlug(_slug);
-  }, [loadSlug]);
+    loadSlug(_slug, _slug === slug);
+  }, [slug, loadSlug]);
 
   // connect to websocket for updates
   const socketRef = useRef(null);
@@ -283,37 +291,39 @@ export const Main : React.FC<MainProps> = props => {
           setMaxVisibleTabs,
         }}/>
         <div className='hflex'>
+          {(page === 'puzzle' || null) &&
           <div className='sidebar left'>
-            {(page === 'puzzle' || null) &&
-            <>
-              <a
-                href={iframeDetailsRef.current?.[`puzzle/${slug}`]?.url}
-                target='_blank'
-              >
-                <ExternalLink/>
-              </a>
-              {puzzleVisible ?
-                <Eye onClick={() => setPuzzleVisible(false)}/>
-                :
-                <EyeOff onClick={() => setPuzzleVisible(true)}/>
-              }
-              <div className='text-up'>Puzzle</div>
-              <div className='flex'/>
-              <a
-                href={iframeDetailsRef.current?.[`sheet/${slug}`]?.url}
-                target='_blank'
-              >
-                <ExternalLink/>
-              </a>
-              {sheetVisible ?
-                <Eye onClick={() => setSheetVisible(false)}/>
-                :
-                <EyeOff onClick={() => setSheetVisible(true)}/>
-              }
-              <div className='text-up'>Sheet</div>
-            </>
+            <Link
+              href={iframeDetailsRef.current?.[`puzzle/${slug}`]?.url}
+              target='_blank'
+              className='sidebar-icon nostyle'
+            >
+              <ExternalLink/>
+            </Link>
+            <RefreshCw className='sidebar-icon' onClick={dispatchReloadPuzzleTrigger}/>
+            {puzzleVisible ?
+              <Eye className='sidebar-icon' onClick={() => setPuzzleVisible(false)}/>
+              :
+              <EyeOff className='sidebar-icon' onClick={() => setPuzzleVisible(true)}/>
             }
+            <div className='text-up'>Puzzle</div>
+            <div className='flex'/>
+            <Link
+              href={iframeDetailsRef.current?.[`sheet/${slug}`]?.url}
+              target='_blank'
+              className='sidebar-icon nostyle'
+            >
+              <ExternalLink/>
+            </Link>
+            <RefreshCw className='sidebar-icon' onClick={dispatchReloadSheetTrigger}/>
+            {sheetVisible ?
+              <Eye className='sidebar-icon' onClick={() => setSheetVisible(false)}/>
+              :
+              <EyeOff className='sidebar-icon' onClick={() => setSheetVisible(true)}/>
+            }
+            <div className='text-up'>Sheet</div>
           </div>
+          }
           <div className='flex'>
             <SplitPane
               split='vertical'
@@ -323,7 +333,7 @@ export const Main : React.FC<MainProps> = props => {
               onDragStarted={onDragStarted}
               onDragFinished={onDragFinishedVsplitter}
               resizerClassName={leftVisible && rightVisible ? 'Resizer' : 'nodisplay'}
-              /* only for pane2 because pane2 is primary */
+              pane1Style={rightVisible ? undefined : {width: '100%'}}
               pane2Style={leftVisible ? undefined : {width: '100%'}}
               /* @ts-ignore */
               pane1ClassName={leftVisible ? '' : 'nodisplay'}
@@ -344,15 +354,20 @@ export const Main : React.FC<MainProps> = props => {
                 <ShowIf display={page === 'puzzle'}>
                   <Puzzles
                     isActive={page === 'puzzle'}
-                    tabs={tabs}
-                    slug={slug}
-                    puzzles={puzzles}
-                    hunt={hunt}
-                    iframeDetails={iframeDetails}
-                    onDragStarted={onDragStarted}
-                    onDragFinishedSet={onDragFinishedSet}
-                    puzzleVisible={puzzleVisible}
-                    sheetVisible={sheetVisible}
+                    {...{
+                      tabs,
+                      slug,
+                      puzzles,
+                      hunt,
+                      iframeDetails,
+                      onDragStarted,
+                      onDragFinishedSet,
+                      puzzleVisible,
+                      sheetVisible,
+                      reloadIfChangedTrigger,
+                      reloadPuzzleTrigger,
+                      reloadSheetTrigger,
+                    }}
                   />
                 </ShowIf>
               </div>
@@ -362,6 +377,8 @@ export const Main : React.FC<MainProps> = props => {
                 onDragStarted={onDragStarted}
                 onDragFinished={onDragFinishedRhsplitter}
                 resizerClassName={infoVisible && discordVisible ? 'Resizer' : 'nodisplay'}
+                pane1Style={discordVisible ? undefined : {height: '100%'}}
+                pane2Style={infoVisible ? undefined : {height: '100%'}}
                 /* @ts-ignore */
                 pane1ClassName={infoVisible ? '' : 'nodisplay'}
                 pane2ClassName={discordVisible ? '' : 'nodisplay'}
@@ -395,22 +412,24 @@ export const Main : React.FC<MainProps> = props => {
           </div>
           <div className='sidebar right'>
             {infoVisible ?
-              <Eye onClick={() => setInfoVisible(false)}/>
+              <Eye className='sidebar-icon' onClick={() => setInfoVisible(false)}/>
               :
-              <EyeOff onClick={() => setInfoVisible(true)}/>
+              <EyeOff className='sidebar-icon' onClick={() => setInfoVisible(true)}/>
             }
             <div className='text-down'>Info</div>
             <div className='flex'/>
-            <a
+            <Link
               href={iframeDetailsRef.current?.['discord']?.url}
               target='_blank'
+              className='sidebar-icon nostyle'
             >
               <ExternalLink/>
-            </a>
+            </Link>
+            <RefreshCw className='sidebar-icon' onClick={() => loadDiscord(slug)}/>
             {discordVisible ?
-              <Eye onClick={() => setDiscordVisible(false)}/>
+              <Eye className='sidebar-icon' onClick={() => setDiscordVisible(false)}/>
               :
-              <EyeOff onClick={() => setDiscordVisible(true)}/>
+              <EyeOff className='sidebar-icon' onClick={() => setDiscordVisible(true)}/>
             }
             <div className='text-down'>Discord</div>
           </div>
