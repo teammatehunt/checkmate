@@ -32,7 +32,8 @@
 .nav-item-link > * > :not(:first-child) {
   margin-left: 0.5ch;
 }
-.nav-item-link:hover {
+.nav-item-link:hover,
+.nav-item-link:hover > div {
   color: purple;
 }
 
@@ -170,13 +171,9 @@
 .nav-settings-dropdown > * {
   padding: 8px;
 }
-/* is needing to specify both of these a bug? */
-.nav-settings-dropdown > div:hover,
-.nav-settings-dropdown > :hover {
+/* is needing to specify the tag a bug? */
+.nav-settings-dropdown > a:hover {
   backdrop-filter: brightness(90%);
-}
-.logout:hover {
-  color: purple;
 }
 
 .nav-status {

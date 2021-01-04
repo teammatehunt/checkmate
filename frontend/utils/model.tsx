@@ -113,13 +113,13 @@ export const dataReducer = (state : Data, {ws, cacheRef, update} : {ws, cacheRef
     }
     if (update.prev_version === null || cacheRef.current.version === update.prev_version) {
       // apply update
-      dataMerge(draft, update.data, update.roots);
+      draft = dataMerge(draft, update.data, update.roots);
       cacheRef.current.version = update.version;
       cacheRef.current.reception_timestamp = Date.now();
       // look through cached updates
       while (cacheRef.current.deltas[cacheRef.current.version]?.version > cacheRef.current.version) {
         const delta = cacheRef.current.deltas[cacheRef.current.version];
-        dataMerge(draft, delta.data, delta.roots);
+        draft = dataMerge(draft, delta.data, delta.roots);
         cacheRef.current.version = delta.version;
       }
       Object.keys(cacheRef.current.deltas).filter(version => Number(version) <= cacheRef.current.version).forEach(version => delete cacheRef.current.deltas[version]);
@@ -135,14 +135,15 @@ export const dataReducer = (state : Data, {ws, cacheRef, update} : {ws, cacheRef
         }
       }, 3000);
     }
+    return draft;
   });
 };
 
 const _MERGED = {};
-const dataMerge = (draft, data, roots) => {
+const dataMergeInternal = (draft, data, roots) => {
   if (roots === true) return data;
   for (const key in roots) {
-    const newData = dataMerge(draft[key], data[key], roots[key]);
+    const newData = dataMergeInternal(draft[key], data[key], roots[key]);
     if (newData === undefined) {
       delete draft[key];
     } else if (newData !== _MERGED){
@@ -151,5 +152,12 @@ const dataMerge = (draft, data, roots) => {
   }
   return _MERGED;
 };
+
+const dataMerge = (draft, data, roots) => {
+  const result = dataMergeInternal(draft, data, roots);
+  if (result === _MERGED) return draft;
+  else return result;
+};
+
 
 export const discordLink = (server_id: number, channel_id?: number) => `https://discord.com/channels/${server_id}/${channel_id === null || channel_id === undefined ? '' : channel_id}`;

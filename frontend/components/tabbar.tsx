@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   MoreHorizontal,
+  Tool,
   X,
 } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
@@ -92,12 +93,28 @@ const NavSettings = ({
   <div className='nav-item nav-settings'>
     <Menu className='nav-menu'/>
     <div className='nav-settings-dropdown'>
-      <div className='nav-item-link clickable' onClick={removeSolvedTabs}>
-        Close solved tabs
-      </div>
-      <div className='nav-item-link clickable' onClick={removeAllTabs}>
-        Close all tabs
-      </div>
+      <Link className='nav-item-link nostyle' onClick={removeSolvedTabs}>
+        <div>
+          <X/>
+          <span>Close solved tabs</span>
+        </div>
+      </Link>
+      <Link className='nav-item-link nostyle' onClick={removeAllTabs}>
+        <div>
+          <X/>
+          <span>Close all tabs</span>
+        </div>
+      </Link>
+      <Link
+        href='/extension'
+        className='nav-item-link nostyle'
+        target='_blank'
+      >
+        <div className='extension-link'>
+          <Tool/>
+          <span>Extension instructions</span>
+        </div>
+      </Link>
       <Link
         href='/accounts/logout'
         className='nav-item-link nostyle'

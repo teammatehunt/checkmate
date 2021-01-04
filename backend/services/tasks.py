@@ -55,7 +55,7 @@ def post_solve_puzzle(slug):
 @app.task
 def cleanup_puzzle(slug):
     'Cleanup discord actions.'
-    puzzle = models.Puzzle.get(pk=slug)
+    puzzle = models.Puzzle.objects.get(pk=slug)
     if puzzle.is_solved():
         asyncio.get_event_loop().run_until_complete(async_cleanup_puzzle(puzzle))
 
@@ -64,11 +64,13 @@ async def async_cleanup_puzzle(puzzle):
         dmgr = DiscordManager.instance()
         await dmgr.move_members_to_afk(puzzle.discord_voice_channel_id)
         await dmgr.delete_channel(puzzle.discord_voice_channel_id)
+        puzzle.discord_voice_channel_id = None
+        await database_sync_to_async(puzzle.save)(update_fields=['discord_voice_channel_id'])
 
 @app.task
 def unsolve_puzzle(slug):
     'Delayed check to reset puzzle solve status.'
-    puzzle = models.Puzzle.get(pk=slug)
+    puzzle = models.Puzzle.objects.get(pk=slug)
     if not puzzle.is_solved() and puzzle.solved is not None:
         puzzle.solved = None
         puzzle.save()

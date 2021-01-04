@@ -45,4 +45,7 @@ def puzzle(request, slug):
 @login_required
 def extension(request):
     page = 'extension'
-    return render_app(request, page)
+    props = {
+        'extension_version': settings.EXTENSION_VERSION,
+    }
+    return render_app(request, page, props)

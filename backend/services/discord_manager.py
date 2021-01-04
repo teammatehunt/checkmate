@@ -58,7 +58,8 @@ class DiscordManager:
             self.__setup_done = True
 
     async def close(self):
-        await self.client.close()
+        if self.client is not None:
+            await self.client.close()
 
     async def __aenter__(self):
         await self.setup()
@@ -100,6 +101,7 @@ class DiscordManager:
         return result['id']
 
     async def delete_channel(self, channel_id):
+        await self.setup()
         return await self.client.delete_channel(channel_id)
 
     async def get_member(self, uid):
@@ -115,6 +117,7 @@ class DiscordManager:
     async def move_members_to_afk(self, channel_id):
         # TODO: Looks like this would entail having a full fledged discord
         # client maintaining state and websockets to know who is in the channel
+        await self.setup()
         pass
 
     @classmethod

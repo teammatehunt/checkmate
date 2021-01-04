@@ -48,8 +48,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.action) {
     case 'loaded-subframe':
       // firefox requires cloning the object in the window space
-      const localMessage = Object.assign(new window.Object(), message);
-      const e = new CustomEvent('loaded-subframe', {detail: localMessage});
+      const localDetail = Object.assign(new window.Object(), message);
+      const e = new CustomEvent('loaded-subframe', {detail: localDetail});
       window.dispatchEvent(e);
       break;
     case 'move-discord-voice':
@@ -59,7 +59,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-window.addEventListener('ping', () => window.dispatchEvent(new Event('pong')));
+window.addEventListener('ping', () => {
+  // firefox requires cloning the object in the window space
+  const localDetail = Object.assign(new window.Object(), {
+    version: chrome.runtime.getManifest().version,
+  });
+  window.dispatchEvent(new CustomEvent('pong', {detail: localDetail}));
+});
 window.addEventListener('load-discord', (e) => {
   if (!e.detail.frameId) return;
   if (!e.detail.serverId) return;

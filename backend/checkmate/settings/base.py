@@ -31,6 +31,12 @@ if secrets_path.is_file():
         SECRETS = yaml.safe_load(f)
 else:
     SECRETS = {}
+extension_manifest_path = PROJECT_DIR / 'checkmate-extension' / 'manifest.json'
+if extension_manifest_path.is_file():
+    with open(extension_manifest_path, 'rt') as f:
+        EXTENSION_VERSION = json.load(f)['version']
+else:
+    EXTENSION_VERSION = None
 
 
 # Quick-start development settings - unsuitable for production

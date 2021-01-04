@@ -93,6 +93,11 @@ svg {
   vertical-align: bottom;
 }
 
+a {
+  /* even when no href */
+  cursor: pointer;
+}
+
 img.emoji {
   height: 1em;
   width: 1em;

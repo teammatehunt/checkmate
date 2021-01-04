@@ -89,7 +89,7 @@ export const Main : React.FC<MainProps> = props => {
   const initialLoad = useRef(true);
   const [maxVisibleTabs, setMaxVisibleTabs] = useState(null);
 
-  const [hasExtension, setHasExtension] = useState(false);
+  const [extensionVersion, setExtensionVersion] = useState(undefined);
 
   const uid = data.uid;
   const hunt = data.hunt;
@@ -119,7 +119,7 @@ export const Main : React.FC<MainProps> = props => {
 
   // Check for extension
   useEffect(() => {
-    const handler = (e) => setHasExtension(true);
+    const handler = (e) => setExtensionVersion(e.detail?.version);
     window.addEventListener('pong', handler);
     window.dispatchEvent(new Event('ping'));
     return () => window.removeEventListener('pong', handler);
@@ -329,7 +329,7 @@ export const Main : React.FC<MainProps> = props => {
                 <DiscordFrame
                   id='discord'
                   src={initialDiscordUrl}
-                  hasExtension={hasExtension}
+                  hasExtension={Boolean(extensionVersion)}
                 />
               </div>
             </SplitPane>

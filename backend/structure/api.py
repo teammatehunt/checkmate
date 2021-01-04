@@ -7,6 +7,7 @@ from django import db
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import F
+from django.conf import settings
 from django.contrib.auth.models import User
 from rest_framework import decorators, exceptions, permissions, response, serializers, status, viewsets
 from allauth.socialaccount.models import SocialAccount
@@ -305,6 +306,7 @@ def everything(request):
 def data_everything_with_uid(request):
     data = data_everything()
     data['uid'] = request.user.id
+    data['extension_version'] = settings.EXTENSION_VERSION
     return data
 
 @decorators.api_view(['POST'])

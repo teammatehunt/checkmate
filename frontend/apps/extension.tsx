@@ -1,5 +1,8 @@
 import mountElement from 'utils/mount';
-import React from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
 
 import Base from 'components/base';
 import InstallationChrome from 'assets/installation-chrome.png';
@@ -8,14 +11,32 @@ import InstallationFirefox from 'assets/installation-firefox.png';
 import 'style/layout.css';
 import 'style/extension.css';
 
-export const GetExtension = props => {
+export const GetExtension = ({
+  extension_version,
+}) => {
+  const [clientExtensionVersion, setClientExtensionVersion] = useState(undefined);
+  // Check for extension
+  useEffect(() => {
+    const handler = (e) => setClientExtensionVersion(e.detail?.version);
+    window.addEventListener('pong', handler);
+    window.dispatchEvent(new Event('ping'));
+    return () => window.removeEventListener('pong', handler);
+  }, []);
+
   return (
     <Base>
       <title>Checkmate Extension</title>
       <div className='root'>
+        <p className='extension-detection'>
+          {clientExtensionVersion ?
+            `**Detected the Checkmate extension v${clientExtensionVersion}!**`
+            :
+            '**The Checkmate extension was not detected.**'
+          }
+        </p>
         <p>
           <strong>
-            Download: <a href='/static/checkmate-extension.zip' download>checkmate-extension.zip</a>
+            Download: <a href='/static/checkmate-extension.zip' download>checkmate-extension.zip</a> (v{extension_version})
           </strong>
         </p>
         <p>
