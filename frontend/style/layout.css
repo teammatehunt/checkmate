@@ -35,6 +35,9 @@ body {
   flex: 1;
 }
 
+iframe {
+  border: none;
+}
 .resizing iframe {
   pointer-events: none;
 }
@@ -120,9 +123,34 @@ input, select, textarea, button {
   cursor: pointer;
 }
 
-.form-item > span:first-child {
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  font-size: larger;
+  padding: 2px;
+  background-color: floralwhite;
+  width: 1em;
+  align-items: center;
+}
+.sidebar.left {
+  border-right: 2px solid silver;
+}
+.sidebar.right {
+  border-left: 2px solid silver;
+}
+.sidebar > *:not(:first-child) {
+  margin-top: 0.5ch;
+}
+.sidebar > * {
+  margin-bottom: 0.5ch;
 }
 
-.ReactModal__Overlay {
-  z-index: 100;
+.text-up {
+  writing-mode: vertical-rl;
+  white-space: nowrap;
+  transform: scale(-1);
+}
+.text-down {
+  writing-mode: vertical-rl;
+  white-space: nowrap;
 }

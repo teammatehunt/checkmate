@@ -62,7 +62,10 @@ const Round : React.FC<RoundProps> = React.memo(({
 }) => {
   // Round is always visible (we need it because it is sticky)
   return (
-    <div className={`tr sub-master round ${round.is_pseudoround ? 'pseudoround' : ''}`}>
+    <div
+      className={`tr sub-master round ${round.is_pseudoround ? 'pseudoround' : ''}`}
+      id={`round-${round.slug}`}
+    >
       <div className='th sub-master name'><div>
         <Twemoji>
           {round.name}
@@ -81,6 +84,7 @@ const Round : React.FC<RoundProps> = React.memo(({
 
 interface PuzzleProps {
   puzzle: Model.Puzzle;
+  round: string;
   roundTags: string[] | null;
   loadSlug: any;
   statuses: {[status: string]: string};
@@ -91,6 +95,7 @@ interface PuzzleProps {
 
 const Puzzle : React.FC<PuzzleProps> = React.memo(({
   puzzle,
+  round,
   roundTags,
   loadSlug,
   statuses,
@@ -126,9 +131,31 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   );
   const openForStyle = useMemo(() => Model.isSolved(puzzle) ? {backgroundColor: colors?.solved} : undefined, [puzzle, colors]);
 
-  if (!visible) return emptyRow();
   const answerWidth = 25; // should max with css
   const answerStyle = puzzle.answer.length < answerWidth ? undefined : {transform: `scale(${answerWidth / puzzle.answer.length})`};
+
+  if (!visible) {
+    // shortened complexity when offscreen
+    return (
+      <div
+        className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}
+        id={`round-${round}--puzzle-${puzzle.slug}`}
+      >
+        <div className='td sub-master name'><div>
+          {Link({
+            className: 'restyle',
+            href: `/puzzles/${puzzle.slug}`,
+            load: () => loadSlug(puzzle.slug),
+            children: (
+              <span>
+                {puzzle.is_meta ? <span className='metatag'/> : null}{puzzle.name}
+              </span>
+            ),
+          })}
+        </div></div>
+      </div>
+    );
+  }
 
   return (
     <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
@@ -253,6 +280,7 @@ const Master : React.FC<MasterProps> = ({
           Component: Puzzle,
           props: {
             puzzle: puzzle,
+            round: round.slug,
             roundTags: roundTags,
             loadSlug: loadSlug,
             statuses: statuses,

@@ -22,7 +22,7 @@ import {
   EditState,
   TdEditable,
 } from 'components/td-editable';
-import { Check, Edit3, ExternalLink, Plus, X } from 'components/react-feather';
+import { Check, Edit3, Plus, X } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
 import {
   fetchJson,
@@ -598,9 +598,6 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         <Twemoji>
           {puzzle?.name}
         </Twemoji>
-        {puzzle?.link &&
-          <a target='_blank' href={puzzle.link}><ExternalLink className='puzzleinfo-external-link'/></a>
-        }
       </h2>
       <Feeds
         type='round'

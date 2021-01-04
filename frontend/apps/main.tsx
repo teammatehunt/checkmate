@@ -15,11 +15,17 @@ import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
 
 import Base from 'components/base';
+import { Link } from 'components/drop-ins';
 import { useLocalStorageObject } from 'utils/hooks';
 import Master from 'components/master';
 import MasterInfo from 'components/master-info';
 import Puzzles from 'components/puzzle';
 import PuzzleInfo from 'components/puzzle-info';
+import {
+  ExternalLink,
+  Eye,
+  EyeOff,
+} from 'components/react-feather';
 import TabBar from 'components/tabbar';
 import {
   DiscordFrame,
@@ -90,6 +96,12 @@ export const Main : React.FC<MainProps> = props => {
   const [maxVisibleTabs, setMaxVisibleTabs] = useState(null);
 
   const [extensionVersion, setExtensionVersion] = useState(undefined);
+
+  // panes states / sidebar toggles
+  const [puzzleVisible, setPuzzleVisible] = useState(true);
+  const [sheetVisible, setSheetVisible] = useState(true);
+  const [infoVisible, setInfoVisible] = useState(true);
+  const [discordVisible, setDiscordVisible] = useState(true);
 
   const uid = data.uid;
   const hunt = data.hunt;
@@ -246,12 +258,14 @@ export const Main : React.FC<MainProps> = props => {
   const onDragFinishedVsplitter = onDragFinishedSet(setVsplitter);
   const onDragFinishedRhsplitter = onDragFinishedSet(setRhsplitter);
 
-  // TODO: extend with colors from database
   const statuses = baseStatuses;
   const colors = useMemo(() => ({
     ...baseColors,
     ...hunt.tag_colors,
   }), [hunt.tag_colors]);
+
+  const leftVisible = !(page === 'puzzle' && !puzzleVisible && !sheetVisible);
+  const rightVisible = infoVisible || discordVisible;
 
   return (
     <Base>
@@ -268,72 +282,138 @@ export const Main : React.FC<MainProps> = props => {
           maxVisibleTabs,
           setMaxVisibleTabs,
         }}/>
-        <div className='flex'>
-          <SplitPane
-            split='vertical'
-            primary='second'
-            defaultSize={vsplitter || 240}
-            minSize={50}
-            onDragStarted={onDragStarted}
-            onDragFinished={onDragFinishedVsplitter}
-          >
-            <div ref={mainPaneChildRef}>
-              <ShowIf display={page === 'master'}>
-                <Master
-                  isActive={page === 'master'}
-                  data={data}
-                  loadSlug={loadSlug}
-                  statuses={statuses}
-                  colors={colors}
-                  hideSolved={hideSolved.value}
-                  yDims={masterYDims}
-                />
-              </ShowIf>
-              <ShowIf display={page === 'puzzle'}>
-                <Puzzles
-                  isActive={page === 'puzzle'}
-                  tabs={tabs}
-                  slug={slug}
-                  puzzles={puzzles}
-                  hunt={hunt}
-                  iframeDetails={iframeDetails}
-                  onDragStarted={onDragStarted}
-                  onDragFinishedSet={onDragFinishedSet}
-                />
-              </ShowIf>
-            </div>
+        <div className='hflex'>
+          <div className='sidebar left'>
+            {(page === 'puzzle' || null) &&
+            <>
+              <a
+                href={iframeDetailsRef.current?.[`puzzle/${slug}`]?.url}
+                target='_blank'
+              >
+                <ExternalLink/>
+              </a>
+              {puzzleVisible ?
+                <Eye onClick={() => setPuzzleVisible(false)}/>
+                :
+                <EyeOff onClick={() => setPuzzleVisible(true)}/>
+              }
+              <div className='text-up'>Puzzle</div>
+              <div className='flex'/>
+              <a
+                href={iframeDetailsRef.current?.[`sheet/${slug}`]?.url}
+                target='_blank'
+              >
+                <ExternalLink/>
+              </a>
+              {sheetVisible ?
+                <Eye onClick={() => setSheetVisible(false)}/>
+                :
+                <EyeOff onClick={() => setSheetVisible(true)}/>
+              }
+              <div className='text-up'>Sheet</div>
+            </>
+            }
+          </div>
+          <div className='flex'>
             <SplitPane
-              split='horizontal'
-              defaultSize={rhsplitter || window.innerHeight / 2}
+              split='vertical'
+              primary='second'
+              defaultSize={vsplitter || 240}
+              minSize={50}
               onDragStarted={onDragStarted}
-              onDragFinished={onDragFinishedRhsplitter}
+              onDragFinished={onDragFinishedVsplitter}
+              resizerClassName={leftVisible && rightVisible ? 'Resizer' : 'nodisplay'}
+              /* only for pane2 because pane2 is primary */
+              pane2Style={leftVisible ? undefined : {width: '100%'}}
+              /* @ts-ignore */
+              pane1ClassName={leftVisible ? '' : 'nodisplay'}
+              pane2ClassName={rightVisible ? '' : 'nodisplay'}
             >
-              <div className={`${page}info infopane pane`}>
+              <div ref={mainPaneChildRef}>
                 <ShowIf display={page === 'master'}>
-                  <MasterInfo
+                  <Master
+                    isActive={page === 'master'}
                     data={data}
-                    hideSolved={hideSolved}
-                  />
-                </ShowIf>
-                <ShowIf display={page === 'puzzle'}>
-                  <PuzzleInfo
-                    data={data}
-                    slug={slug}
                     loadSlug={loadSlug}
                     statuses={statuses}
                     colors={colors}
+                    hideSolved={hideSolved.value}
+                    yDims={masterYDims}
+                  />
+                </ShowIf>
+                <ShowIf display={page === 'puzzle'}>
+                  <Puzzles
+                    isActive={page === 'puzzle'}
+                    tabs={tabs}
+                    slug={slug}
+                    puzzles={puzzles}
+                    hunt={hunt}
+                    iframeDetails={iframeDetails}
+                    onDragStarted={onDragStarted}
+                    onDragFinishedSet={onDragFinishedSet}
+                    puzzleVisible={puzzleVisible}
+                    sheetVisible={sheetVisible}
                   />
                 </ShowIf>
               </div>
-              <div className='chat pane'>
-                <DiscordFrame
-                  id='discord'
-                  src={initialDiscordUrl}
-                  hasExtension={Boolean(extensionVersion)}
-                />
-              </div>
+              <SplitPane
+                split='horizontal'
+                defaultSize={rhsplitter || window.innerHeight / 2}
+                onDragStarted={onDragStarted}
+                onDragFinished={onDragFinishedRhsplitter}
+                resizerClassName={infoVisible && discordVisible ? 'Resizer' : 'nodisplay'}
+                /* @ts-ignore */
+                pane1ClassName={infoVisible ? '' : 'nodisplay'}
+                pane2ClassName={discordVisible ? '' : 'nodisplay'}
+              >
+                <div className={`${page}info infopane pane`}>
+                  <ShowIf display={page === 'master'}>
+                    <MasterInfo
+                      data={data}
+                      hideSolved={hideSolved}
+                    />
+                  </ShowIf>
+                  <ShowIf display={page === 'puzzle'}>
+                    <PuzzleInfo
+                      data={data}
+                      slug={slug}
+                      loadSlug={loadSlug}
+                      statuses={statuses}
+                      colors={colors}
+                    />
+                  </ShowIf>
+                </div>
+                <div className='chat pane'>
+                  <DiscordFrame
+                    id='discord'
+                    src={initialDiscordUrl}
+                    hasExtension={Boolean(extensionVersion)}
+                  />
+                </div>
+              </SplitPane>
             </SplitPane>
-          </SplitPane>
+          </div>
+          <div className='sidebar right'>
+            {infoVisible ?
+              <Eye onClick={() => setInfoVisible(false)}/>
+              :
+              <EyeOff onClick={() => setInfoVisible(true)}/>
+            }
+            <div className='text-down'>Info</div>
+            <div className='flex'/>
+            <a
+              href={iframeDetailsRef.current?.['discord']?.url}
+              target='_blank'
+            >
+              <ExternalLink/>
+            </a>
+            {discordVisible ?
+              <Eye onClick={() => setDiscordVisible(false)}/>
+              :
+              <EyeOff onClick={() => setDiscordVisible(true)}/>
+            }
+            <div className='text-down'>Discord</div>
+          </div>
         </div>
       </div>
     </Base>

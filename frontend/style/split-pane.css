@@ -1,16 +1,3 @@
-.only-pane1 > .Pane1 {
-  height: 100%;
-}
-.only-pane1 > .Pane2 {
-  display: none;
-}
-.only-pane2 > .Pane1 {
-  display: none;
-}
-.only-pane2 > .Pane1 {
-  height: 100%;
-}
-
 .Resizer {
   background-color: #ccc;
   z-index: 1;

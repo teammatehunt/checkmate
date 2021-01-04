@@ -30,11 +30,6 @@
   filter: drop-shadow(0 0 3px gray);
 }
 
-.puzzleinfo-external-link {
-  height: 0.75em;
-  width: 0.75em;
-  align-self: start;
-}
 .puzzleinfo-edit {
   height: 1em;
   width: 1em;
