@@ -104,6 +104,10 @@ class DiscordManager:
         await self.setup()
         return await self.client.delete_channel(channel_id)
 
+    async def rename_channel(self, channel_id, name):
+        await self.setup()
+        return await self.client.edit_channel(channel_id, name=name)
+
     async def get_member(self, uid):
         await self.setup()
         member = await self.client.get_member(self.server_id, uid)

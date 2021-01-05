@@ -1,8 +1,10 @@
 import React, {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 
 import produce from 'immer';
@@ -17,6 +19,7 @@ import {
   Th,
   Td,
 } from 'components/drop-ins';
+import { Plus, X } from 'components/react-feather';
 import {
   EditState,
   TdEditable,
@@ -27,13 +30,7 @@ import * as Model from 'utils/model';
 
 import 'style/master.css';
 
-const emptyRow = () => {
-  return (
-    <div className='tr sub-master'/>
-  );
-};
-
-const SizingRow = ({maxRoundTags}) => {
+const SizingRow = ({maxRoundTags, hasExtra}) => {
   // zero height row to set widths
   return (
     <div className='tr sub-master sizer'>
@@ -45,21 +42,86 @@ const SizingRow = ({maxRoundTags}) => {
       {Array.from({length: maxRoundTags}).map(() => (
         <div className='td sub-master sizer tag'/>
       ))}
+      {(hasExtra || null) &&
+        <div className='td sub-master sizer tag-extra'/>
+      }
     </div>
   );
 }
 
 interface RoundProps {
+  data: Model.Data;
   round: Model.Round;
-  roundTags: string[] | null;
   visible: boolean;
+  editable: boolean;
+  setNumTagsWithEditing: any;
+  numTotalTagColumns: number;
 }
 
 const Round : React.FC<RoundProps> = React.memo(({
+  data,
   round,
-  roundTags,
   visible,
+  editable,
+  setNumTagsWithEditing,
+  numTotalTagColumns,
 }) => {
+  const [editState, setEditState] = useState(EditState.DEFAULT);
+  const prevRoundTagsRef = useRef(null);
+
+  useEffect(() => {
+    if (!editable) setEditState(EditState.DEFAULT);
+  }, [editable]);
+  useEffect(() => {
+    if (editState === EditState.DEFAULT) {
+      setNumTagsWithEditing(0);
+    } else {
+      setNumTagsWithEditing(round.round_tags.length + 1);
+    }
+    if (editState === EditState.WAITING) {
+      if (prevRoundTagsRef.current !== round.round_tags) {
+        setEditState(EditState.DEFAULT);
+      }
+    }
+    prevRoundTagsRef.current = round.round_tags;
+  }, [editState, round.round_tags]);
+  const patchRoundTags = useCallback(async (newRoundTags) => {
+    const response = await patch({
+      type: 'round',
+      slug: round.slug,
+      data: {
+        'round_tags': newRoundTags,
+      },
+    });
+    return response;
+  }, [round]);
+  const patchTag = useCallback(async (tag) => {
+    const roundTags = round.round_tags ?? [];
+    const trimmedTag = tag;
+    if (!trimmedTag || roundTags.includes(trimmedTag)) {
+      setEditState(EditState.DEFAULT);
+      return null;
+    } else {
+      const newRoundTags = [...roundTags, trimmedTag].sort();
+      return await patchRoundTags(newRoundTags);
+    }
+  }, [round.round_tags, patchRoundTags]);
+  const remove = (i) => async (e) => {
+    const roundTags = round.round_tags ?? [];
+    const newRoundTags = [...roundTags.slice(0, i), ...roundTags.slice(i + 1)];
+    return await patchRoundTags(newRoundTags);
+  };
+
+  let tagOptions = useMemo(() => {
+    if (editState === EditState.EDITING) {
+      const roundTags = new Set(round.round_tags);
+      const newPuzzleTags = new Set(round.puzzles.map(slug => Object.keys(data.puzzles[slug]?.tags ?? {})).flat().filter(tag => !roundTags.has(tag)));
+      return [...newPuzzleTags].sort();
+    } else {
+      return undefined;
+    }
+  }, [round, editState, data]);
+
   // Round is always visible (we need it because it is sticky)
   return (
     <div
@@ -75,9 +137,43 @@ const Round : React.FC<RoundProps> = React.memo(({
       <div className='th sub-master status'><div>Status</div></div>
       <div className='th sub-master notes'><div>Notes</div></div>
       <div className='th sub-master open-for'><div>Open For</div></div>
-      {(roundTags || []).map(tag => (
-        <div key={tag} className='th sub-master tag capitalize'><div>{tag}</div></div>
+      {(round.round_tags ?? []).map((tag, i) => (
+        <div key={tag} className='th sub-master tag capitalize'>
+          <div>
+            <div className='sub-master tag-name'>{tag}</div>
+            {((editable && editState === EditState.DEFAULT) || null) &&
+            <X className='sub-master round-remove-tag' onClick={remove(i)}/>
+            }
+          </div>
+        </div>
       ))}
+      {Array.from({length: numTotalTagColumns - (round.round_tags?.length ?? 0)}).map((_, i) => {
+        if (!i && editable) {
+          if (editState === EditState.DEFAULT) {
+            return (
+              <div key={i} className='th round-add-tag-container'>
+                <Plus className='sub-master round-add-tag' onClick={() => setEditState(EditState.EDITING)}/>
+              </div>
+            );
+          } else {
+            return (
+              <TdEditable
+                key={i}
+                value=''
+                editState={editState}
+                setEditState={setEditState}
+                patch={patchTag}
+                options={tagOptions}
+                className='sub-master round-add-tag-editing'
+              />
+            );
+          }
+        } else {
+          return (
+            <div key={i} className='th empty'/>
+          );
+        }
+      })}
     </div>
   );
 });
@@ -91,6 +187,7 @@ interface PuzzleProps {
   colors: {[value: string]: string};
   isPseudoround?: boolean;
   visible: boolean;
+  editable: boolean;
 }
 
 const Puzzle : React.FC<PuzzleProps> = React.memo(({
@@ -102,6 +199,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   colors,
   isPseudoround,
   visible,
+  editable,
 }) => {
   const patchValue = useMemo(() => (key, isTags=false) => {
     return async (value) => {
@@ -114,6 +212,14 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   const patchAnswer = useMemo(() => patchValue('answer'), [puzzle]);
   const patchStatus = useMemo(() => patchValue('status'), [puzzle]);
   const patchNotes = useMemo(() => patchValue('notes'), [puzzle]);
+  const patchTag = (key) => {
+    return async (value) => {
+      const _data = {tags: produce(puzzle.tags, draft => {
+        draft[key] = value;
+      })};
+      return await patch({slug: puzzle.slug, data: _data});
+    };
+  };
 
   const now = Date.now();
   const hasCreated = puzzle.created ?? undefined !== undefined;
@@ -194,8 +300,14 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
       <div className='td sub-master open-for' style={openForStyle}><div>
         {hasCreated ? humanDuration : null}
       </div></div>
-      {(roundTags || []).map(tag => (
-        <div key={tag} className='td sub-master'><div>{puzzle.tags[tag] ?? ''}</div></div>
+      {(roundTags ?? []).map(tag => (
+        <TdEditable
+          key={tag}
+          className='sub-master tag'
+          value={puzzle.tags[tag] ?? ''}
+          patch={patchTag(tag)}
+          colors={colors}
+        />
       ))}
     </div>
   );
@@ -225,6 +337,7 @@ interface MasterProps {
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
   hideSolved: boolean;
+  editable: boolean;
   yDims: {[key: string]: number};
 }
 
@@ -235,9 +348,11 @@ const Master : React.FC<MasterProps> = ({
   statuses,
   colors,
   hideSolved,
+  editable,
   yDims,
 }) => {
   const masterRef = useRef(null);
+  const [numTagsWithEditing, setNumTagsWithEditing] = useState(0);
 
   if (!isActive) {
     masterRef.current = null;
@@ -263,15 +378,21 @@ const Master : React.FC<MasterProps> = ({
     } as Model.Round;
   });
 
+  const maxRoundTags = Math.max(...Object.values(data.rounds).map(round => round.round_tags?.length ?? 0));
+  const numTotalTagColumns = Math.max(maxRoundTags + 1, numTagsWithEditing);
   let rows = Object.entries(roundsWithExtras).filter(([slug, round]) => round?.hidden === false).map(([slug, round]) => {
-    const roundTags = round?.tagNames ?? null;
+    const roundTags = round?.round_tags ?? null;
     return [
       {
         key: round.slug,
         Component: Round,
         props: {
+          data: data,
           round: round,
           roundTags: roundTags,
+          editable: editable,
+          setNumTagsWithEditing: setNumTagsWithEditing,
+          numTotalTagColumns: numTotalTagColumns,
         },
       },
       ...orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle))), ['is_meta'], ['desc']).map(puzzle => (
@@ -286,12 +407,12 @@ const Master : React.FC<MasterProps> = ({
             statuses: statuses,
             colors: colors,
             isPseudoround: round.is_pseudoround,
+            editable: editable,
           },
         }
       )),
     ];
   }).flat();
-  const maxRoundTags = Math.max(...rows.map(row => row.props.roundTags?.length ?? 0));
 
   const rowHeight = masterRef.current ? masterRef.current.scrollHeight / Math.max(1, rows.length) : 28;
   const padding = masterRef.current && yDims.scrollHeight ? yDims.scrollHeight - masterRef.current.scrollHeight : 0;
@@ -303,7 +424,10 @@ const Master : React.FC<MasterProps> = ({
     <div className='master' ref={masterRef}>
       <Table className='sub-master'>
         <Tbody className='sub-master'>
-          {SizingRow({maxRoundTags})}
+          {SizingRow({
+            maxRoundTags: Math.max(maxRoundTags, numTagsWithEditing),
+            hasExtra: editable && numTagsWithEditing <= maxRoundTags,
+          })}
           {rows.map(({Component, key, props}, i) => (
             <Component
               key={key}

@@ -22,11 +22,13 @@ import 'style/master-info.css';
 interface MasterInfoProps {
   data: Model.Data;
   hideSolved: LocalStorageObject<boolean>;
+  editable: LocalStorageObject<boolean>;
 }
 
 const MasterInfo : React.FC<MasterInfoProps> = ({
   data,
   hideSolved,
+  editable,
 }) => {
   const defaultFormPuzzleData = {
     name: '',
@@ -213,8 +215,14 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
       </Collapsible>
 
       <h2>Settings</h2>
-      <input type='checkbox' onChange={(e) => hideSolved.set(e.target.checked)} checked={hideSolved.value}/>
-      <span>Hide solved</span>
+      <div>
+        <input type='checkbox' onChange={(e) => hideSolved.set(e.target.checked)} checked={hideSolved.value}/>
+        <span>Hide solved</span>
+      </div>
+      <div>
+        <input type='checkbox' onChange={(e) => editable.set(e.target.checked)} checked={editable.value}/>
+        <span>Editable</span>
+      </div>
     </>
   );
 };

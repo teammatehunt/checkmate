@@ -282,8 +282,8 @@ def data_everything():
         if _round is not None:
             _round['puzzles'].append(round_puzzle['puzzle_id'])
     for meta_feeder in meta_feeders:
-        feeder = feeder_by_slug.get(meta_feeder['feeder_id'])
-        meta = meta_by_slug.get(meta_feeder['meta_id'])
+        feeder = puzzle_by_slug.get(meta_feeder['feeder_id'])
+        meta = puzzle_by_slug.get(meta_feeder['meta_id'])
         if feeder is not None:
             feeder['metas'].append(meta_feeder['meta_id'])
         if meta is not None:

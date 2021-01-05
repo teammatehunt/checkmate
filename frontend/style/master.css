@@ -1,5 +1,6 @@
 .master {
   padding: 2em;
+  --master-row-height: 28px;
 }
 
 .sub-master.table {
@@ -10,7 +11,7 @@
 }
 
 .sub-master.tr {
-  height: 28px;
+  height: var(--master-row-height);
 }
 
 .sub-master.sizer {
@@ -26,23 +27,53 @@
 .sub-master.sizer.notes { width: 30ch; }
 .sub-master.sizer.open-for { width: 13ch; }
 .sub-master.sizer.tag { width: 13ch; }
+.sub-master.sizer.tag-extra { width: 1em; }
 
 .sub-master.th > div,
-.sub-master.td > div {
+.sub-master.td:not(.td-field) > div {
+  position: relative;
+  display: flex;
+}
+.sub-master.th > div {
+  align-items: flex-end;
+}
+.sub-master.td > div.value {
   display: inline;
+}
+.sub-master.td.answer > div.value {
+  display: inline-block;
   transform-origin: left;
 }
-.sub-master.td.answer > div {
-  display: inline-block;
+.sub-master.tag-name {
+  min-width: 0;
+  flex: 1;
+}
+.round-add-tag {
+  color: green;
+  cursor: pointer;
+}
+.sub-master.round-remove-tag {
+  align-self: center;
+  cursor: pointer;
+  font-size: larger;
+}
+.sub-master.round-remove-tag:hover {
+  stroke-width: 4;
 }
 
 .sub-master.th,
 .sub-master.td {
   font-size: smaller;
 }
-.sub-master.th ,
+.sub-master.th,
 .sub-master.td {
   padding: var(--td-field-padding);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sub-master.tag-name,
+.sub-master.td-field > .value > span {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -56,6 +87,13 @@
   position: sticky;
   top: 0;
   z-index: 1;
+}
+.th.round-add-tag-container,
+.th.empty {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: white;
 }
 .sub-master.th:first-child {
   border-left: 2px solid gray;

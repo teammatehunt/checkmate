@@ -520,7 +520,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
 
   const [isAdding, setIsAdding] = useState(false);
 
-  const patchValue = (key, isTags=false) => {
+  const patchValue = (key, isTags=false, isRoundTag=false) => {
     return async (value) => {
       if (key === null) {
         setIsAdding(false);
@@ -528,7 +528,8 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         if (!value) return null;
       }
       const _data = !isTags ? {[key]: value} : {tags: produce(puzzle.tags, draft => {
-        draft[key] = value;
+        if (isRoundTag && (key in draft) && !value) delete draft[key];
+        else draft[key] = value;
       })};
       return await patch({slug, data: _data});
     };
@@ -591,6 +592,8 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
     return await changeRelations({feeds: slug, ...kwargs});
   };
 
+  const roundTags = new Set(puzzle.rounds.map(round => data.rounds[round].round_tags).flat());
+  const tags = [...new Set([...Object.keys(puzzle.tags ?? {}), ...roundTags])].sort();
 
   return (
     <>
@@ -622,11 +625,11 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
           <TextField className='answerize' name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>
           <TextField name='status' value={puzzle?.status} patchValue={patchValue('status')} options={Object.keys(statuses)} colors={statuses}/>
           <TextField name='notes' textarea value={puzzle?.notes} patchValue={patchValue('notes')} colors={colors}/>
-          {Object.keys(puzzle?.tags || {}).sort().map(tag => (
-            <TextField key={tag} name={tag} value={puzzle.tags[tag]}
-              patchKey={patchKey(tag)}
-              patchValue={patchValue(tag, true)}
-              remove={removeTag(tag)}
+          {tags.map(tag => (
+            <TextField key={tag} name={tag} value={puzzle.tags[tag] ?? ''}
+              patchKey={roundTags.has(tag) ? undefined : patchKey(tag)}
+              patchValue={patchValue(tag, true, roundTags.has(tag))}
+              remove={roundTags.has(tag) ? undefined : removeTag(tag)}
               colors={colors}
             />
           ))}
@@ -656,7 +659,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         loadSlug={loadSlug}
         options={(() => {
           let slugSet = new Set();
-          const puzzles = puzzle?.rounds.map(round => data.rounds[round].puzzles).flat().filter(_slug => {
+          const puzzles = puzzle.rounds.map(round => data.rounds[round].puzzles).flat().filter(_slug => {
             const add = !slugSet.has(_slug) && _slug !== slug;
             slugSet.add(_slug);
             return add;

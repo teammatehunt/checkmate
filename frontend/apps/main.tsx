@@ -91,6 +91,7 @@ export const Main : React.FC<MainProps> = props => {
   }, []);
 
   const hideSolved = useLocalStorageObject<boolean>('master/hide-solved', false);
+  const editable = useLocalStorageObject<boolean>('master/editable', false);
 
   // because tabs can update outside of this window
   const initialLoad = useRef(true);
@@ -348,6 +349,7 @@ export const Main : React.FC<MainProps> = props => {
                     statuses={statuses}
                     colors={colors}
                     hideSolved={hideSolved.value}
+                    editable={editable.value}
                     yDims={masterYDims}
                   />
                 </ShowIf>
@@ -388,6 +390,7 @@ export const Main : React.FC<MainProps> = props => {
                     <MasterInfo
                       data={data}
                       hideSolved={hideSolved}
+                      editable={editable}
                     />
                   </ShowIf>
                   <ShowIf display={page === 'puzzle'}>

@@ -36,8 +36,8 @@ export const fetchJson = async ({url, data, ...kwargs}) => {
 };
 export default fetchJson;
 
-export const patch = async ({slug, data}) => {
-  const url = `/api/puzzles/${slug}`;
+export const patch = async ({slug, data, type='puzzle'}) => {
+  const url = `/api/${type}s/${slug}`;
   const response = await fetchJson({
     url: url,
     method: 'PATCH',

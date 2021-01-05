@@ -102,7 +102,10 @@ export const TdEditable : React.FC<TdEditableProps> = React.memo(({
         } else {
           const func = async () => {
             const response = await patch(inputRef.current.value);
-            if (response === null) return;
+            if (response === null) {
+              // TdEditable was removed from the DOM
+              return;
+            }
             if (!response.ok) {
               setEditState(EditState.DEFAULT);
             }

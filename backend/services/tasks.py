@@ -49,8 +49,13 @@ def post_autodetected_solve_puzzle(slug):
 
 @app.task
 def post_solve_puzzle(slug):
+    solve_prefix = '♔'
     cleanup_puzzle.apply_async(args=[slug], countdown=5*60.)
-    pass
+    puzzle = models.Puzzle.objects.get(pk=slug)
+    if puzzle.discord_text_channel_id is not None:
+        dmgr = DiscordManager.instance()
+        asyncio.get_event_loop().run_until_complete(
+            dmgr.rename_channel(puzzle.discord_text_channel_id, f'{solve_prefix}{slug}'))
 
 @app.task
 def cleanup_puzzle(slug):
@@ -73,7 +78,11 @@ def unsolve_puzzle(slug):
     puzzle = models.Puzzle.objects.get(pk=slug)
     if not puzzle.is_solved() and puzzle.solved is not None:
         puzzle.solved = None
-        puzzle.save()
+        puzzle.save(update_fields=['solved'])
+        if puzzle.discord_text_channel_id is not None:
+            dmgr = DiscordManager.instance()
+            asyncio.get_event_loop().run_until_complete(
+                dmgr.rename_channel(puzzle.discord_text_channel_id, slug))
 
 @app.task
 def create_puzzle(

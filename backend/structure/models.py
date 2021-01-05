@@ -129,7 +129,9 @@ class Round(Entity):
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
     discord_category_id = models.BigIntegerField(null=True, blank=True)
-    round_tags = fields.ArrayField(CharField(), default=list, help_text='Tag categories that should be displayed / set for each puzzle in the round.')
+    round_tags = fields.ArrayField(
+        CharField(), default=list, blank=True,
+        help_text='Tag categories that should be displayed / set for each puzzle in the round.')
 
 class Puzzle(Entity):
     feeders = models.ManyToManyField('Puzzle', through='MetaFeeder', related_name='metas')

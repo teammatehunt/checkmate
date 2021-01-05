@@ -55,7 +55,7 @@ export interface Round extends Entity {
   discord_category_id: number;
   puzzles: string[]; // puzzle slugs
 
-  tagNames?: string[]; // TODO
+  round_tags?: string[];
   is_pseudoround?: boolean; // set clientside, not on server
 }
 
