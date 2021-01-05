@@ -54,12 +54,14 @@ export const Main : React.FC<MainProps> = props => {
   const [iframeDetails, iframeDetailsDispatch] = useReducer(iframeDetailsReducer, {});
 
   const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
+  const [cachedTabs, setCachedTabs] = useState<string[]>([]);
+  const [cachedTabSet, setCachedTabSet] = useState<Set<string>>(new Set());
   const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
   const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
 
   // detect which rows are on screen
   const mainPaneChildRef = useRef(null);
-  const [masterYDims, dispatchMasterYDims] = useReducer((state, action) => {
+  const [masterYDims, dispatchMasterYDims] = useReducer((state) => {
     const scrollTop = mainPaneChildRef.current.parentElement.scrollTop;
     const height = mainPaneChildRef.current.parentElement.getBoundingClientRect().height;
     const scrollHeight = mainPaneChildRef.current.parentElement.scrollHeight;
@@ -92,6 +94,8 @@ export const Main : React.FC<MainProps> = props => {
 
   const hideSolved = useLocalStorageObject<boolean>('master/hide-solved', false);
   const editable = useLocalStorageObject<boolean>('master/editable', false);
+  const sortNewRoundsFirst = useLocalStorageObject<boolean>('master/sort-new-rounds-first', false);
+  const puzzleCacheSize = useLocalStorageObject<number>('frames/puzzle-cache-size', 3);
 
   // because tabs can update outside of this window
   const initialLoad = useRef(true);
@@ -211,6 +215,20 @@ export const Main : React.FC<MainProps> = props => {
       setTabs(tabs.filter(slug => data.puzzles[slug]?.hidden === false));
     }
   }, [tabs, data]);
+  useEffect(() => {
+    const tabSet = new Set(tabs);
+    if ((slug ?? undefined) === undefined || cachedTabs[0] === slug) {
+      const filteredCachedTabs = cachedTabs.filter(tab => tabSet.has(tab)).slice(0, puzzleCacheSize.value);
+      if (filteredCachedTabs.length !== cachedTabs.length) {
+        setCachedTabs(filteredCachedTabs);
+        setCachedTabSet(new Set(filteredCachedTabs));
+      }
+    } else {
+      const filteredCachedTabs = [slug, ...cachedTabs.filter(tab => tab !== slug && tabSet.has(tab))].slice(0, puzzleCacheSize.value);
+      setCachedTabs(filteredCachedTabs);
+      setCachedTabSet(new Set(filteredCachedTabs));
+    }
+  }, [slug, tabs, cachedTabs, puzzleCacheSize.value]);
 
   const activateTab = useCallback((e) => {
     const href = e.currentTarget.getAttribute('href');
@@ -350,6 +368,7 @@ export const Main : React.FC<MainProps> = props => {
                     colors={colors}
                     hideSolved={hideSolved.value}
                     editable={editable.value}
+                    sortNewRoundsFirst={sortNewRoundsFirst.value}
                     yDims={masterYDims}
                   />
                 </ShowIf>
@@ -369,6 +388,7 @@ export const Main : React.FC<MainProps> = props => {
                       reloadIfChangedTrigger,
                       reloadPuzzleTrigger,
                       reloadSheetTrigger,
+                      cachedTabSet,
                     }}
                   />
                 </ShowIf>
@@ -391,6 +411,8 @@ export const Main : React.FC<MainProps> = props => {
                       data={data}
                       hideSolved={hideSolved}
                       editable={editable}
+                      sortNewRoundsFirst={sortNewRoundsFirst}
+                      puzzleCacheSize={puzzleCacheSize}
                     />
                   </ShowIf>
                   <ShowIf display={page === 'puzzle'}>

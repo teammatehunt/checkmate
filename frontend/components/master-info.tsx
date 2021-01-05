@@ -23,12 +23,16 @@ interface MasterInfoProps {
   data: Model.Data;
   hideSolved: LocalStorageObject<boolean>;
   editable: LocalStorageObject<boolean>;
+  sortNewRoundsFirst: LocalStorageObject<boolean>;
+  puzzleCacheSize: LocalStorageObject<number>;
 }
 
 const MasterInfo : React.FC<MasterInfoProps> = ({
   data,
   hideSolved,
   editable,
+  sortNewRoundsFirst,
+  puzzleCacheSize,
 }) => {
   const defaultFormPuzzleData = {
     name: '',
@@ -220,8 +224,16 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
         <span>Hide solved</span>
       </div>
       <div>
+        <input type='checkbox' onChange={(e) => sortNewRoundsFirst.set(e.target.checked)} checked={sortNewRoundsFirst.value}/>
+        <span>Newest rounds at top</span>
+      </div>
+      <div>
         <input type='checkbox' onChange={(e) => editable.set(e.target.checked)} checked={editable.value}/>
-        <span>Editable</span>
+        <span>Edit Tags</span>
+      </div>
+      <div>
+        <span className='colon'>Max puzzles to cache</span>
+        <input className='puzzle-cache-input' type='number' min={1} onChange={(e) => puzzleCacheSize.set(Number(e.target.value))} value={puzzleCacheSize.value}/>
       </div>
     </>
   );

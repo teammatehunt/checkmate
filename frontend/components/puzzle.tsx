@@ -35,6 +35,7 @@ interface PuzzlesProps {
   reloadIfChangedTrigger: number;
   reloadPuzzleTrigger: number;
   reloadSheetTrigger: number;
+  cachedTabSet: Set<string>;
 }
 
 const Puzzles : React.FC<PuzzlesProps> = ({
@@ -51,6 +52,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
   reloadIfChangedTrigger,
   reloadPuzzleTrigger,
   reloadSheetTrigger,
+  cachedTabSet,
 }) => {
   const [lhsplitter, setLhsplitter] = useLocalStorage<number>('frames/lhsplitter', null);
 
@@ -74,6 +76,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
               id={`puzzle/${tab}`}
               hunt={hunt}
               isActive={isActive && tab === slug}
+              isCached={tab === slug || cachedTabSet.has(tab)}
               puzzleData={puzzles[tab]}
               currentUrl={iframeDetails[`puzzle/${tab}`]?.url}
               reloadIfChangedTrigger={reloadIfChangedTrigger}
@@ -88,6 +91,7 @@ const Puzzles : React.FC<PuzzlesProps> = ({
             <SheetFrame
               id={`sheet/${tab}`}
               isActive={isActive && tab === slug}
+              isCached={tab === slug || cachedTabSet.has(tab)}
               puzzleData={puzzles[tab]}
               currentUrl={iframeDetails[`sheet/${tab}`]?.url}
               reloadIfChangedTrigger={reloadIfChangedTrigger}

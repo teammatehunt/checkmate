@@ -31,3 +31,7 @@
   content: ' ';
   white-space: pre;
 }
+
+.puzzle-cache-input {
+  width: 5ch;
+}

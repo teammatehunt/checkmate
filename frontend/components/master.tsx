@@ -39,8 +39,8 @@ const SizingRow = ({maxRoundTags, hasExtra}) => {
       <div className='td sub-master sizer status'/>
       <div className='td sub-master sizer notes'/>
       <div className='td sub-master sizer open-for'/>
-      {Array.from({length: maxRoundTags}).map(() => (
-        <div className='td sub-master sizer tag'/>
+      {Array.from({length: maxRoundTags}).map((_, i) => (
+        <div key={i} className='td sub-master sizer tag'/>
       ))}
       {(hasExtra || null) &&
         <div className='td sub-master sizer tag-extra'/>
@@ -338,6 +338,7 @@ interface MasterProps {
   colors: {[value: string]: string};
   hideSolved: boolean;
   editable: boolean;
+  sortNewRoundsFirst: boolean;
   yDims: {[key: string]: number};
 }
 
@@ -349,6 +350,7 @@ const Master : React.FC<MasterProps> = ({
   colors,
   hideSolved,
   editable,
+  sortNewRoundsFirst,
   yDims,
 }) => {
   const masterRef = useRef(null);
@@ -380,7 +382,8 @@ const Master : React.FC<MasterProps> = ({
 
   const maxRoundTags = Math.max(...Object.values(data.rounds).map(round => round.round_tags?.length ?? 0));
   const numTotalTagColumns = Math.max(maxRoundTags + 1, numTagsWithEditing);
-  let rows = Object.entries(roundsWithExtras).filter(([slug, round]) => round?.hidden === false).map(([slug, round]) => {
+  const orderedRoundEntries = sortNewRoundsFirst ? Object.entries(roundsWithExtras).reverse() : Object.entries(roundsWithExtras);
+  let rows = orderedRoundEntries.filter(([slug, round]) => round?.hidden === false).map(([slug, round]) => {
     const roundTags = round?.round_tags ?? null;
     return [
       {

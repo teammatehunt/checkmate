@@ -74,6 +74,7 @@ interface CachedIFrameProps {
   src: string;
   title: string;
   isActive: boolean;
+  isCached: boolean;
   currentUrl: string;
   reloadIfChangedTrigger: number;
   reloadTrigger: number;
@@ -81,24 +82,17 @@ interface CachedIFrameProps {
 
 export const CachedIFrame : React.FC<CachedIFrameProps> = ({
   isActive,
+  isCached,
   currentUrl,
   reloadIfChangedTrigger,
   reloadTrigger,
   ...props
 }) => {
-  const [cached, setCached] = useState(DisplayType.NO_RENDER);
   const [ownReloadTrigger, dispatchOwnReloadTrigger] = useReducer(state => state + 1, 0);
   const isActiveRef = useRef(isActive);
   const isChangedRef = useRef(false);
   isActiveRef.current = isActive;
   isChangedRef.current = canonicalUrl(currentUrl) !== canonicalUrl(props.src);
-  useEffect(() => {
-    if (canonicalUrl(currentUrl) === canonicalUrl(props.src)) {
-      if (isActive) setCached(DisplayType.HIDE);
-    } else {
-      setCached(DisplayType.NO_RENDER);
-    }
-  }, [isActive, currentUrl, props.src]);
 
   useEffect(() => {
     if (isActiveRef.current && isChangedRef.current) dispatchOwnReloadTrigger();
@@ -107,7 +101,7 @@ export const CachedIFrame : React.FC<CachedIFrameProps> = ({
     if (isActiveRef.current) dispatchOwnReloadTrigger();
   }, [reloadTrigger]);
 
-  const display = isActive ? DisplayType.DISPLAY : cached;
+  const display = isActive ? DisplayType.DISPLAY : isCached ? DisplayType.HIDE : DisplayType.NO_RENDER;
   return (
     <IFrame key={ownReloadTrigger} display={display} {...props}/>
   );
@@ -117,6 +111,7 @@ export const PuzzleFrame = ({
   id,
   hunt,
   isActive,
+  isCached,
   puzzleData,
   currentUrl,
   reloadIfChangedTrigger,
@@ -137,6 +132,7 @@ export const PuzzleFrame = ({
       src={puzzleUrl}
       title={puzzleData?.name}
       isActive={isActive}
+      isCached={isCached}
       currentUrl={currentUrl}
       reloadIfChangedTrigger={reloadIfChangedTrigger}
       reloadTrigger={reloadTrigger}
@@ -147,6 +143,7 @@ export const PuzzleFrame = ({
 export const SheetFrame = ({
   id,
   isActive,
+  isCached,
   puzzleData,
   currentUrl,
   reloadIfChangedTrigger,
@@ -159,6 +156,7 @@ export const SheetFrame = ({
       src={puzzleData?.sheet_link}
       title={puzzleData?.name && `Spreadsheet for ${puzzleData?.name}`}
       isActive={isActive}
+      isCached={isCached}
       currentUrl={currentUrl}
       reloadIfChangedTrigger={reloadIfChangedTrigger}
       reloadTrigger={reloadTrigger}
