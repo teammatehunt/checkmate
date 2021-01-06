@@ -153,7 +153,10 @@ const asyncOnMessage = async (message, sender) => {
     }
   }
 };
-chrome.runtime.onMessage.addListener((message, sender) => asyncOnMessage(message, sender));
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  asyncOnMessage(message, sender);
+  sendResponse();
+});
 
 // update voice state class
 if (parseDiscordLocation(window.location.href)[0]) {

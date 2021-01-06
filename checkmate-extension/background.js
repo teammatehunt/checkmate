@@ -215,6 +215,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (!(sender.tab.id in discordInfo)) discordInfo[sender.tab.id] = {};
       discordInfo[sender.tab.id][sender.frameId] = message;
       sendLoadDiscord(sender.tab.id, message);
+      sendResponse();
       break;
     case 'keydown-discord':
       if (sender.tab.id in discordFrame) {
@@ -227,6 +228,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           logError,
         );
       }
+      sendResponse();
       break;
     case 'move-discord-voice':
       moveDiscordVoiceHandler(message, sender, sendResponse);

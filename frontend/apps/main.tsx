@@ -68,7 +68,8 @@ export const Main : React.FC<MainProps> = props => {
     const thresh = 0.1;
     if (state.scrollHeight === null ||
         Math.abs(scrollTop - state.scrollTop) >= thresh * height ||
-        Math.abs((scrollTop + height) - (state.scrollTop + state.height)) >= thresh * height) {
+        Math.abs((scrollTop + height) - (state.scrollTop + state.height)) >= thresh * height ||
+        Math.abs(scrollHeight - state.scrollHeight) >= thresh * height) {
       return {scrollTop, height, scrollHeight};
     } else {
       return state;
@@ -91,6 +92,9 @@ export const Main : React.FC<MainProps> = props => {
       window.removeEventListener('resize', handler);
     };
   }, []);
+  useEffect(() => {
+    if (slug === undefined) dispatchMasterYDims();
+  }, [slug]);
 
   const hideSolved = useLocalStorageObject<boolean>('master/hide-solved', false);
   const editable = useLocalStorageObject<boolean>('master/editable', false);
@@ -196,7 +200,7 @@ export const Main : React.FC<MainProps> = props => {
     if (slug) {
       document.title = puzzleData?.name ?? 'Checkmate';
     } else {
-      document.title = 'Master';
+      document.title = 'Checkmate';
     }
   }, [slug]);
 

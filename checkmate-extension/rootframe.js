@@ -51,6 +51,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const localDetail = Object.assign(new window.Object(), message);
       const e = new CustomEvent('loaded-subframe', {detail: localDetail});
       window.dispatchEvent(e);
+      sendResponse();
       break;
     case 'move-discord-voice':
       moveDiscordVoiceHandler(message, sendResponse);
