@@ -220,6 +220,7 @@ const TabBar : React.FC<TabBarProps> = ({
         </div>
         <div
           className={`connection-indicator ${isConnected ? 'connected' : 'disconnected'}`}
+          data-tip
           aria-label={`${isConnected ? 'Connected to server' : 'Disconnected from server'}`}
         />
         <NavSettings

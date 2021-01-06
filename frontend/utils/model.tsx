@@ -129,8 +129,9 @@ export const dataReducer = (state : Data, {ws, cacheRef, update} : {ws, cacheRef
       setTimeout(() => {
         if (cacheRef.current.version < update.prev_version) {
           ws.send(JSON.stringify({
+            action: 'fetch',
             version: cacheRef.current.version,
-            force_fetch: true,
+            force: true,
           }));
         }
       }, 3000);

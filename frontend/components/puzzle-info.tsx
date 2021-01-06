@@ -24,6 +24,7 @@ import {
 } from 'components/td-editable';
 import { Check, Edit3, Plus, X } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
+import { Activity, Avatar } from 'utils/activity-manager';
 import {
   fetchJson,
   patch,
@@ -506,6 +507,7 @@ interface PuzzleInfoProps {
   loadSlug: any;
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
+  puzzleActivities: Activity[];
 }
 
 const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
@@ -514,6 +516,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
   loadSlug,
   statuses,
   colors,
+  puzzleActivities,
 }) => {
   const puzzle = data.puzzles[slug];
   if (!puzzle) return null;
@@ -669,6 +672,9 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         changeFeeders={changeFeeders}
       />
       }
+      <div className='sub-puzzleinfo viewers'>
+        {puzzleActivities?.map(activity => Avatar(data.users[activity.uid], activity))}
+      </div>
     </>
   );
 };

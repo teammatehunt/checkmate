@@ -32,6 +32,10 @@
   white-space: pre;
 }
 
+.master-settings {
+  font-size: smaller;
+}
+
 .puzzle-cache-input {
   width: 5ch;
 }

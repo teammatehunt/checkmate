@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import time
 
 from asgiref.sync import async_to_sync
@@ -11,6 +12,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django import dispatch
 
 from . import api
+
+logger = logging.getLogger(__name__)
 
 MASTER_CHANNEL_NAME = 'channels_master'
 CLIENT_GROUP_NAME = 'all_updates'
@@ -44,17 +47,42 @@ class ClientConsumer(AsyncWebsocketConsumer):
             self.timestamp = event['timestamp']
         await self.send(text_data=event['update'])
 
+    async def client_notify(self, event):
+        # similar to update but no versioning
+        await self.send(text_data=event['payload'])
+
     async def receive(self, text_data=None):
         if self.timestamp is not None:
             try:
                 data = json.loads(text_data)
             except:
                 return
-            version = data.get('version')
-            if data.get('force_fetch') is True:
-                await self.fetch()
-            elif isinstance(version, int) and version < self.version and self.timestamp - time.time() > self.SYNC_THRESHOLD:
-                await self.fetch()
+            action = data.get('action')
+            if action == 'fetch':
+                version = data.get('version')
+                if data.get('force') is True:
+                    await self.fetch()
+                elif isinstance(version, int) and version < self.version and self.timestamp - time.time() > self.SYNC_THRESHOLD:
+                    await self.fetch()
+            elif action == 'activity':
+                puzzle = data.get('puzzle')
+                tab = data.get('tab')
+                user = self.scope['user']
+                uid = None if user is None else user.id
+                if (isinstance(puzzle, str) or puzzle is None) and isinstance(tab, int) and uid is not None:
+                    await self.channel_layer.group_send(
+                        CLIENT_GROUP_NAME,
+                        {
+                            'type': 'client.notify',
+                            'payload': json.dumps({
+                                'activity': {
+                                    'uid': uid,
+                                    'tab': tab,
+                                    'puzzle': puzzle,
+                                },
+                            }),
+                        },
+                    )
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(

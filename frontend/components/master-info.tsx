@@ -25,6 +25,7 @@ interface MasterInfoProps {
   editable: LocalStorageObject<boolean>;
   sortNewRoundsFirst: LocalStorageObject<boolean>;
   puzzleCacheSize: LocalStorageObject<number>;
+  hideActivity: LocalStorageObject<boolean>;
 }
 
 const MasterInfo : React.FC<MasterInfoProps> = ({
@@ -33,6 +34,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
   editable,
   sortNewRoundsFirst,
   puzzleCacheSize,
+  hideActivity,
 }) => {
   const defaultFormPuzzleData = {
     name: '',
@@ -219,21 +221,27 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
       </Collapsible>
 
       <h2>Settings</h2>
-      <div>
-        <input type='checkbox' onChange={(e) => hideSolved.set(e.target.checked)} checked={hideSolved.value}/>
-        <span>Hide solved</span>
-      </div>
-      <div>
-        <input type='checkbox' onChange={(e) => sortNewRoundsFirst.set(e.target.checked)} checked={sortNewRoundsFirst.value}/>
-        <span>Newest rounds at top</span>
-      </div>
-      <div>
-        <input type='checkbox' onChange={(e) => editable.set(e.target.checked)} checked={editable.value}/>
-        <span>Edit Tags</span>
-      </div>
-      <div>
-        <span className='colon'>Max puzzles to cache</span>
-        <input className='puzzle-cache-input' type='number' min={1} onChange={(e) => puzzleCacheSize.set(Number(e.target.value))} value={puzzleCacheSize.value}/>
+      <div className='master-settings'>
+        <div>
+          <input type='checkbox' onChange={(e) => hideSolved.set(e.target.checked)} checked={hideSolved.value}/>
+          <span>Hide solved</span>
+        </div>
+        <div>
+          <input type='checkbox' onChange={(e) => sortNewRoundsFirst.set(e.target.checked)} checked={sortNewRoundsFirst.value}/>
+          <span>Newest rounds at top</span>
+        </div>
+        <div>
+          <input type='checkbox' onChange={(e) => editable.set(e.target.checked)} checked={editable.value}/>
+          <span>Edit Tags</span>
+        </div>
+        <div>
+          <input type='checkbox' onChange={(e) => hideActivity.set(e.target.checked)} checked={hideActivity.value}/>
+          <span>Hide own activity</span>
+        </div>
+        <div>
+          <span className='colon'>Max puzzles to cache</span>
+          <input className='puzzle-cache-input' type='number' min={1} onChange={(e) => puzzleCacheSize.set(Number(e.target.value))} value={puzzleCacheSize.value}/>
+        </div>
       </div>
     </>
   );

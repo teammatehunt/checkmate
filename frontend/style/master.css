@@ -26,6 +26,7 @@
 .sub-master.sizer.status { width: 13ch; }
 .sub-master.sizer.notes { width: 30ch; }
 .sub-master.sizer.open-for { width: 13ch; }
+.sub-master.sizer.viewers { width: 13ch; }
 .sub-master.sizer.tag { width: 13ch; }
 .sub-master.sizer.tag-extra { width: 1em; }
 
@@ -151,4 +152,12 @@
 
 .sub-master.td.answer {
   font-size: inherit;
+}
+
+.sub-master.td.viewers > div {
+  display: flex;
+  flex-wrap: wrap;
+}
+.sub-master.td.viewers:hover {
+  overflow: initial;
 }

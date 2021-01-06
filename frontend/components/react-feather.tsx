@@ -11,4 +11,5 @@ export { default as MoreHorizontal } from 'react-feather/dist/icons/more-horizon
 export { default as Plus } from 'react-feather/dist/icons/plus';
 export { default as RefreshCw } from 'react-feather/dist/icons/refresh-cw';
 export { default as Tool } from 'react-feather/dist/icons/tool';
+export { default as User } from 'react-feather/dist/icons/user';
 export { default as X } from 'react-feather/dist/icons/x';

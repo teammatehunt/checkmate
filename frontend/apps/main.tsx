@@ -13,10 +13,11 @@ import React, {
 import * as JSONbig from 'json-bigint';
 import { useLocalStorage } from '@rehooks/local-storage';
 import SplitPane from 'react-split-pane';
+import useSessionStorage from 'react-use/lib/useSessionStorage';
 
 import Base from 'components/base';
 import { Link } from 'components/drop-ins';
-import { useLocalStorageObject } from 'utils/hooks';
+import { useLocalStorageObject, useDefaultLocalStorageObject } from 'utils/hooks';
 import Master from 'components/master';
 import MasterInfo from 'components/master-info';
 import Puzzles from 'components/puzzle';
@@ -34,6 +35,7 @@ import {
 } from 'components/frames';
 import baseColors, { statuses as baseStatuses } from 'utils/colors';
 import * as Model from 'utils/model';
+import useActivityManager from 'utils/activity-manager';
 
 import 'style/layout.css';
 import 'style/split-pane.css';
@@ -52,12 +54,13 @@ export const Main : React.FC<MainProps> = props => {
   const [data, dataDispatch] = useReducer(Model.dataReducer, props.data);
   const iframeDetailsReducer = (state, action) => Object.assign({}, state, action);
   const [iframeDetails, iframeDetailsDispatch] = useReducer(iframeDetailsReducer, {});
+  const [tabUuid] = useSessionStorage('main/tab-uuid', window.crypto.getRandomValues(new Uint32Array(1))[0]);
 
   const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
   const [cachedTabs, setCachedTabs] = useState<string[]>([]);
   const [cachedTabSet, setCachedTabSet] = useState<Set<string>>(new Set());
-  const [vsplitter, setVsplitter] = useLocalStorage<number>('frames/vsplitter', null);
-  const [rhsplitter, setRhsplitter] = useLocalStorage<number>('frames/rhsplitter', null);
+  const vsplitter = useDefaultLocalStorageObject<number>('frames/vsplitter', null);
+  const rhsplitter = useDefaultLocalStorageObject<number>('frames/rhsplitter', null);
 
   // detect which rows are on screen
   const mainPaneChildRef = useRef(null);
@@ -96,22 +99,24 @@ export const Main : React.FC<MainProps> = props => {
     if (slug === undefined) dispatchMasterYDims();
   }, [slug]);
 
-  const hideSolved = useLocalStorageObject<boolean>('master/hide-solved', false);
-  const editable = useLocalStorageObject<boolean>('master/editable', false);
-  const sortNewRoundsFirst = useLocalStorageObject<boolean>('master/sort-new-rounds-first', false);
-  const puzzleCacheSize = useLocalStorageObject<number>('frames/puzzle-cache-size', 3);
+  const hideSolved = useDefaultLocalStorageObject<boolean>('master/hide-solved', false);
+  const editable = useDefaultLocalStorageObject<boolean>('master/editable', false);
+  const sortNewRoundsFirst = useDefaultLocalStorageObject<boolean>('master/sort-new-rounds-first', false);
+  const puzzleCacheSize = useDefaultLocalStorageObject<number>('frames/puzzle-cache-size', 3);
+  const hideActivity = useDefaultLocalStorageObject<boolean>('main/hide-activity', false);
+  const hideActivityRef = useRef(hideActivity.value);
+  hideActivityRef.current = hideActivity.value;
 
   // because tabs can update outside of this window
-  const initialLoad = useRef(true);
   const [maxVisibleTabs, setMaxVisibleTabs] = useState(null);
 
   const [extensionVersion, setExtensionVersion] = useState(undefined);
 
   // panes states / sidebar toggles
-  const [puzzleVisible, setPuzzleVisible] = useState(true);
-  const [sheetVisible, setSheetVisible] = useState(true);
-  const [infoVisible, setInfoVisible] = useState(true);
-  const [discordVisible, setDiscordVisible] = useState(true);
+  const [puzzleVisible, setPuzzleVisible] = useSessionStorage('frames/puzzle-visible', true);
+  const [sheetVisible, setSheetVisible] = useSessionStorage('frames/sheet-visible', true);
+  const [infoVisible, setInfoVisible] = useSessionStorage('frames/info-visible', true);
+  const [discordVisible, setDiscordVisible] = useSessionStorage('frames/discord-visible', true);
   const [reloadIfChangedTrigger, dispatchReloadIfChangedTrigger] = useReducer(state => state + 1, 0);
   const [reloadPuzzleTrigger, dispatchReloadPuzzleTrigger] = useReducer(state => state + 1, 0);
   const [reloadSheetTrigger, dispatchReloadSheetTrigger] = useReducer(state => state + 1, 0);
@@ -123,9 +128,11 @@ export const Main : React.FC<MainProps> = props => {
 
   const dataRef = useRef(data);
   const huntRef = useRef(hunt);
+  const slugRef = useRef(slug);
   const iframeDetailsRef = useRef(iframeDetails);
   dataRef.current = data;
   huntRef.current = hunt;
+  slugRef.current = slug;
   iframeDetailsRef.current = iframeDetails;
   const loadDiscord = useCallback((_slug, frameId?) => {
     // BigInt doesn't fit in JSON types
@@ -205,14 +212,17 @@ export const Main : React.FC<MainProps> = props => {
   }, [slug]);
 
   // validate slug in tabs
+  const initialLoadSlugInTabs = useRef(true);
   useEffect(() => {
-    if (initialLoad.current) return;
+    if (initialLoadSlugInTabs.current) {
+      initialLoadSlugInTabs.current = false;
+      return;
+    }
     if (isBlank(slug)) return;
     if (!tabs.includes(slug)) loadSlug(undefined);
   }, [tabs, slug]);
   useEffect(() => {
     addTab(slug);
-    initialLoad.current = false;
   }, [maxVisibleTabs]);
   useEffect(() => {
     if (tabs.some(slug => data.puzzles[slug]?.hidden !== false)) {
@@ -240,29 +250,48 @@ export const Main : React.FC<MainProps> = props => {
     loadSlug(_slug, _slug === slug);
   }, [slug, loadSlug]);
 
+  const [activities, dispatchActivity] = useActivityManager();
+
   // connect to websocket for updates
   const socketRef = useRef(null);
   const reconnectDelayRef = useRef<number>(1);
   const updateCacheRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
+  const sendActivity = useCallback((_slug=(slugRef.current ?? null)) => {
+    if (!hideActivityRef.current && socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({
+        action: 'activity',
+        puzzle: _slug,
+        tab: tabUuid,
+      }));
+    }
+  }, [tabUuid]);
   useEffect(() => {
     const closeWebsocket = () => {
       try {
-        socketRef.current.close();
+        socketRef.current?.close();
       } catch (error) {}
     };
-    const openWebsocket = () => {
+    const openWebsocket = (initial=false) => {
       const socket = new WebSocket(`wss://${window.location.host}/ws/`);
       socket.addEventListener('message', (e) => {
         const _data = JSONbig.parse(e.data);
-        dataDispatch({
-          ws: socket,
-          cacheRef: updateCacheRef,
-          update: _data,
-        });
+        if (_data.data) {
+          // update state data
+          dataDispatch({
+            ws: socket,
+            cacheRef: updateCacheRef,
+            update: _data,
+          });
+        }
+        // update active users
+        if (_data.activity) {
+          dispatchActivity(_data.activity);
+        }
       });
       socket.addEventListener('open', (e) => {
         setIsConnected(true);
+        if (initial) sendActivity();
         reconnectDelayRef.current = 1;
       });
       socket.addEventListener('close', (e) => {
@@ -273,9 +302,39 @@ export const Main : React.FC<MainProps> = props => {
       closeWebsocket();
       socketRef.current = socket;
     };
-    openWebsocket();
-    return closeWebsocket;
+    openWebsocket(true);
+    const interval = 60 * 1000; // one minute
+    const intervalId = setInterval(sendActivity, interval);
+    return () => {
+      clearInterval(intervalId);
+      if (!hideActivityRef.current) sendActivity(null);
+      closeWebsocket();
+    };
   }, []);
+  const initialLoadSendActivityHide = useRef(true);
+  useEffect(() => {
+    if (initialLoadSendActivityHide.current) {
+      initialLoadSendActivityHide.current = false;
+      return;
+    }
+    if (hideActivity.value) {
+      sendActivity(null);
+    } else {
+      sendActivity();
+    }
+  }, [hideActivity.value]);
+  const initialLoadSendActivitySlug = useRef(true);
+  useEffect(() => {
+    if (initialLoadSendActivitySlug.current) {
+      initialLoadSendActivitySlug.current = false;
+      return;
+    }
+    // send activity when switching
+    const delay = 5000; // ms
+    setTimeout(_slug => {
+      if (_slug === slugRef.current) sendActivity();
+    }, delay, slug);
+  }, [slug]);
 
   const [initialDiscordUrl] = useState(Model.discordLink(
     hunt?.discord_server_id, puzzleData?.discord_text_channel_id));
@@ -286,8 +345,8 @@ export const Main : React.FC<MainProps> = props => {
     setResizingClass('');
     return set(x);
   }, []);
-  const onDragFinishedVsplitter = onDragFinishedSet(setVsplitter);
-  const onDragFinishedRhsplitter = onDragFinishedSet(setRhsplitter);
+  const onDragFinishedVsplitter = onDragFinishedSet(vsplitter.set);
+  const onDragFinishedRhsplitter = onDragFinishedSet(rhsplitter.set);
 
   const statuses = baseStatuses;
   const colors = useMemo(() => ({
@@ -351,7 +410,7 @@ export const Main : React.FC<MainProps> = props => {
             <SplitPane
               split='vertical'
               primary='second'
-              defaultSize={vsplitter || 240}
+              defaultSize={vsplitter.value || 240}
               minSize={50}
               onDragStarted={onDragStarted}
               onDragFinished={onDragFinishedVsplitter}
@@ -370,6 +429,7 @@ export const Main : React.FC<MainProps> = props => {
                     loadSlug={loadSlug}
                     statuses={statuses}
                     colors={colors}
+                    activities={activities}
                     hideSolved={hideSolved.value}
                     editable={editable.value}
                     sortNewRoundsFirst={sortNewRoundsFirst.value}
@@ -399,7 +459,7 @@ export const Main : React.FC<MainProps> = props => {
               </div>
               <SplitPane
                 split='horizontal'
-                defaultSize={rhsplitter || window.innerHeight / 2}
+                defaultSize={rhsplitter.value || window.innerHeight / 2}
                 onDragStarted={onDragStarted}
                 onDragFinished={onDragFinishedRhsplitter}
                 resizerClassName={infoVisible && discordVisible ? 'Resizer' : 'nodisplay'}
@@ -417,6 +477,7 @@ export const Main : React.FC<MainProps> = props => {
                       editable={editable}
                       sortNewRoundsFirst={sortNewRoundsFirst}
                       puzzleCacheSize={puzzleCacheSize}
+                      hideActivity={hideActivity}
                     />
                   </ShowIf>
                   <ShowIf display={page === 'puzzle'}>
@@ -426,6 +487,7 @@ export const Main : React.FC<MainProps> = props => {
                       loadSlug={loadSlug}
                       statuses={statuses}
                       colors={colors}
+                      puzzleActivities={activities[slug]}
                     />
                   </ShowIf>
                 </div>

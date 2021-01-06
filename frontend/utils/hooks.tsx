@@ -3,10 +3,12 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 
 import isEqual from 'lodash/isEqual';
 import { useLocalStorage } from '@rehooks/local-storage';
+import useSessionStorage from 'react-use/lib/useSessionStorage';
 
 export interface LocalStorageObject<T> {
   value: T;
@@ -17,6 +19,23 @@ export interface LocalStorageObject<T> {
 export function useLocalStorageObject<T>(key: string, defaultValue: T) : LocalStorageObject<T> {
   const [value, set, _delete] = useLocalStorage<T>(key, defaultValue);
   return {value, set, delete: _delete};
+}
+
+export function useDefaultLocalStorageObject<T>(key: string, defaultValue: T) : LocalStorageObject<T> {
+  const [localValue, localSet, localDelete] = useLocalStorage<T>(key, defaultValue);
+  const [sessionValue, sessionSet] = useSessionStorage<T>(key, localValue);
+  const set = useCallback((value) => {
+    localSet(value);
+    sessionSet(value);
+  }, []);
+  const _delete = useCallback(() => {
+    sessionStorage.removeItem(key);
+  }, [key]);
+  return {
+    value: sessionValue,
+    set: set,
+    delete: _delete,
+  };
 }
 
 export const usePrevious = (value) => {

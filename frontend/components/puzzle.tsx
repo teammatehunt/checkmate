@@ -13,6 +13,7 @@ import {
   SheetFrame,
 } from 'components/frames';
 import * as Model from 'utils/model';
+import { useDefaultLocalStorageObject } from 'utils/hooks';
 
 interface IframeDetails {
   action: 'loaded-subframe';
@@ -54,14 +55,14 @@ const Puzzles : React.FC<PuzzlesProps> = ({
   reloadSheetTrigger,
   cachedTabSet,
 }) => {
-  const [lhsplitter, setLhsplitter] = useLocalStorage<number>('frames/lhsplitter', null);
+  const lhsplitter  = useDefaultLocalStorageObject<number>('frames/lhsplitter', null);
 
   return (
     <SplitPane
       split='horizontal'
-      defaultSize={lhsplitter || window.innerHeight / 2}
+      defaultSize={lhsplitter.value || window.innerHeight / 2}
       onDragStarted={onDragStarted}
-      onDragFinished={onDragFinishedSet(setLhsplitter)}
+      onDragFinished={onDragFinishedSet(lhsplitter.set)}
       resizerClassName={puzzleVisible && sheetVisible ? 'Resizer' : 'nodisplay'}
       pane1Style={sheetVisible ? undefined : {height: '100%'}}
       pane2Style={puzzleVisible ? undefined : {height: '100%'}}

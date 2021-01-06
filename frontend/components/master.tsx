@@ -27,6 +27,7 @@ import {
 import Twemoji from 'components/twemoji';
 import { patch } from 'utils/fetch';
 import * as Model from 'utils/model';
+import { Activity, Avatar } from 'utils/activity-manager';
 
 import 'style/master.css';
 
@@ -39,6 +40,7 @@ const SizingRow = ({maxRoundTags, hasExtra}) => {
       <div className='td sub-master sizer status'/>
       <div className='td sub-master sizer notes'/>
       <div className='td sub-master sizer open-for'/>
+      <div className='td sub-master sizer viewers'/>
       {Array.from({length: maxRoundTags}).map((_, i) => (
         <div key={i} className='td sub-master sizer tag'/>
       ))}
@@ -137,6 +139,7 @@ const Round : React.FC<RoundProps> = React.memo(({
       <div className='th sub-master status'><div>Status</div></div>
       <div className='th sub-master notes'><div>Notes</div></div>
       <div className='th sub-master open-for'><div>Open For</div></div>
+      <div className='th sub-master viewers'><div>Viewers</div></div>
       {(round.round_tags ?? []).map((tag, i) => (
         <div key={tag} className='th sub-master tag capitalize'>
           <div>
@@ -185,6 +188,7 @@ interface PuzzleProps {
   loadSlug: any;
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
+  viewers: {user: Model.User, activity: Activity}[];
   isPseudoround?: boolean;
   visible: boolean;
   editable: boolean;
@@ -197,6 +201,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   loadSlug,
   statuses,
   colors,
+  viewers,
   isPseudoround,
   visible,
   editable,
@@ -300,6 +305,9 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
       <div className='td sub-master open-for' style={openForStyle}><div>
         {hasCreated ? humanDuration : null}
       </div></div>
+      <div className='td sub-master viewers'><div>
+        {viewers?.map(({user, activity}) => Avatar(user, activity))}
+      </div></div>
       {(roundTags ?? []).map(tag => (
         <TdEditable
           key={tag}
@@ -336,6 +344,7 @@ interface MasterProps {
   loadSlug: any;
   statuses: {[status: string]: string};
   colors: {[value: string]: string};
+  activities: {[puzzle: string]: Activity[]};
   hideSolved: boolean;
   editable: boolean;
   sortNewRoundsFirst: boolean;
@@ -348,6 +357,7 @@ const Master : React.FC<MasterProps> = ({
   loadSlug,
   statuses,
   colors,
+  activities,
   hideSolved,
   editable,
   sortNewRoundsFirst,
@@ -409,6 +419,7 @@ const Master : React.FC<MasterProps> = ({
             loadSlug: loadSlug,
             statuses: statuses,
             colors: colors,
+            viewers: activities[puzzle.slug]?.map(activity => ({user: data.users[activity.uid], activity: activity})),
             isPseudoround: round.is_pseudoround,
             editable: editable,
           },

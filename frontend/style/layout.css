@@ -162,3 +162,24 @@ input, select, textarea, button {
   color: purple;
   filter: drop-shadow(0 0 1px);
 }
+
+[data-tip] {
+  position: relative;
+}
+[data-tip]:hover:after {
+  content: attr(aria-label);
+  white-space: pre;
+  position: absolute;
+  pointer-events: none;
+  padding: 3px;
+  background-color: black;
+  color: lightgray;
+  border: 1px solid gray;
+  z-index: 100;
+  opacity: 0.75;
+}
+[data-place=below]:hover:after {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
