@@ -1,3 +1,4 @@
+from collections import deque
 import datetime
 import json
 import logging
@@ -30,16 +31,20 @@ class ClientConsumer(AsyncWebsocketConsumer):
             self.channel_name,
         )
         await self.accept()
-        await self.fetch()
+        await self.query(fetch=True)
 
-    async def fetch(self):
-        await self.channel_layer.send(
-            MASTER_CHANNEL_NAME,
-            {
-                'type': 'client.fetch',
-                'channel': self.channel_name,
-            },
-        )
+    async def query(self, *, fetch=False, activity=None):
+        # single request that combines fetching entire data state and notifying
+        # with current activity
+        request = {
+            'type': 'client.query',
+        }
+        if fetch:
+            request['fetch'] = True
+            request['channel'] = self.channel_name
+        if activity is not None:
+            request['activity'] = activity
+        await self.channel_layer.send(MASTER_CHANNEL_NAME, request)
 
     async def client_update(self, event):
         if self.version < event['version']:
@@ -57,32 +62,35 @@ class ClientConsumer(AsyncWebsocketConsumer):
                 data = json.loads(text_data)
             except:
                 return
-            action = data.get('action')
-            if action == 'fetch':
-                version = data.get('version')
-                if data.get('force') is True:
-                    await self.fetch()
-                elif isinstance(version, int) and version < self.version and self.timestamp - time.time() > self.SYNC_THRESHOLD:
-                    await self.fetch()
-            elif action == 'activity':
-                puzzle = data.get('puzzle')
-                tab = data.get('tab')
+            version = data.get('version')
+            activity = data.get('activity')
+            request = {}
+            if data.get('force') is True:
+                request['fetch'] = True
+            elif isinstance(version, int) and version < self.version and self.timestamp - time.time() > self.SYNC_THRESHOLD:
+                request['fetch'] = True
+            if isinstance(activity, dict):
+                puzzle = activity.get('puzzle')
+                tab = activity.get('tab')
                 user = self.scope['user']
                 uid = None if user is None else user.id
                 if (isinstance(puzzle, str) or puzzle is None) and isinstance(tab, int) and uid is not None:
+                    request['activity'] = {
+                        'uid': uid,
+                        'tab': tab,
+                        'puzzle': puzzle,
+                    }
                     await self.channel_layer.group_send(
                         CLIENT_GROUP_NAME,
                         {
                             'type': 'client.notify',
                             'payload': json.dumps({
-                                'activity': {
-                                    'uid': uid,
-                                    'tab': tab,
-                                    'puzzle': puzzle,
-                                },
+                                'activities': [request['activity']],
                             }),
                         },
                     )
+            if request:
+                await self.query(**request)
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -92,11 +100,14 @@ class ClientConsumer(AsyncWebsocketConsumer):
 
 
 class BroadcastMasterConsumer(SyncConsumer):
+    ACTIVITY_CACHE_TIME = 60 # s
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.timestamp = None
         self.version = None
         self.data = None
+        self.activity = deque()
 
     def maybe_init(self):
         if self.version is None:
@@ -104,22 +115,33 @@ class BroadcastMasterConsumer(SyncConsumer):
             self.version = 1 # version 0 is empty set, version 1 is initial data
             self.data = api.data_everything()
 
-    def client_fetch(self, event):
+    def client_query(self, event):
         self.maybe_init()
-        async_to_sync(self.channel_layer.send)(
-            event['channel'],
-            {
-                'type': 'client.update',
-                'version': self.version,
-                'timestamp': self.timestamp,
-                'update': json.dumps({
-                    'prev_version': None, # version None for any
+        # prune activity
+        now = time.monotonic()
+        while self.activity and self.activity[0][0] < now - self.ACTIVITY_CACHE_TIME:
+            self.activity.popleft()
+        # perform fetch
+        if event.get('fetch') is True:
+            async_to_sync(self.channel_layer.send)(
+                event['channel'],
+                {
+                    'type': 'client.update',
                     'version': self.version,
-                    'data': self.data,
-                    'roots': True,
-                }),
-            },
-        )
+                    'timestamp': self.timestamp,
+                    'update': json.dumps({
+                        'prev_version': None, # version None for any
+                        'version': self.version,
+                        'data': self.data,
+                        'roots': True,
+                        'activities': [_activity for ts, _activity in self.activity],
+                    }),
+                },
+            )
+        # update cache with client's activity
+        activity = event.get('activity')
+        if activity is not None:
+            self.activity.append((now, activity))
 
     def server_maybe_update(self, event):
         self.maybe_init()

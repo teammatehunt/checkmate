@@ -260,9 +260,11 @@ export const Main : React.FC<MainProps> = props => {
   const sendActivity = useCallback((_slug=(slugRef.current ?? null)) => {
     if (!hideActivityRef.current && socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({
-        action: 'activity',
-        puzzle: _slug,
-        tab: tabUuid,
+        activity: {
+          puzzle: _slug,
+          tab: tabUuid,
+        },
+        version: updateCacheRef.current?.version,
       }));
     }
   }, [tabUuid]);
@@ -285,8 +287,8 @@ export const Main : React.FC<MainProps> = props => {
           });
         }
         // update active users
-        if (_data.activity) {
-          dispatchActivity(_data.activity);
+        if (_data.activities) {
+          dispatchActivity(_data.activities);
         }
       });
       socket.addEventListener('open', (e) => {

@@ -47,26 +47,40 @@ export interface Activity {
 
 const useActivityManager = () : [{[slug: string]: Activity[]}, (Activity) => void] => {
   const ttl = 3 * 60 * 1000; // 3 minutes
-  const [items, dispatchActivity] = useReducer((items, action) => {
+  const [items, dispatchActivity] = useReducer((items, activities) => {
     const now = performance.now();
-    let activity = action ? {...action, ts: now} : null;
     const thresh = now - ttl;
-    const oldActivity = items.filter(x => x.uid === activity?.uid && x.tab === activity?.tab)[0];
-    let newItems = null;
-    if (activity && oldActivity) {
-      activity.origTs = oldActivity.origTs;
-      const mappedItems = items.map(x => x.uid === activity?.uid && x.tab === activity?.tab ? activity : x);
-      newItems = mappedItems.filter(x => x.ts > thresh);
-    } else {
-      const filteredItems = items.filter(x => x.ts > thresh && !(x.uid === activity?.uid && x.tab === activity?.tab));
-      if (activity) {
-        activity.origTs = now;
-        newItems = [...filteredItems, activity];
-      } else {
-        newItems = filteredItems.length === items.length ? items : filteredItems;
-      }
+    let byId = {};
+    for (const activity of activities) {
+      byId[activity.uid] = byId[activity.uid] ?? {};
+      byId[activity.uid][activity.tab] = activity;
     }
-    return newItems;
+    let oldById = {};
+    for (const activity of items) {
+      oldById[activity.uid] = oldById[activity.uid] ?? {};
+      oldById[activity.uid][activity.tab] = activity;
+    }
+    const mappedItems = items.map(x => {
+      const newItem = byId[x.uid]?.[x.tab];
+      if (newItem) {
+        if (newItem.puzzle === x.puzzle) return {...x, ts: now};
+        return null;
+      } else {
+        return x;
+      }
+    });
+    const filteredItems = mappedItems.filter(x => x && x.ts > thresh);
+    const newItems = [...filteredItems, ...activities.filter(activity => {
+      const oldActivity = oldById[activity.uid]?.[activity.tab];
+      if (byId[activity.uid][activity.tab] !== activity) return false;
+      if (oldActivity && oldActivity.puzzle === activity.puzzle) return false;
+      return true;
+    }).map(activity => ({...activity, ts: now, tsOrig: now}))];
+    if (activities.length || mappedItems.length !== filteredItems.length) {
+      return newItems;
+    } else {
+      return items;
+    }
   }, []);
 
   const byPuzzle = useMemo(() => {

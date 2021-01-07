@@ -101,44 +101,41 @@ export interface DataUpdate {
   roots: any;
 }
 
-export const dataReducer = (state : Data, {ws, cacheRef, update} : {ws, cacheRef, update: DataUpdate}) : Data => {
-  return produce(state, (draft : Draft<Data>) => {
-    update.reception_timestamp = Date.now();
-    if (cacheRef.current === null) {
-      cacheRef.current = {
-        version: null,
-        reception_timestamp: null,
-        deltas: {},
-      };
+export const dataReducer = produce((draft : Draft<Data>, {ws, cacheRef, update} : {ws, cacheRef, update: DataUpdate}) : Data => {
+  update.reception_timestamp = Date.now();
+  if (cacheRef.current === null) {
+    cacheRef.current = {
+      version: null,
+      reception_timestamp: null,
+      deltas: {},
+    };
+  }
+  if (update.prev_version === null || cacheRef.current.version === update.prev_version) {
+    // apply update
+    draft = dataMerge(draft, update.data, update.roots);
+    cacheRef.current.version = update.version;
+    cacheRef.current.reception_timestamp = Date.now();
+    // look through cached updates
+    while (cacheRef.current.deltas[cacheRef.current.version]?.version > cacheRef.current.version) {
+      const delta = cacheRef.current.deltas[cacheRef.current.version];
+      draft = dataMerge(draft, delta.data, delta.roots);
+      cacheRef.current.version = delta.version;
     }
-    if (update.prev_version === null || cacheRef.current.version === update.prev_version) {
-      // apply update
-      draft = dataMerge(draft, update.data, update.roots);
-      cacheRef.current.version = update.version;
-      cacheRef.current.reception_timestamp = Date.now();
-      // look through cached updates
-      while (cacheRef.current.deltas[cacheRef.current.version]?.version > cacheRef.current.version) {
-        const delta = cacheRef.current.deltas[cacheRef.current.version];
-        draft = dataMerge(draft, delta.data, delta.roots);
-        cacheRef.current.version = delta.version;
+    Object.keys(cacheRef.current.deltas).filter(version => Number(version) <= cacheRef.current.version).forEach(version => delete cacheRef.current.deltas[version]);
+  } else if (cacheRef.current.version === null || cacheRef.current.version < update.prev_version) {
+    // add to cache of updates
+    cacheRef.current.deltas[update.prev_version] = update;
+    setTimeout(() => {
+      if (cacheRef.current.version < update.prev_version) {
+        ws.send(JSON.stringify({
+          version: cacheRef.current.version,
+          force: true,
+        }));
       }
-      Object.keys(cacheRef.current.deltas).filter(version => Number(version) <= cacheRef.current.version).forEach(version => delete cacheRef.current.deltas[version]);
-    } else if (cacheRef.current.version === null || cacheRef.current.version < update.prev_version) {
-      // add to cache of updates
-      cacheRef.current.deltas[update.prev_version] = update;
-      setTimeout(() => {
-        if (cacheRef.current.version < update.prev_version) {
-          ws.send(JSON.stringify({
-            action: 'fetch',
-            version: cacheRef.current.version,
-            force: true,
-          }));
-        }
-      }, 3000);
-    }
-    return draft;
-  });
-};
+    }, 3000);
+  }
+  return draft;
+});
 
 const _MERGED = {};
 const dataMergeInternal = (draft, data, roots) => {
