@@ -13,6 +13,9 @@
 .feeds > * {
   margin: 2px 0;
 }
+.is-meta {
+  font-size: smaller;
+}
 
 .puzzleinfo .table.puzzleinfo-tags {
   margin: 1em 0;

@@ -602,7 +602,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
     <>
       <h2>
         <Twemoji>
-          {puzzle?.name}
+          {puzzle?.is_meta ? <span className='metatag'/> : null}{puzzle?.name}
         </Twemoji>
       </h2>
       <Feeds
@@ -623,6 +623,10 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         changeFeeds={changeFeeds}
       />
       }
+      <div className='is-meta'>
+        <input type='checkbox' name='is_meta' onChange={(e) => patchValue('is_meta')(e.target.checked)} checked={puzzle?.is_meta} disabled={Boolean(puzzle?.feeders?.length)}/>
+        <span>Is meta</span>
+      </div>
       <Table className='puzzleinfo-tags'>
         <Tbody>
           <TextField className='answerize' name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>

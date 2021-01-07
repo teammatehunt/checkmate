@@ -14,6 +14,7 @@ Drive:
 Ensure the database is setup (choose a better password):
 ```
 docker-compose build
+mkdir frontend/node_modules
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #docker-compose exec app /app/backend/manage.py makemigrations accounts checkmate structure
 docker-compose exec app /app/backend/manage.py migrate

@@ -131,11 +131,6 @@
 .sub-master.meta > .name {
   font-weight: bold;
 }
-.sub-master.metatag:after {
-  content: 'meta: ';
-  font-variant: small-caps;
-  white-space: pre;
-}
 
 .sub-master.editable:not(.editing):hover {
   /* z-index / borders behave weirdly so disable drop-shadow and use box-shadow only */

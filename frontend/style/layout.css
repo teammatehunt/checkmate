@@ -112,6 +112,17 @@ input, select, textarea, button {
   font: inherit;
 }
 
+input[type=checkbox] {
+  vertical-align: middle;
+}
+input[type=checkbox]:not([disabled]):hover {
+  cursor: pointer;
+}
+input[type=checkbox] + span:before {
+  content: ' ';
+  white-space: pre;
+}
+
 .infopane {
   padding-left: 1em;
   padding-right: 1em;
@@ -182,4 +193,10 @@ input, select, textarea, button {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.metatag:after {
+  content: 'meta: ';
+  font-variant: small-caps;
+  white-space: pre;
 }
