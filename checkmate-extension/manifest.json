@@ -3,8 +3,13 @@
   "name": "Checkmate Extension",
   "version": "0.0.1",
   "author": "Brian Shimanuki",
-
   "description": "Helper enabling iframe management for puzzle solving using Checkmate, a puzzle management tool for teammate in the MIT Mystery Hunt.",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{8fc5d1ed-4e99-4172-95c4-f2e5bc897096}"
+    }
+  },
 
   "icons": {
     "16": "icon16.png",

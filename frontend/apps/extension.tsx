@@ -29,21 +29,21 @@ export const GetExtension = ({
       <div className='root'>
         <p className='extension-detection'>
           {clientExtensionVersion ?
-            `**Detected the Checkmate extension v${clientExtensionVersion}!**`
+            `**Detected the Checkmate extension v${clientExtensionVersion} in your browser!**`
             :
-            '**The Checkmate extension was not detected.**'
+            '**The Checkmate extension was not detected in your browser.**'
           }
-        </p>
-        <p>
-          <strong>
-            Download: <a href='/static/checkmate-extension.zip' download>checkmate-extension.zip</a> (v{extension_version})
-          </strong>
         </p>
         <p>
           This extension lets webpages load in iframes and performs some integrations, especially with Discord.
         </p>
         <h2>Instructions for Chrome</h2>
         <img src={InstallationChrome}/>
+        <p>
+          <strong>
+            Chrome Download: <a href='/static/checkmate-extension.zip' download>checkmate-extension.zip</a> (v{extension_version})
+          </strong>
+        </p>
         <ol>
           <li>Unzip the extension.</li>
           <li>Copy and paste <span className='link'>chrome://extensions</span> into the address bar.</li>
@@ -52,9 +52,14 @@ export const GetExtension = ({
         </ol>
         <h2>Instructions for Firefox</h2>
         <img src={InstallationFirefox}/>
+        <p>
+          <strong>
+            Firefox Download: <a href='/static/checkmate-extension.xpi' download>checkmate-extension.xpi</a> (v{extension_version})
+          </strong>
+        </p>
         <ol>
-          <li>Copy and paste <span className='link'>about:debugging#/runtime/this-firefox</span> into the address bar.</li>
-          <li>Select <span className='red'>Load Temporary Add-on</span> and select the extension zip file</li>
+          <li>Copy and paste <span className='link'>about:addons</span> into the address bar.</li>
+          <li>Select <span className='red'>Install Add-on From File...</span> and select the extension file.</li>
         </ol>
       </div>
     </Base>

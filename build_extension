@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+'''
+Build extension for Chrome and Firefox.
+Note that Firefox will sign the extension, which can only be done once per version.
+'''
+import os
+import json
+import logging
+import shutil
+import subprocess
+
+import yaml
+
+logger = logging.getLogger(__name__)
+
+if __name__ == '__main__':
+    manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
+    with open(manifest_path, 'rt') as f:
+        manifest = json.load(f)
+    version = manifest['version']
+    secrets_path = os.path.join(os.path.dirname(__file__), 'SECRETS.yaml')
+    with open(secrets_path, 'rt') as f:
+        SECRETS = yaml.safe_load(f)
+    api_key = SECRETS['FIREFOX']['api_key']
+    api_secret = SECRETS['FIREFOX']['api_secret']
+    # Chrome extension
+    subprocess.run('zip /build/backend/static/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
+    # Firefox extension
+    if api_key and api_secret:
+        subprocess.run(['web-ext', 'sign', '--api-key', api_key, '--api-secret', api_secret, '--artifacts-dir', '/web-ext-artifacts', '--filename', 'checkmate-extension.xpi', '--no-input'], cwd='/app/checkmate-extension')
+        shutil.copy(f'/web-ext-artifacts/checkmate_extension-{version}-an+fx.xpi', '/build/backend/static/checkmate-extension.xpi')
+    else:
+        logger.warning('Firefox extension not built because no signing credentials were found.')

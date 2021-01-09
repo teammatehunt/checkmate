@@ -272,7 +272,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
       <div className='td sub-master name'><div>
         {Link({
-          className: 'restyle',
+          className: 'restyle flex',
           href: `/puzzles/${puzzle.slug}`,
           load: () => loadSlug(puzzle.slug),
           children: (

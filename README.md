@@ -26,12 +26,13 @@ To run in `dev` mode, run the following:
 ```
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
-Note that the checkmate-extension zip file is not created in dev mode but it exists (unzipped) in the repository.
+Note that the checkmate-extension zip file is not created in dev mode but it exists (unzipped) in the repository. The `build_extension` script requires a Firefox account with credentials.
 
 To run in `prod` mode, run the following (replace `docker-compose.prod.yml` with `docker-compose.prod.localhost.yml` if running locally):
 ```
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-docker-compose exec app /app/build_static.sh
+docker-compose exec app /app/build_static
+docker-compose exec app /app/build_extension
 docker-compose restart app
 ```
 
