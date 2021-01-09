@@ -3,6 +3,7 @@
 Build extension for Chrome and Firefox.
 Note that Firefox will sign the extension, which can only be done once per version.
 '''
+import argparse
 import os
 import json
 import logging
@@ -14,6 +15,15 @@ import yaml
 logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--chrome', action='store_true')
+    parser.add_argument('--firefox', action='store_true')
+    args = parser.parse_args()
+
+    specified = args.chrome or args.firefox
+    chrome = not specified or args.chrome
+    firefox = not specified or args.firefox
+
     manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
     with open(manifest_path, 'rt') as f:
         manifest = json.load(f)
@@ -23,11 +33,20 @@ if __name__ == '__main__':
         SECRETS = yaml.safe_load(f)
     api_key = SECRETS['FIREFOX']['api_key']
     api_secret = SECRETS['FIREFOX']['api_secret']
-    # Chrome extension
-    subprocess.run('zip /build/backend/static/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
-    # Firefox extension
-    if api_key and api_secret:
-        subprocess.run(['web-ext', 'sign', '--api-key', api_key, '--api-secret', api_secret, '--artifacts-dir', '/web-ext-artifacts', '--filename', 'checkmate-extension.xpi', '--no-input'], cwd='/app/checkmate-extension')
-        shutil.copy(f'/web-ext-artifacts/checkmate_extension-{version}-an+fx.xpi', '/build/backend/static/checkmate-extension.xpi')
-    else:
-        logger.warning('Firefox extension not built because no signing credentials were found.')
+    if chrome:
+        # Chrome extension
+        subprocess.run('zip /build/backend/static/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
+    if firefox:
+        # Firefox extension
+        if api_key and api_secret:
+            subprocess.run([
+                'web-ext', 'sign',
+                '--api-key', api_key,
+                '--api-secret', api_secret,
+                '--artifacts-dir', '/web-ext-artifacts',
+                '--filename', 'checkmate-extension.xpi',
+                '--no-input',
+            ], cwd='/app/checkmate-extension')
+            shutil.copy(f'/web-ext-artifacts/checkmate_extension-{version}-an+fx.xpi', '/build/backend/static/checkmate-extension.xpi')
+        else:
+            logger.warning('Firefox extension not built because no signing credentials were found.')
