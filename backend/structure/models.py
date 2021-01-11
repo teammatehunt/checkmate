@@ -67,10 +67,11 @@ class BotConfig(SingletonModel):
     default_category_id = models.BigIntegerField(
         null=True, blank=True,
         help_text='Discord category for puzzles to be placed if not in round category.')
-    alert_new_puzzle_id = models.BigIntegerField(
-        null=True, blank=True, help_text='Discord channel for new puzzle alerts.')
-    alert_solved_puzzle_id = models.BigIntegerField(
-        null=True, blank=True, help_text='Discord channel for solved puzzle alerts.')
+    # need to use webhooks because of better hyperlink support
+    alert_new_puzzle_webhook = CharField(
+        blank=True, help_text='Discord webhook for new puzzle alerts.')
+    alert_solved_puzzle_webhook = CharField(
+        blank=True, help_text='Discord webhook for solved puzzle alerts.')
     afk_voice_channel_id = models.BigIntegerField(
         null=True, blank=True, help_text='Discord channel to put people in when deleting channels.')
 
@@ -152,6 +153,10 @@ class Puzzle(Entity):
         self.original_is_meta = self.is_meta
         self.original_solved = self.solved
         self.original_is_solved = self.is_solved()
+
+    @staticmethod
+    def get_link(slug):
+        return f'{settings.ORIGIN}/puzzles/{slug}'
 
     def is_solved(self):
         return self.status in self.SOLVED_STATUSES

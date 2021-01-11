@@ -18,6 +18,7 @@ django-redis
 djangorestframework
 html5lib
 psycopg2
+pynacl
 pyyaml
 pyttsx3
 redis

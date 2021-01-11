@@ -18,6 +18,11 @@ class StaticDiscordHttpClient(discord.http.HTTPClient):
         self._HTTPClient__session = aiohttp.ClientSession()
         self._token(token, bot=bot)
 
+    @property
+    def session(self):
+        return self._HTTPClient__session
+
+
 class DiscordManager:
     __main_instance = None
     __thread_instance = None
@@ -42,6 +47,18 @@ class DiscordManager:
                 cls.__thread.start()
             return cls.__thread_instance
 
+    @staticmethod
+    async def initiate_gateway():
+        '''
+        Connect to gateway and then close. This is necessary before Discord
+        will allow certain actions like posting messages.
+        '''
+        bot_token = settings.DISCORD_CREDENTIALS['bot_token']
+        client = discord.Client()
+        await client.start(bot_token)
+        await client.close()
+        logger.warning('connected to discord')
+
     def __init__(self, loop):
         self.server_id = settings.DISCORD_CREDENTIALS['server_id']
         self.bot_token = settings.DISCORD_CREDENTIALS['bot_token']
@@ -49,6 +66,10 @@ class DiscordManager:
         self.loop = loop
         self.client = None
         self.__setup_done = False
+
+    async def get_session(self):
+        await self.setup()
+        return self.client.session
 
     async def setup(self):
         assert asyncio.get_running_loop() is self.loop
@@ -91,12 +112,27 @@ class DiscordManager:
         ids = [result['id'] for result in results]
         return dict(zip(keys, ids))
 
-    async def create_category(self, slug):
+    async def create_category(self, slug, discord_category_ids):
+        # discord_category_ids should be a list of existing auto-created category ids.
+        # This will position the new category at the top of these.
         await self.setup()
+        discord_category_ids = set(discord_category_ids)
+        channels = await self.client.get_all_guild_channels(
+            self.server_id,
+        )
+        first_auto_category_position = min(
+            [
+                channel['position'] for channel in channels if 
+                channel['type'] == discord.enums.ChannelType.category.value and
+                int(channel['id']) in discord_category_ids
+            ],
+            default=None,
+        )
         result = await self.client.create_channel(
             self.server_id,
             discord.enums.ChannelType.category.value,
             name=slug,
+            position=first_auto_category_position,
         )
         return result['id']
 

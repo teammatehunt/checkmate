@@ -1,13 +1,21 @@
 {$SERVER_HOSTNAME} {
   log {
-    output file /log/caddy.log
+    output file /log/caddy.log {
+      roll_size 1MiB
+      roll_keep 5
+    }
   }
 
   encode zstd gzip
 
   route {
-    file_server /static/* {
-      root /srv
+    handle_path /static/* {
+      root * /srv/static
+      file_server
+    }
+    handle_path /log/* {
+      root * /log
+      file_server browse
     }
     reverse_proxy app:8000
   }

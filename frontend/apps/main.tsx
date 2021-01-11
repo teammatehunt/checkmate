@@ -412,7 +412,7 @@ export const Main : React.FC<MainProps> = props => {
             <SplitPane
               split='vertical'
               primary='second'
-              defaultSize={vsplitter.value || 240}
+              defaultSize={vsplitter.value || 360}
               minSize={50}
               onDragStarted={onDragStarted}
               onDragFinished={onDragFinishedVsplitter}

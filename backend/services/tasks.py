@@ -44,6 +44,15 @@ def reduced_name(name):
     return alphanumeric_regex.sub('', unidecode(name)).lower()
 
 @app.task
+def discord_initiate_gateway():
+    '''
+    Should be called on startup if bots need to post messages directly (not
+    counting webhooks).
+    '''
+    asyncio.get_event_loop().run_until_complete(
+        DiscordManager.initiate_gateway())
+
+@app.task
 def post_autodetected_solve_puzzle(slug):
     pass
 
@@ -51,11 +60,27 @@ def post_autodetected_solve_puzzle(slug):
 def post_solve_puzzle(slug):
     solve_prefix = '♔'
     cleanup_puzzle.apply_async(args=[slug], countdown=5*60.)
-    puzzle = models.Puzzle.objects.get(pk=slug)
+    bot_config = models.BotConfig.get()
+    puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug)
+    asyncio.get_event_loop().run_until_complete(
+        async_post_solve_puzzle(puzzle, bot_config))
+
+async def async_post_solve_puzzle(puzzle, bot_config):
+    dmgr = DiscordManager.instance()
     if puzzle.discord_text_channel_id is not None:
-        dmgr = DiscordManager.instance()
-        asyncio.get_event_loop().run_until_complete(
-            dmgr.rename_channel(puzzle.discord_text_channel_id, f'{solve_prefix}{slug}'))
+        await dmgr.rename_channel(puzzle.discord_text_channel_id, f'{solve_prefix}{slug}')
+    if bot_config.alert_solved_puzzle_webhook:
+        session = await dmgr.get_session()
+        # NB: puzzle needs to have had prefetched_related('rounds')
+        rounds = ', '.join(_round.name for _round in puzzle.rounds.all())
+        prefix = f'[{rounds}]: ' if rounds else ''
+        checkmate_link = models.Puzzle.get_link(puzzle.slug)
+        await session.post(
+            bot_config.alert_solved_puzzle_webhook,
+            json={
+                'content': f'{prefix}**[{puzzle.name}]({checkmate_link})** was {puzzle.status}!',
+            },
+        )
 
 @app.task
 def cleanup_puzzle(slug):
@@ -111,7 +136,8 @@ def create_puzzle(
     # If a puzzle with the same link exists and the force flag is not set, or
     # if the puzzle was created in the past minute, assume this is a duplicate
     # request.
-    if puzzle is None or (force and (timezone.localtime() - puzzle.created) > timedelta(minutes=1)):
+    creating = puzzle is None or (force and (timezone.localtime() - puzzle.created) > timedelta(minutes=1))
+    if creating:
         puzzle_kwargs = {
             'name': name,
             'link': link,
@@ -131,6 +157,7 @@ def create_puzzle(
                     discord_category_id = models.Round.objects.get(pk=_round).discord_category_id
     populate_puzzle(
         puzzle=puzzle,
+        created=creating,
         sheet=sheet,
         text=text,
         voice=voice,
@@ -142,19 +169,23 @@ def create_puzzle(
 def populate_puzzle(
         puzzle=None,
         slug=None,
+        created=False,
         hunt_root=None,
         discord_category_id=None,
         **kwargs,
 ):
-    if puzzle is None:
-        puzzle = models.Puzzle.get(pk=slug)
+    bot_config = models.BotConfig.get()
+    webhook = bot_config.alert_new_puzzle_webhook if created else None
     if hunt_root is None:
         hunt_root = models.HuntConfig.get().root
+    if puzzle is None or webhook:
+        puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug or puzzle.slug)
     if discord_category_id is None and (kwargs.get('text') or kwargs.get('voice')):
-        discord_category_id = models.BotConfig.get().default_category_id
+        discord_category_id = bot_config.default_category_id
     asyncio.get_event_loop().run_until_complete(async_populate_puzzle(
         puzzle,
         hunt_root=hunt_root,
+        webhook=webhook,
         discord_category_id=discord_category_id,
         **kwargs,
     ))
@@ -163,6 +194,7 @@ async def async_populate_puzzle(
     puzzle,
     *,
     hunt_root,
+    webhook=None,
     sheet=True,
     text=True,
     voice=True,
@@ -171,7 +203,7 @@ async def async_populate_puzzle(
     discord_manager = DiscordManager.instance()
     google_manager = GoogleManager.instance()
 
-    checkmate_link = f'{settings.ORIGIN}/puzzles/{puzzle.slug}'
+    checkmate_link = models.Puzzle.get_link(puzzle.slug)
     tasks = {}
     if sheet and not puzzle.sheet_link:
         tasks['sheet'] = google_manager.create(puzzle.name)
@@ -227,6 +259,18 @@ async def async_populate_puzzle(
             )
         except Exception as e:
             logger.error(f'Sheets Edit Error: {repr(e)}')
+    if webhook:
+        session = await discord_manager.get_session()
+        # NB: puzzle needs to have had prefetched_related('rounds')
+        rounds = ', '.join(_round.name for _round in puzzle.rounds.all())
+        prefix = f'[{rounds}]: ' if rounds else ''
+        checkmate_link = models.Puzzle.get_link(puzzle.slug)
+        await session.post(
+            webhook,
+            json={
+                'content': f'{prefix}**[{puzzle.name}]({checkmate_link})**',
+            },
+        )
 
 @app.task
 def create_round(
@@ -237,11 +281,13 @@ def create_round(
     name = name.strip()
     _round, _ = models.Round.objects.get_or_create(name=name, **({} if link is None else {'link': link}), hidden=False, defaults=kwargs)
     if _round.discord_category_id is None:
+        discord_category_ids = list(models.Round.objects.values_list('discord_category_id', flat=True))
         # create discord category
         discord_manager = DiscordManager.instance()
         # round setup needs to happen immediately so it is available before puzzle creation
         _round.discord_category_id = asyncio.get_event_loop().run_until_complete(
-            discord_manager.create_category(_round.slug))
+            discord_manager.create_category(
+                _round.slug, discord_category_ids=discord_category_ids))
         _round.save(update_fields=['discord_category_id'])
     round_dict = {key: getattr(_round, key) for key in api.BaseRoundSerializer().fields.keys()}
     return round_dict

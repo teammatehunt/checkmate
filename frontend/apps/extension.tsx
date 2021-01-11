@@ -59,7 +59,7 @@ export const GetExtension = ({
         </p>
         <ol>
           <li>Copy and paste <span className='link'>about:addons</span> into the address bar.</li>
-          <li>Select <span className='red'>Install Add-on From File...</span> and select the extension file.</li>
+          <li>Open the management drop-down, click <span className='red'>Install Add-on From File...</span>, and select the extension file.</li>
         </ol>
       </div>
     </Base>
