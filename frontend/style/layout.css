@@ -184,6 +184,8 @@ input[type=checkbox] + span:before {
 [data-tip]:after,
 [data-tip-popup]:after {
   content: attr(aria-label);
+  font-size: 1rem;
+  font-variant: none;
   white-space: pre;
   position: absolute;
   pointer-events: none;
@@ -199,10 +201,26 @@ input[type=checkbox] + span:before {
 [data-tip-popup-active]:after {
   opacity: 0.75;
 }
+[data-tip-delay]:hover:after {
+  transition-delay: 0.75s;
+}
+[data-place=above]:after {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
 [data-place=below]:after {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
+}
+[data-place='below right']:after {
+  top: 100%;
+  left: 100%;
+}
+[data-place='below left']:after {
+  top: 100%;
+  right: 100%;
 }
 
 .metatag:after {

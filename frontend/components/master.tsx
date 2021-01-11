@@ -155,7 +155,14 @@ const Round : React.FC<RoundProps> = React.memo(({
           if (editState === EditState.DEFAULT) {
             return (
               <div key={i} className='th round-add-tag-container'>
-                <Plus className='sub-master round-add-tag' onClick={() => setEditState(EditState.EDITING)}/>
+                <span
+                  aria-label='Add tag'
+                  data-tip
+                  data-tip-delay
+                  data-place='above'
+                >
+                  <Plus className='sub-master round-add-tag' onClick={() => setEditState(EditState.EDITING)}/>
+                </span>
               </div>
             );
           } else {

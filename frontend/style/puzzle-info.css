@@ -42,6 +42,7 @@
   margin-inline: 5px;
   cursor: pointer;
 }
+/* the data-tip-popup-active toggles instantly, so set delays to show for a second */
 .puzzleinfo-copy:after {
   transition-delay: 1s;
 }

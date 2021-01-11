@@ -398,34 +398,97 @@ export const Main : React.FC<MainProps> = props => {
         <div className='hflex'>
           {(page === 'puzzle' || null) &&
           <div className='sidebar left'>
-            <Link
-              href={iframeDetailsRef.current?.[`puzzle/${slug}`]?.url}
-              target='_blank'
-              className='sidebar-icon nostyle'
+            <span
+              aria-label='Open puzzle externally'
+              data-tip
+              data-tip-delay
+              data-place='below right'
             >
-              <ExternalLink/>
-            </Link>
-            <RefreshCw className='sidebar-icon' onClick={dispatchReloadPuzzleTrigger}/>
+              <Link
+                href={iframeDetailsRef.current?.[`puzzle/${slug}`]?.url}
+                target='_blank'
+                className='sidebar-icon nostyle'
+              >
+                <ExternalLink/>
+              </Link>
+            </span>
+            <span
+              aria-label='Reload puzzle'
+              data-tip
+              data-tip-delay
+              data-place='below right'
+            >
+              <RefreshCw className='sidebar-icon' onClick={dispatchReloadPuzzleTrigger}/>
+            </span>
             {puzzleVisible ?
-              <Eye className='sidebar-icon' onClick={() => setPuzzleVisible(false)}/>
+              <span
+                aria-label='Hide puzzle'
+                data-tip
+                data-tip-delay
+                data-place='below right'
+              >
+                <Eye className='sidebar-icon' onClick={() => setPuzzleVisible(false)}/>
+              </span>
               :
-              <EyeOff className='sidebar-icon' onClick={() => setPuzzleVisible(true)}/>
+              <span
+                aria-label='Show puzzle'
+                data-tip
+                data-tip-delay
+                data-place='below right'
+              >
+                <EyeOff className='sidebar-icon' onClick={() => setPuzzleVisible(true)}/>
+              </span>
             }
-            <Layout className={`sidebar-icon ${iframePuzzle ? 'enabled' : 'disabled'}`} onClick={iframePuzzle ? () => loadSlug(iframePuzzle) : undefined}/>
+            <span
+              aria-label='Open Checkmate tab for currently navigated puzzle page'
+              data-tip
+              data-tip-delay
+              data-place='below right'
+            >
+              <Layout className={`sidebar-icon ${iframePuzzle ? 'enabled' : 'disabled'}`} onClick={iframePuzzle ? () => loadSlug(iframePuzzle) : undefined}/>
+            </span>
             <div className='text-up'>Puzzle</div>
             <div className='flex'/>
-            <Link
-              href={iframeDetailsRef.current?.[`sheet/${slug}`]?.url}
-              target='_blank'
-              className='sidebar-icon nostyle'
+            <span
+              aria-label='Open Sheets externally'
+              data-tip
+              data-tip-delay
+              data-place='below right'
             >
-              <ExternalLink/>
-            </Link>
-            <RefreshCw className='sidebar-icon' onClick={dispatchReloadSheetTrigger}/>
+              <Link
+                href={iframeDetailsRef.current?.[`sheet/${slug}`]?.url}
+                target='_blank'
+                className='sidebar-icon nostyle'
+              >
+                <ExternalLink/>
+              </Link>
+            </span>
+            <span
+              aria-label='Reload Sheets'
+              data-tip
+              data-tip-delay
+              data-place='below right'
+            >
+              <RefreshCw className='sidebar-icon' onClick={dispatchReloadSheetTrigger}/>
+            </span>
             {sheetVisible ?
-              <Eye className='sidebar-icon' onClick={() => setSheetVisible(false)}/>
+              <span
+                aria-label='Hide Sheets'
+                data-tip
+                data-tip-delay
+                data-place='below right'
+              >
+                <Eye className='sidebar-icon' onClick={() => setSheetVisible(false)}/>
+              </span>
               :
-              <EyeOff className='sidebar-icon' onClick={() => setSheetVisible(true)}/>
+              <span
+                aria-label='Show Sheets'
+                data-tip
+                data-tip-delay
+                data-place='below right'
+              >
+                <EyeOff className='sidebar-icon' onClick={() => setSheetVisible(true)}/>
+              </span>
             }
             <div className='text-up'>Sheet</div>
           </div>
@@ -527,24 +590,66 @@ export const Main : React.FC<MainProps> = props => {
           </div>
           <div className='sidebar right'>
             {infoVisible ?
-              <Eye className='sidebar-icon' onClick={() => setInfoVisible(false)}/>
+              <span
+                aria-label='Hide information'
+                data-tip
+                data-tip-delay
+                data-place='below left'
+              >
+                <Eye className='sidebar-icon' onClick={() => setInfoVisible(false)}/>
+              </span>
               :
-              <EyeOff className='sidebar-icon' onClick={() => setInfoVisible(true)}/>
+              <span
+                aria-label='Show information'
+                data-tip
+                data-tip-delay
+                data-place='below left'
+              >
+                <EyeOff className='sidebar-icon' onClick={() => setInfoVisible(true)}/>
+              </span>
             }
             <div className='text-down'>Info</div>
             <div className='flex'/>
-            <Link
-              href={iframeDetailsRef.current?.['discord']?.url}
-              target='_blank'
-              className='sidebar-icon nostyle'
+            <span
+              aria-label='Open Discord externally'
+              data-tip
+              data-tip-delay
+              data-place='below left'
             >
-              <ExternalLink/>
-            </Link>
-            <RefreshCw className='sidebar-icon' onClick={() => loadDiscord(slug)}/>
+              <Link
+                href={iframeDetailsRef.current?.['discord']?.url}
+                target='_blank'
+                className='sidebar-icon nostyle'
+              >
+                <ExternalLink/>
+              </Link>
+            </span>
+            <span
+              aria-label='Reload Discord'
+              data-tip
+              data-tip-delay
+              data-place='below left'
+            >
+              <RefreshCw className='sidebar-icon' onClick={() => loadDiscord(slug)}/>
+            </span>
             {discordVisible ?
-              <Eye className='sidebar-icon' onClick={() => setDiscordVisible(false)}/>
+              <span
+                aria-label='Hide Discord'
+                data-tip
+                data-tip-delay
+                data-place='below left'
+              >
+                <Eye className='sidebar-icon' onClick={() => setDiscordVisible(false)}/>
+              </span>
               :
-              <EyeOff className='sidebar-icon' onClick={() => setDiscordVisible(true)}/>
+              <span
+                aria-label='Show Discord'
+                data-tip
+                data-tip-delay
+                data-place='below left'
+              >
+                <EyeOff className='sidebar-icon' onClick={() => setDiscordVisible(true)}/>
+              </span>
             }
             <div className='text-down'>Discord</div>
           </div>

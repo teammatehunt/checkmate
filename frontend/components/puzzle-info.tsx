@@ -134,7 +134,7 @@ const Feeds : React.FC<FeedsProps>= ({
             className='puzzleinfo-input-entity'
             list={`puzzleinfo-datalist-${type}`}
             onBlur={onBlur}
-            placeholder={`Add ${type[0].toUpperCase() + type.slice(1)}`}
+            placeholder={`Add ${type}`}
           />
           <datalist id={`puzzleinfo-datalist-${type}`}>
             {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
@@ -142,7 +142,14 @@ const Feeds : React.FC<FeedsProps>= ({
         </>
       }
       {(editState === EditState.DEFAULT || null) &&
-        <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
+        <span
+          aria-label={`Edit ${type}s`}
+          data-tip
+          data-tip-delay
+          data-place='below right'
+        >
+          <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
+        </span>
       }
       {(editState === EditState.WAITING || null) &&
         <div className='loader loading'/>
@@ -369,19 +376,33 @@ const Feeders : React.FC<FeedersProps>= ({
             case EditState.DEFAULT:
               return (
                 <>
-                  <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
+                  <span
+                    aria-label='Edit feeders'
+                    data-tip
+                    data-tip-delay
+                    data-place='below right'
+                  >
+                    <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
+                  </span>
                   <span
                     className='puzzleinfo-copy'
                     aria-label='Copied!'
                     data-tip-popup
-                    data-place='below'
+                    data-place='above'
                     {...(copied ? {
                       'data-tip-popup-active': true,
                     } : {})}
                   >
-                    <Clipboard
-                      onClick={copyToClipboard}
-                    />
+                    <span
+                      aria-label='Copy table'
+                      data-tip
+                      data-tip-delay
+                      data-place='below right'
+                    >
+                      <Clipboard
+                        onClick={copyToClipboard}
+                      />
+                    </span>
                   </span>
                 </>
             );
@@ -680,7 +701,14 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
               <Td/>
               <Td/>
               <Td>
-                <Plus className='plus-add larger' onClick={()=>setIsAdding(true)}/>
+                <span
+                  aria-label='Add tag'
+                  data-tip
+                  data-tip-delay
+                  data-place='below right'
+                >
+                  <Plus className='plus-add larger' onClick={()=>setIsAdding(true)}/>
+                </span>
               </Td>
             </Tr>
           }
