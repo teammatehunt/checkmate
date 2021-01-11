@@ -41,6 +41,9 @@ nav[class*=guilds-]:hover + div[class*=base-] div[class^=sidebar-] > nav[class^=
   width: 30px;
   transition-delay: 0.5s;
 }
+[aria-label='Create Invite'] {
+  display: none ! important;
+}
 
 /* Don't hide channel links */
 div[class^=sidebar-] > nav[class^=container-] > div:first-child {
