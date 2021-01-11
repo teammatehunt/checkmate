@@ -42,8 +42,8 @@ class Client:
         if login_page:
             headers['Referrer'] = login_page
         payload = {
-            username: settings.SECRETS['LOGIN']['username'],
-            password: settings.SECRETS['LOGIN']['password'],
+            'username': settings.SECRETS['LOGIN']['username'],
+            'password': settings.SECRETS['LOGIN']['password'],
         }
         login_api = self.bot_config.login_api_endpoint
         if not login_api:

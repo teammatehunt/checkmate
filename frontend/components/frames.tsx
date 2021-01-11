@@ -60,7 +60,7 @@ export const IFrame : React.FC<IFrameProps> = ({
   );
 };
 
-const canonicalUrl = (url: string) => {
+export const canonicalUrl = (url: string) => {
   if (!url) return null;
   const _url = new URL(url);
   let combined = (_url.origin + _url.pathname).replace(/\/+$/, '');
@@ -101,10 +101,22 @@ export const CachedIFrame : React.FC<CachedIFrameProps> = ({
     if (isActiveRef.current) dispatchOwnReloadTrigger();
   }, [reloadTrigger]);
 
-  const display = isActive ? DisplayType.DISPLAY : isCached ? DisplayType.HIDE : DisplayType.NO_RENDER;
+  const display = isActive ? DisplayType.DISPLAY : isCached && !isChangedRef.current ? DisplayType.HIDE : DisplayType.NO_RENDER;
   return (
     <IFrame key={ownReloadTrigger} display={display} {...props}/>
   );
+};
+
+export const puzzleUrl = (link, root) => {
+  let hasOrigin = false;
+  try {
+    hasOrigin = Boolean(new URL(link).origin);
+  } catch (error) {
+  }
+  const root_stripped = (root ?? '').slice(-1) === '/' ? root.slice(0, -1) : (root ?? '');
+  const link_stripped = link[0] === '/' ? link.slice(1) : link;
+  const url = link ? hasOrigin ? link : `${root_stripped}/${link_stripped}` : undefined;
+  return url;
 };
 
 export const PuzzleFrame = ({
@@ -117,19 +129,12 @@ export const PuzzleFrame = ({
   reloadIfChangedTrigger,
   reloadTrigger,
 }) => {
-  let hasOrigin = false;
-  try {
-    hasOrigin = Boolean(new URL(puzzleData?.link).origin);
-  } catch (error) {
-  }
-  const root_stripped = (hunt?.root ?? '').slice(-1) === '/' ? hunt.root.slice(0, -1) : (hunt?.root ?? '');
-  const link_stripped = puzzleData.link[0] === '/' ? puzzleData.link.slice(1) : puzzleData.link;
-  const puzzleUrl = puzzleData?.link ? hasOrigin ? puzzleData.link : `${root_stripped}/${link_stripped}` : undefined;
+  const src = puzzleUrl(puzzleData.link, hunt?.root);
   return (
     <CachedIFrame
       id={id}
       kind='puzzle'
-      src={puzzleUrl}
+      src={src}
       title={puzzleData?.name}
       isActive={isActive}
       isCached={isCached}

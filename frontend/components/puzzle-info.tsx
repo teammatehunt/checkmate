@@ -22,7 +22,7 @@ import {
   EditState,
   TdEditable,
 } from 'components/td-editable';
-import { Check, Edit3, Plus, X } from 'components/react-feather';
+import { Check, Clipboard, Edit3, Plus, X } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
 import { Activity, Avatar } from 'utils/activity-manager';
 import {
@@ -134,6 +134,7 @@ const Feeds : React.FC<FeedsProps>= ({
             className='puzzleinfo-input-entity'
             list={`puzzleinfo-datalist-${type}`}
             onBlur={onBlur}
+            placeholder={`Add ${type[0].toUpperCase() + type.slice(1)}`}
           />
           <datalist id={`puzzleinfo-datalist-${type}`}>
             {optionsSlugs.map(slug => <option key={slug} value={data[slug].name}/>)}
@@ -347,6 +348,15 @@ const Feeders : React.FC<FeedersProps>= ({
     }
   };
 
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (copied) setCopied(false);
+  }, [copied]);
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(slugs.map(slug => [data[slug].name, data[slug].answer].join('\t')).join('\n'));
+    setCopied(true);
+  };
+
   const staticSlugs = slugs.filter(slug => slug !== draggingItem?.slug);
   const localSlugs = draggingItem ? [...staticSlugs.slice(0, draggingItem.index), draggingItem.slug, ...staticSlugs.slice(draggingItem.index)] : slugs;
 
@@ -357,7 +367,24 @@ const Feeders : React.FC<FeedersProps>= ({
         {(() => {
           switch (editState) {
             case EditState.DEFAULT:
-              return <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>;
+              return (
+                <>
+                  <Edit3 className='puzzleinfo-edit' onClick={()=>setEditState(EditState.EDITING)}/>
+                  <span
+                    className='puzzleinfo-copy'
+                    aria-label='Copied!'
+                    data-tip-popup
+                    data-place='below'
+                    {...(copied ? {
+                      'data-tip-popup-active': true,
+                    } : {})}
+                  >
+                    <Clipboard
+                      onClick={copyToClipboard}
+                    />
+                  </span>
+                </>
+            );
             case EditState.EDITING:
               return <Check className='puzzleinfo-done' onClick={()=>setToDone(true)}/>;
           }
@@ -417,6 +444,7 @@ const Feeders : React.FC<FeedersProps>= ({
               className='puzzleinfo-input-entity'
               onKeyDown={onKeyDown}
               onBlur={onBlur}
+              placeholder='Add feeder'
               list={`puzzleinfo-datalist-${type}`}
             />
             <datalist id={`puzzleinfo-datalist-${type}`}>
@@ -659,22 +687,25 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         </Tbody>
       </Table>
       {(puzzle?.is_meta || null) &&
-      <Feeders
-        type='meta'
-        slugs={puzzle?.feeders}
-        data={data.puzzles}
-        loadSlug={loadSlug}
-        options={(() => {
-          let slugSet = new Set();
-          const puzzles = puzzle.rounds.map(round => data.rounds[round].puzzles).flat().filter(_slug => {
-            const add = !slugSet.has(_slug) && _slug !== slug;
-            slugSet.add(_slug);
-            return add;
-          });
-          return puzzles;
-        })()}
-        changeFeeders={changeFeeders}
-      />
+      <>
+        <Feeders
+          type='meta'
+          slugs={puzzle?.feeders}
+          data={data.puzzles}
+          loadSlug={loadSlug}
+          options={(() => {
+            let slugSet = new Set();
+            const puzzles = puzzle.rounds.map(round => data.rounds[round].puzzles).flat().filter(_slug => {
+              const add = !slugSet.has(_slug) && _slug !== slug;
+              slugSet.add(_slug);
+              return add;
+            });
+            return puzzles;
+          })()}
+          changeFeeders={changeFeeders}
+        />
+        <br/>
+      </>
       }
       <div className='sub-puzzleinfo viewers'>
         <span className='colon'>Viewers</span>

@@ -26,12 +26,15 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Layout,
   RefreshCw,
 } from 'components/react-feather';
 import TabBar from 'components/tabbar';
 import {
   DiscordFrame,
   ShowIf,
+  canonicalUrl,
+  puzzleUrl,
 } from 'components/frames';
 import baseColors, { statuses as baseStatuses } from 'utils/colors';
 import * as Model from 'utils/model';
@@ -250,6 +253,24 @@ export const Main : React.FC<MainProps> = props => {
     loadSlug(_slug, _slug === slug);
   }, [slug, loadSlug]);
 
+  const iframePuzzle = useMemo(() => {
+    if ((slug ?? undefined) === undefined) return null;
+    const currentUrl = iframeDetails[`puzzle/${slug}`]?.url;
+    const canonicalCurrentUrl = currentUrl ? canonicalUrl(puzzleUrl(currentUrl, data.hunt?.root)) : null;
+    let _slug = null;
+    if (canonicalCurrentUrl) {
+      for (const puzzle of Object.values(data.puzzles)) {
+        if (puzzle.slug !== slug) {
+          if (puzzle.link && canonicalUrl(puzzleUrl(puzzle.link, data.hunt?.root)) === canonicalCurrentUrl) {
+            _slug = puzzle.slug;
+            break;
+          }
+        }
+      }
+    }
+    return _slug;
+  }, [data, slug, iframeDetails]);
+
   const [activities, dispatchActivity] = useActivityManager();
 
   // connect to websocket for updates
@@ -390,6 +411,7 @@ export const Main : React.FC<MainProps> = props => {
               :
               <EyeOff className='sidebar-icon' onClick={() => setPuzzleVisible(true)}/>
             }
+            <Layout className={`sidebar-icon ${iframePuzzle ? 'enabled' : 'disabled'}`} onClick={iframePuzzle ? () => loadSlug(iframePuzzle) : undefined}/>
             <div className='text-up'>Puzzle</div>
             <div className='flex'/>
             <Link

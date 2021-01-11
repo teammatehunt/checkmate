@@ -34,16 +34,22 @@
 }
 
 .puzzleinfo-edit {
-  height: 1em;
-  width: 1em;
-  margin-left: 5px;
+  margin-inline: 5px;
   color: darkblue;
   cursor: pointer;
 }
+.puzzleinfo-copy {
+  margin-inline: 5px;
+  cursor: pointer;
+}
+.puzzleinfo-copy:after {
+  transition-delay: 1s;
+}
+.puzzleinfo-copy[data-tip-popup-active]:after {
+  transition-delay: 0s;
+}
 .puzzleinfo-done {
-  height: 1em;
-  width: 1em;
-  margin-left: 5px;
+  margin-inline: 5px;
   color: green;
   cursor: pointer;
 }

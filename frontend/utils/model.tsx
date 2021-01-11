@@ -158,4 +158,6 @@ const dataMerge = (draft, data, roots) => {
 };
 
 
-export const discordLink = (server_id: number, channel_id?: number) => `https://discord.com/channels/${server_id}/${channel_id === null || channel_id === undefined ? '' : channel_id}`;
+export const discordLink = (server_id: number, channel_id?: number) => {
+  return `https://discord.com/channels/${server_id}/${channel_id === null || channel_id === undefined ? '' : channel_id}`;
+};

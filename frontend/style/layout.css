@@ -166,18 +166,23 @@ input[type=checkbox] + span:before {
   white-space: nowrap;
 }
 
-.sidebar-icon {
+.sidebar-icon:not(.disabled) {
   cursor: pointer;
 }
-.sidebar-icon:hover {
+.sidebar-icon:not(.disabled):hover {
   color: purple;
   filter: drop-shadow(0 0 1px);
 }
+.sidebar-icon.disabled {
+  opacity: 0.25;
+}
 
-[data-tip] {
+[data-tip],
+[data-tip-popup] {
   position: relative;
 }
-[data-tip]:hover:after {
+[data-tip]:after,
+[data-tip-popup]:after {
   content: attr(aria-label);
   white-space: pre;
   position: absolute;
@@ -187,9 +192,14 @@ input[type=checkbox] + span:before {
   color: lightgray;
   border: 1px solid gray;
   z-index: 100;
+  opacity: 0;
+  transition-property: opacity;
+}
+[data-tip]:hover:after,
+[data-tip-popup-active]:after {
   opacity: 0.75;
 }
-[data-place=below]:hover:after {
+[data-place=below]:after {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);

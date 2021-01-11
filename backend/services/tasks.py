@@ -302,7 +302,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
     if site_data is scraper.NOT_CONFIGURED:
         return
     if not site_data:
-        logger.error(f'No data was parsed from autocreaton task: {site_data}')
+        logger.error(f'No data was parsed from autocreation task: {site_data}')
         return
     site_rounds = site_data.get('rounds', [])
     site_puzzles = site_data.get('puzzles', [])
