@@ -60,6 +60,7 @@ export const Main : React.FC<MainProps> = props => {
   const [tabUuid] = useSessionStorage('main/tab-uuid', window.crypto.getRandomValues(new Uint32Array(1))[0]);
 
   const [tabs, setTabs] = useLocalStorage<string[]>('main/puzzle-tabs', []);
+  const filteredTabs = tabs.filter(tab => tab in data.puzzles);
   const [cachedTabs, setCachedTabs] = useState<string[]>([]);
   const [cachedTabSet, setCachedTabSet] = useState<Set<string>>(new Set());
   const vsplitter = useDefaultLocalStorageObject<number>('frames/vsplitter', null);
@@ -384,18 +385,20 @@ export const Main : React.FC<MainProps> = props => {
   return (
     <Base>
       <div className={`root vflex ${resizingClass} page-${page}`}>
-        <TabBar {...{
-          tabs,
-          slug,
-          activateTab,
-          setTabs,
-          hunt,
-          puzzles,
-          uid,
-          isConnected,
-          maxVisibleTabs,
-          setMaxVisibleTabs,
-        }}/>
+        <TabBar
+          tabs={filteredTabs}
+          {...{
+            slug,
+            activateTab,
+            setTabs,
+            hunt,
+            puzzles,
+            uid,
+            isConnected,
+            maxVisibleTabs,
+            setMaxVisibleTabs,
+          }}
+        />
         <div className='hflex'>
           {(page === 'puzzle' || null) &&
           <div className='sidebar left'>
@@ -527,8 +530,8 @@ export const Main : React.FC<MainProps> = props => {
                 <ShowIf display={page === 'puzzle'}>
                   <Puzzles
                     isActive={page === 'puzzle'}
+                    tabs={filteredTabs}
                     {...{
-                      tabs,
                       slug,
                       puzzles,
                       hunt,
