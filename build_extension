@@ -22,19 +22,15 @@ if __name__ == '__main__':
     parser.add_argument('--sign', action='store_true')
     args = parser.parse_args()
 
-    specified = args.chrome or args.firefox
-    chrome = not specified or args.chrome
-    firefox = not specified or args.firefox
-
     # Chrome extension
     subprocess.run(f'zip {STATIC_ROOT}/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
 
     # Firefox extension
+    manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
+    with open(manifest_path, 'rt') as f:
+        manifest = json.load(f)
+    version = manifest['version']
     if args.sign:
-        manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
-        with open(manifest_path, 'rt') as f:
-            manifest = json.load(f)
-        version = manifest['version']
         secrets_path = os.path.join(os.path.dirname(__file__), 'SECRETS.yaml')
         with open(secrets_path, 'rt') as f:
             SECRETS = yaml.safe_load(f)
