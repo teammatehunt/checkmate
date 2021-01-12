@@ -294,7 +294,10 @@ def data_everything():
         'rounds': {_round['slug']: _round for _round in rounds},
         'round_order': [_round['slug'] for _round in rounds],
         'puzzles': {puzzle['slug']: puzzle for puzzle in puzzles},
+        'extension_version': settings.EXTENSION_VERSION,
     }
+    if settings.SECRETS['LOGIN']['username'] and settings.SECRETS['LOGIN']['password']:
+        data['login'] = settings.SECRETS['LOGIN']
     return data
 
 @decorators.api_view()
@@ -306,7 +309,6 @@ def everything(request):
 def data_everything_with_uid(request):
     data = data_everything()
     data['uid'] = request.user.id
-    data['extension_version'] = settings.EXTENSION_VERSION
     return data
 
 @decorators.api_view(['POST'])

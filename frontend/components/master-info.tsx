@@ -243,6 +243,20 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
           <input className='puzzle-cache-input' type='number' min={1} onChange={(e) => puzzleCacheSize.set(Number(e.target.value))} value={puzzleCacheSize.value}/>
         </div>
       </div>
+
+      {(data.login || null) &&
+      <>
+        <h2>Hunt Login</h2>
+        <div>
+          <span className='colon'>Username</span>
+          <span>{data.login.username}</span>
+        </div>
+        <div>
+          <span className='colon'>Password</span>
+          <span>{data.login.password}</span>
+        </div>
+      </>
+      }
     </>
   );
 };

@@ -91,6 +91,11 @@ export interface Data {
   round_order: string[];
   puzzles: Puzzles;
   uid?: number;
+  extension_version?: string;
+  login?: {
+    username: string;
+    password: string;
+  };
 }
 
 export interface DataUpdate {

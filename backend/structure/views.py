@@ -31,7 +31,7 @@ def master(request):
 
 @login_required
 def puzzle(request, slug):
-    data = api.everything(request).data
+    data = api.data_everything_with_uid(request)
     if slug not in data['puzzles']:
         return redirect('/')
     page = 'main'
