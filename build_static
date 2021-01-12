@@ -6,3 +6,5 @@ yarn --cwd /app/frontend build
 rm -rf /build/backend/*
 # collect static files
 /app/backend/manage.py collectstatic
+# build extension
+/app/build_extension "$@"
