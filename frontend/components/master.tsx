@@ -443,6 +443,11 @@ const Master : React.FC<MasterProps> = ({
 
   return (
     <div className='master' ref={masterRef}>
+      {(!rows.length || null) &&
+      <p>
+        Puzzles will be listed here once they exist.
+      </p>
+      }
       <Table className='sub-master'>
         <Tbody className='sub-master'>
           {SizingRow({

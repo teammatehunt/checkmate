@@ -9,6 +9,7 @@ import {
   Link,
 } from 'components/drop-ins';
 import {
+  Compass,
   LogOut,
   Menu,
   MoreHorizontal,
@@ -106,11 +107,21 @@ const NavSettings = ({
         </div>
       </Link>
       <Link
+        href='/getting-started'
+        className='nav-item-link nostyle'
+        target='_blank'
+      >
+        <div>
+          <Compass/>
+          <span>Getting started</span>
+        </div>
+      </Link>
+      <Link
         href='/extension'
         className='nav-item-link nostyle'
         target='_blank'
       >
-        <div className='extension-link'>
+        <div>
           <Tool/>
           <span>Extension instructions</span>
         </div>
@@ -119,7 +130,7 @@ const NavSettings = ({
         href='/accounts/logout'
         className='nav-item-link nostyle'
       >
-        <div className='logout'>
+        <div>
           <LogOut/>
           <span>Logout</span>
         </div>

@@ -26,4 +26,5 @@ urlpatterns = [
     path('puzzles/', lambda req: redirect('/')),
     path('puzzles/<slug:slug>', views.puzzle),
     path('extension/', views.extension),
+    path('getting-started/', views.getting_started),
 ]

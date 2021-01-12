@@ -43,6 +43,11 @@ def puzzle(request, slug):
     return render_app(request, page, props)
 
 @login_required
+def getting_started(request):
+    page = 'gettingstarted'
+    return render_app(request, page)
+
+@login_required
 def extension(request):
     page = 'extension'
     props = {

@@ -4,9 +4,9 @@ Build extension for Chrome and Firefox.
 Note that Firefox will sign the extension, which can only be done once per version.
 '''
 import argparse
-import os
 import json
 import logging
+import os
 import shutil
 import subprocess
 
@@ -14,39 +14,45 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+WEB_EXT_ROOT = '/web-ext-artifacts'
+STATIC_ROOT = '/build/backend/static'
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--chrome', action='store_true')
-    parser.add_argument('--firefox', action='store_true')
+    parser.add_argument('--sign', action='store_true')
     args = parser.parse_args()
 
     specified = args.chrome or args.firefox
     chrome = not specified or args.chrome
     firefox = not specified or args.firefox
 
-    manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
-    with open(manifest_path, 'rt') as f:
-        manifest = json.load(f)
-    version = manifest['version']
-    secrets_path = os.path.join(os.path.dirname(__file__), 'SECRETS.yaml')
-    with open(secrets_path, 'rt') as f:
-        SECRETS = yaml.safe_load(f)
-    api_key = SECRETS['FIREFOX']['api_key']
-    api_secret = SECRETS['FIREFOX']['api_secret']
-    if chrome:
-        # Chrome extension
-        subprocess.run('zip /build/backend/static/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
-    if firefox:
-        # Firefox extension
+    # Chrome extension
+    subprocess.run(f'zip {STATIC_ROOT}/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
+
+    # Firefox extension
+    if args.sign:
+        manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
+        with open(manifest_path, 'rt') as f:
+            manifest = json.load(f)
+        version = manifest['version']
+        secrets_path = os.path.join(os.path.dirname(__file__), 'SECRETS.yaml')
+        with open(secrets_path, 'rt') as f:
+            SECRETS = yaml.safe_load(f)
+        api_key = SECRETS['FIREFOX']['api_key']
+        api_secret = SECRETS['FIREFOX']['api_secret']
+
         if api_key and api_secret:
             subprocess.run([
                 'web-ext', 'sign',
                 '--api-key', api_key,
                 '--api-secret', api_secret,
-                '--artifacts-dir', '/web-ext-artifacts',
-                '--filename', 'checkmate-extension.xpi',
+                '--artifacts-dir', WEB_EXT_ROOT,
                 '--no-input',
             ], cwd='/app/checkmate-extension')
-            shutil.copy(f'/web-ext-artifacts/checkmate_extension-{version}-an+fx.xpi', '/build/backend/static/checkmate-extension.xpi')
         else:
-            logger.warning('Firefox extension not built because no signing credentials were found.')
+            logger.error('Firefox extension not built because no signing credentials were found.')
+    firefox_extension = f'{WEB_EXT_ROOT}/checkmate_extension-{version}-an+fx.xpi'
+    if os.path.isfile(firefox_extension):
+        shutil.copy(firefox_extension, f'{STATIC_ROOT}/checkmate-extension.xpi')
+    else:
+        logger.warning('Could not find Firefox extension.')

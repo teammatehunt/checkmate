@@ -234,14 +234,15 @@ export const Main : React.FC<MainProps> = props => {
   }, [tabs, data]);
   useEffect(() => {
     const tabSet = new Set(tabs);
+    const cacheSize = Number.isInteger(puzzleCacheSize.value) && puzzleCacheSize.value > 0 ? puzzleCacheSize.value : 3;
     if ((slug ?? undefined) === undefined || cachedTabs[0] === slug) {
-      const filteredCachedTabs = cachedTabs.filter(tab => tabSet.has(tab)).slice(0, puzzleCacheSize.value);
+      const filteredCachedTabs = cachedTabs.filter(tab => tabSet.has(tab)).slice(0, cacheSize);
       if (filteredCachedTabs.length !== cachedTabs.length) {
         setCachedTabs(filteredCachedTabs);
         setCachedTabSet(new Set(filteredCachedTabs));
       }
     } else {
-      const filteredCachedTabs = [slug, ...cachedTabs.filter(tab => tab !== slug && tabSet.has(tab))].slice(0, puzzleCacheSize.value);
+      const filteredCachedTabs = [slug, ...cachedTabs.filter(tab => tab !== slug && tabSet.has(tab))].slice(0, cacheSize);
       setCachedTabs(filteredCachedTabs);
       setCachedTabSet(new Set(filteredCachedTabs));
     }

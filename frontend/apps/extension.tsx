@@ -5,11 +5,11 @@ import React, {
 } from 'react';
 
 import Base from 'components/base';
-import InstallationChrome from 'assets/installation-chrome.png';
-import InstallationFirefox from 'assets/installation-firefox.png';
+import InstallationChrome from 'assets/extension/installation-chrome.png';
+import InstallationFirefox from 'assets/extension/installation-firefox.png';
 
 import 'style/layout.css';
-import 'style/extension.css';
+import 'style/documentation.css';
 
 export const GetExtension = ({
   extension_version,
@@ -34,11 +34,13 @@ export const GetExtension = ({
             '**The Checkmate extension was not detected in your browser.**'
           }
         </p>
+
+        <h1>Checkmate Extension</h1>
         <p>
           This extension lets webpages load in iframes and performs some integrations, especially with Discord.
         </p>
         <h2>Instructions for Chrome</h2>
-        <img src={InstallationChrome}/>
+        <img className='center' src={InstallationChrome}/>
         <p>
           <strong>
             Chrome Download: <a href='/static/checkmate-extension.zip' download>checkmate-extension.zip</a> (v{extension_version})
@@ -51,7 +53,7 @@ export const GetExtension = ({
           <li>Click <span className='orange'>Load unpacked</span> and select the extension directory.</li>
         </ol>
         <h2>Instructions for Firefox</h2>
-        <img src={InstallationFirefox}/>
+        <img className='center' src={InstallationFirefox}/>
         <p>
           <strong>
             Firefox Download: <a href='/static/checkmate-extension.xpi' download>checkmate-extension.xpi</a> (v{extension_version})
