@@ -23,10 +23,12 @@ import MasterInfo from 'components/master-info';
 import Puzzles from 'components/puzzle';
 import PuzzleInfo from 'components/puzzle-info';
 import {
+  Columns,
   ExternalLink,
   Eye,
   EyeOff,
   Layout,
+  MinusSquare,
   RefreshCw,
 } from 'components/react-feather';
 import TabBar from 'components/tabbar';
@@ -117,10 +119,11 @@ export const Main : React.FC<MainProps> = props => {
   const [extensionVersion, setExtensionVersion] = useState(undefined);
 
   // panes states / sidebar toggles
-  const [puzzleVisible, setPuzzleVisible] = useSessionStorage('frames/puzzle-visible', true);
-  const [sheetVisible, setSheetVisible] = useSessionStorage('frames/sheet-visible', true);
-  const [infoVisible, setInfoVisible] = useSessionStorage('frames/info-visible', true);
-  const [discordVisible, setDiscordVisible] = useSessionStorage('frames/discord-visible', true);
+  const puzzleVisible = useDefaultLocalStorageObject<boolean>('frames/puzzle-visible', true);
+  const sheetVisible = useDefaultLocalStorageObject<boolean>('frames/sheet-visible', true);
+  const infoVisible = useDefaultLocalStorageObject<boolean>('frames/info-visible', true);
+  const discordVisible = useDefaultLocalStorageObject<boolean>('frames/discord-visible', true);
+  const puzzleSplitVertical = useDefaultLocalStorageObject<boolean>('frames/puzzle-split-vertical', false);
   const [reloadIfChangedTrigger, dispatchReloadIfChangedTrigger] = useReducer(state => state + 1, 0);
   const [reloadPuzzleTrigger, dispatchReloadPuzzleTrigger] = useReducer(state => state + 1, 0);
   const [reloadSheetTrigger, dispatchReloadSheetTrigger] = useReducer(state => state + 1, 0);
@@ -379,8 +382,8 @@ export const Main : React.FC<MainProps> = props => {
     ...hunt.tag_colors,
   }), [hunt.tag_colors]);
 
-  const leftVisible = !(page === 'puzzle' && !puzzleVisible && !sheetVisible);
-  const rightVisible = infoVisible || discordVisible;
+  const leftVisible = !(page === 'puzzle' && !puzzleVisible.value && !sheetVisible.value);
+  const rightVisible = infoVisible.value || discordVisible.value;
 
   return (
     <Base>
@@ -424,14 +427,14 @@ export const Main : React.FC<MainProps> = props => {
             >
               <RefreshCw className='sidebar-icon' onClick={dispatchReloadPuzzleTrigger}/>
             </span>
-            {puzzleVisible ?
+            {puzzleVisible.value ?
               <span
                 aria-label='Hide puzzle'
                 data-tip
                 data-tip-delay
                 data-place='below right'
               >
-                <Eye className='sidebar-icon' onClick={() => setPuzzleVisible(false)}/>
+                <Eye className='sidebar-icon' onClick={() => puzzleVisible.set(false)}/>
               </span>
               :
               <span
@@ -440,7 +443,26 @@ export const Main : React.FC<MainProps> = props => {
                 data-tip-delay
                 data-place='below right'
               >
-                <EyeOff className='sidebar-icon' onClick={() => setPuzzleVisible(true)}/>
+                <EyeOff className='sidebar-icon' onClick={() => puzzleVisible.set(true)}/>
+              </span>
+            }
+            {puzzleSplitVertical.value ?
+              <span
+                aria-label='Change to horizontal split'
+                data-tip
+                data-tip-delay
+                data-place='below right'
+              >
+                <Columns className='sidebar-icon' onClick={() => puzzleSplitVertical.set(false)}/>
+              </span>
+              :
+              <span
+                aria-label='Change to vertical split'
+                data-tip
+                data-tip-delay
+                data-place='below right'
+              >
+                <MinusSquare className='sidebar-icon' onClick={() => puzzleSplitVertical.set(true)}/>
               </span>
             }
             <span
@@ -475,14 +497,14 @@ export const Main : React.FC<MainProps> = props => {
             >
               <RefreshCw className='sidebar-icon' onClick={dispatchReloadSheetTrigger}/>
             </span>
-            {sheetVisible ?
+            {sheetVisible.value ?
               <span
                 aria-label='Hide Sheets'
                 data-tip
                 data-tip-delay
                 data-place='below right'
               >
-                <Eye className='sidebar-icon' onClick={() => setSheetVisible(false)}/>
+                <Eye className='sidebar-icon' onClick={() => sheetVisible.set(false)}/>
               </span>
               :
               <span
@@ -491,7 +513,7 @@ export const Main : React.FC<MainProps> = props => {
                 data-tip-delay
                 data-place='below right'
               >
-                <EyeOff className='sidebar-icon' onClick={() => setSheetVisible(true)}/>
+                <EyeOff className='sidebar-icon' onClick={() => sheetVisible.set(true)}/>
               </span>
             }
             <div className='text-up'>Sheet</div>
@@ -503,6 +525,7 @@ export const Main : React.FC<MainProps> = props => {
               primary='second'
               defaultSize={vsplitter.value || 360}
               minSize={50}
+              maxSize={-50}
               onDragStarted={onDragStarted}
               onDragFinished={onDragFinishedVsplitter}
               resizerClassName={leftVisible && rightVisible ? 'Resizer' : 'nodisplay'}
@@ -531,6 +554,9 @@ export const Main : React.FC<MainProps> = props => {
                   <Puzzles
                     isActive={page === 'puzzle'}
                     tabs={filteredTabs}
+                    puzzleVisible={puzzleVisible.value}
+                    sheetVisible={sheetVisible.value}
+                    puzzleSplitVertical={puzzleSplitVertical.value}
                     {...{
                       slug,
                       puzzles,
@@ -538,8 +564,6 @@ export const Main : React.FC<MainProps> = props => {
                       iframeDetails,
                       onDragStarted,
                       onDragFinishedSet,
-                      puzzleVisible,
-                      sheetVisible,
                       reloadIfChangedTrigger,
                       reloadPuzzleTrigger,
                       reloadSheetTrigger,
@@ -551,14 +575,16 @@ export const Main : React.FC<MainProps> = props => {
               <SplitPane
                 split='horizontal'
                 defaultSize={rhsplitter.value || window.innerHeight / 2}
+                minSize={50}
+                maxSize={-50}
                 onDragStarted={onDragStarted}
                 onDragFinished={onDragFinishedRhsplitter}
-                resizerClassName={infoVisible && discordVisible ? 'Resizer' : 'nodisplay'}
-                pane1Style={discordVisible ? undefined : {height: '100%'}}
-                pane2Style={infoVisible ? undefined : {height: '100%'}}
+                resizerClassName={infoVisible.value && discordVisible.value ? 'Resizer' : 'nodisplay'}
+                pane1Style={discordVisible.value ? undefined : {height: '100%'}}
+                pane2Style={infoVisible.value ? undefined : {height: '100%'}}
                 /* @ts-ignore */
-                pane1ClassName={infoVisible ? '' : 'nodisplay'}
-                pane2ClassName={discordVisible ? '' : 'nodisplay'}
+                pane1ClassName={infoVisible.value ? '' : 'nodisplay'}
+                pane2ClassName={discordVisible.value ? '' : 'nodisplay'}
               >
                 <div className={`${page}info infopane pane`}>
                   <ShowIf display={page === 'master'}>
@@ -593,14 +619,14 @@ export const Main : React.FC<MainProps> = props => {
             </SplitPane>
           </div>
           <div className='sidebar right'>
-            {infoVisible ?
+            {infoVisible.value ?
               <span
                 aria-label='Hide information'
                 data-tip
                 data-tip-delay
                 data-place='below left'
               >
-                <Eye className='sidebar-icon' onClick={() => setInfoVisible(false)}/>
+                <Eye className='sidebar-icon' onClick={() => infoVisible.set(false)}/>
               </span>
               :
               <span
@@ -609,7 +635,7 @@ export const Main : React.FC<MainProps> = props => {
                 data-tip-delay
                 data-place='below left'
               >
-                <EyeOff className='sidebar-icon' onClick={() => setInfoVisible(true)}/>
+                <EyeOff className='sidebar-icon' onClick={() => infoVisible.set(true)}/>
               </span>
             }
             <div className='text-down'>Info</div>
@@ -636,14 +662,14 @@ export const Main : React.FC<MainProps> = props => {
             >
               <RefreshCw className='sidebar-icon' onClick={() => loadDiscord(slug)}/>
             </span>
-            {discordVisible ?
+            {discordVisible.value ?
               <span
                 aria-label='Hide Discord'
                 data-tip
                 data-tip-delay
                 data-place='below left'
               >
-                <Eye className='sidebar-icon' onClick={() => setDiscordVisible(false)}/>
+                <Eye className='sidebar-icon' onClick={() => discordVisible.set(false)}/>
               </span>
               :
               <span
@@ -652,7 +678,7 @@ export const Main : React.FC<MainProps> = props => {
                 data-tip-delay
                 data-place='below left'
               >
-                <EyeOff className='sidebar-icon' onClick={() => setDiscordVisible(true)}/>
+                <EyeOff className='sidebar-icon' onClick={() => discordVisible.set(true)}/>
               </span>
             }
             <div className='text-down'>Discord</div>
