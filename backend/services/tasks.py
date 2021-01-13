@@ -58,7 +58,6 @@ def post_autodetected_solve_puzzle(slug):
 
 @app.task
 def post_solve_puzzle(slug):
-    solve_prefix = '♔'
     cleanup_puzzle.apply_async(args=[slug], countdown=5*60.)
     bot_config = models.BotConfig.get()
     puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug)
@@ -66,9 +65,10 @@ def post_solve_puzzle(slug):
         async_post_solve_puzzle(puzzle, bot_config))
 
 async def async_post_solve_puzzle(puzzle, bot_config):
+    solve_prefix = '♔'
     dmgr = DiscordManager.instance()
     if puzzle.discord_text_channel_id is not None:
-        await dmgr.rename_channel(puzzle.discord_text_channel_id, f'{solve_prefix}{slug}')
+        await dmgr.rename_channel(puzzle.discord_text_channel_id, f'{solve_prefix}{puzzle.slug}')
     if bot_config.alert_solved_puzzle_webhook:
         session = await dmgr.get_session()
         # NB: puzzle needs to have had prefetched_related('rounds')
@@ -229,9 +229,6 @@ async def async_populate_puzzle(
         puzzle.sheet_link = f'https://docs.google.com/spreadsheets/d/{sheet_id}'
         update_fields.append('sheet_link')
     results_discord = results.get('discord', {})
-    if isinstance(results_discord, Exception):
-        logger.error(f'Discord Error: {repr(results_discord)}')
-        results_discord = {}
     discord_text_channel_id = results_discord.get('text')
     discord_voice_channel_id = results_discord.get('voice')
     if discord_text_channel_id is not None:

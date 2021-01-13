@@ -108,9 +108,16 @@ class DiscordManager:
                 parent_id=parent_id,
             )
         keys, values = zip(*requests.items())
-        results = await asyncio.gather(*values)
-        ids = [result['id'] for result in results]
-        return dict(zip(keys, ids))
+        results = await asyncio.gather(*values, return_exceptions=True)
+        exceptions = [result for result in results if isinstance(result, Exception)]
+        if exceptions:
+            logger.error(f'Discord Errors: {repr(exceptions)}')
+        mapping = {
+            key: result['id']
+            for key, result in zip(keys, results)
+            if not isinstance(result, Exception)
+        }
+        return mapping
 
     async def create_category(self, slug, discord_category_ids):
         # discord_category_ids should be a list of existing auto-created category ids.
@@ -122,7 +129,7 @@ class DiscordManager:
         )
         first_auto_category_position = min(
             [
-                channel['position'] for channel in channels if 
+                channel['position'] for channel in channels if
                 channel['type'] == discord.enums.ChannelType.category.value and
                 int(channel['id']) in discord_category_ids
             ],
