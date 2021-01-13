@@ -143,7 +143,7 @@ const Round : React.FC<RoundProps> = React.memo(({
       {(round.round_tags ?? []).map((tag, i) => (
         <div key={tag} className='th sub-master tag capitalize'>
           <div>
-            <div className='sub-master tag-name'>{tag}</div>
+            <div className='sub-master tag-name ellipsis'>{tag}</div>
             {((editable && editState === EditState.DEFAULT) || null) &&
             <X className='sub-master round-remove-tag' onClick={remove(i)}/>
             }
@@ -261,7 +261,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
       >
         <div className='td sub-master name'><div>
           {Link({
-            className: 'restyle',
+            className: 'restyle ellipsis',
             href: `/puzzles/${puzzle.slug}`,
             load: () => loadSlug(puzzle.slug),
             children: (
