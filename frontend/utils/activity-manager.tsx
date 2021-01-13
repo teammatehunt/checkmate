@@ -24,7 +24,7 @@ export const Avatar = (user, activity) => {
       key={`${user?.uid}-${activity.tab}`}
       data-tip
       data-place='below'
-      aria-label={user?.username}
+      aria-label={discordData?.nick ?? user?.username}
       className='avatar-container'
     >
       {src ?

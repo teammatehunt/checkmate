@@ -17,6 +17,7 @@ export interface SocialAccount {
     username?: string;
     discriminator?: string;
     avatar?: string;
+    nick?: string;
     flags?: number;
     public_flags?: number;
     locale?: string;
