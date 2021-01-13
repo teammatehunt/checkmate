@@ -3,6 +3,7 @@ export { default as ChevronDown } from 'react-feather/dist/icons/chevron-down';
 export { default as ChevronRight } from 'react-feather/dist/icons/chevron-right';
 export { default as ChevronsRight } from 'react-feather/dist/icons/chevrons-right';
 export { default as Clipboard } from 'react-feather/dist/icons/clipboard';
+export { default as Columns } from 'react-feather/dist/icons/columns';
 export { default as Compass } from 'react-feather/dist/icons/compass';
 export { default as Eye } from 'react-feather/dist/icons/eye';
 export { default as EyeOff } from 'react-feather/dist/icons/eye-off';
@@ -11,6 +12,7 @@ export { default as ExternalLink } from 'react-feather/dist/icons/external-link'
 export { default as Layout } from 'react-feather/dist/icons/layout';
 export { default as LogOut } from 'react-feather/dist/icons/log-out';
 export { default as Menu } from 'react-feather/dist/icons/menu';
+export { default as MinusSquare } from 'react-feather/dist/icons/minus-square';
 export { default as MoreHorizontal } from 'react-feather/dist/icons/more-horizontal';
 export { default as Plus } from 'react-feather/dist/icons/plus';
 export { default as RefreshCw } from 'react-feather/dist/icons/refresh-cw';
