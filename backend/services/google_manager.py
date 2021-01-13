@@ -25,6 +25,7 @@ class GoogleManager:
         )
         self.template_id = settings.DRIVE_SETTINGS['template_id']
         self.puzzle_folder_id = settings.DRIVE_SETTINGS['puzzle_folder_id']
+        self.owner_id = str(settings.DRIVE_SETTINGS['owner_id'])
         self.client = Aiogoogle(service_account_creds=self.creds)
 
         self.drive = None
@@ -48,6 +49,16 @@ class GoogleManager:
             ),
         )
         sheet_id = sheet_file['id']
+        await self.client.as_service_account(
+            self.drive.permissions.update(
+                fileId=sheet_id,
+                permissionId=self.owner_id,
+                transferOwnership=True,
+                json={
+                    'role': 'owner',
+                },
+            ),
+        )
         return sheet_id
 
     async def add_links(self, sheet_id, checkmate_link=None, puzzle_link=None):
