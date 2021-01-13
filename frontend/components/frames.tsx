@@ -169,7 +169,10 @@ export const SheetFrame = ({
   );
 }
 
-export const DiscordFrame = ({id, src, hasExtension}) => {
+export const DiscordFrame = ({id, src, hasExtension, disabled}) => {
+  if (disabled) {
+    return null;
+  }
   if (hasExtension) {
     return (
       <IFrame

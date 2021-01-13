@@ -26,6 +26,7 @@ interface MasterInfoProps {
   sortNewRoundsFirst: LocalStorageObject<boolean>;
   puzzleCacheSize: LocalStorageObject<number>;
   hideActivity: LocalStorageObject<boolean>;
+  disableDiscord: LocalStorageObject<boolean>;
 }
 
 const MasterInfo : React.FC<MasterInfoProps> = ({
@@ -35,6 +36,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
   sortNewRoundsFirst,
   puzzleCacheSize,
   hideActivity,
+  disableDiscord,
 }) => {
   const defaultFormPuzzleData = {
     name: '',
@@ -232,11 +234,15 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
         </div>
         <div>
           <input type='checkbox' onChange={(e) => editable.set(e.target.checked)} checked={editable.value}/>
-          <span>Edit Tags</span>
+          <span>Edit tags</span>
         </div>
         <div>
           <input type='checkbox' onChange={(e) => hideActivity.set(e.target.checked)} checked={hideActivity.value}/>
           <span>Hide own activity</span>
+        </div>
+        <div>
+          <input type='checkbox' onChange={(e) => disableDiscord.set(e.target.checked)} checked={disableDiscord.value}/>
+          <span>Disable Discord</span>
         </div>
         <div>
           <span className='colon'>Max puzzles to cache</span>

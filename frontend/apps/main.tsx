@@ -108,10 +108,11 @@ export const Main : React.FC<MainProps> = props => {
   const hideSolved = useDefaultLocalStorageObject<boolean>('master/hide-solved', false);
   const editable = useDefaultLocalStorageObject<boolean>('master/editable', false);
   const sortNewRoundsFirst = useDefaultLocalStorageObject<boolean>('master/sort-new-rounds-first', false);
-  const puzzleCacheSize = useDefaultLocalStorageObject<number>('frames/puzzle-cache-size', 3);
   const hideActivity = useDefaultLocalStorageObject<boolean>('main/hide-activity', false);
   const hideActivityRef = useRef(hideActivity.value);
   hideActivityRef.current = hideActivity.value;
+  const disableDiscord = useDefaultLocalStorageObject<boolean>('main/disable-discord', false);
+  const puzzleCacheSize = useDefaultLocalStorageObject<number>('frames/puzzle-cache-size', 3);
 
   // because tabs can update outside of this window
   const [maxVisibleTabs, setMaxVisibleTabs] = useState(null);
@@ -123,6 +124,7 @@ export const Main : React.FC<MainProps> = props => {
   const sheetVisible = useDefaultLocalStorageObject<boolean>('frames/sheet-visible', true);
   const infoVisible = useDefaultLocalStorageObject<boolean>('frames/info-visible', true);
   const discordVisible = useDefaultLocalStorageObject<boolean>('frames/discord-visible', true);
+  const discordInView = !disableDiscord.value && discordVisible.value;
   const puzzleSplitVertical = useDefaultLocalStorageObject<boolean>('frames/puzzle-split-vertical', false);
   const [reloadIfChangedTrigger, dispatchReloadIfChangedTrigger] = useReducer(state => state + 1, 0);
   const [reloadPuzzleTrigger, dispatchReloadPuzzleTrigger] = useReducer(state => state + 1, 0);
@@ -383,7 +385,7 @@ export const Main : React.FC<MainProps> = props => {
   }), [hunt.tag_colors]);
 
   const leftVisible = !(page === 'puzzle' && !puzzleVisible.value && !sheetVisible.value);
-  const rightVisible = infoVisible.value || discordVisible.value;
+  const rightVisible = infoVisible.value || discordInView;
 
   return (
     <Base>
@@ -579,12 +581,12 @@ export const Main : React.FC<MainProps> = props => {
                 maxSize={-50}
                 onDragStarted={onDragStarted}
                 onDragFinished={onDragFinishedRhsplitter}
-                resizerClassName={infoVisible.value && discordVisible.value ? 'Resizer' : 'nodisplay'}
-                pane1Style={discordVisible.value ? undefined : {height: '100%'}}
+                resizerClassName={infoVisible.value && discordInView ? 'Resizer' : 'nodisplay'}
+                pane1Style={discordInView ? undefined : {height: '100%'}}
                 pane2Style={infoVisible.value ? undefined : {height: '100%'}}
                 /* @ts-ignore */
                 pane1ClassName={infoVisible.value ? '' : 'nodisplay'}
-                pane2ClassName={discordVisible.value ? '' : 'nodisplay'}
+                pane2ClassName={discordInView ? '' : 'nodisplay'}
               >
                 <div className={`${page}info infopane pane`}>
                   <ShowIf display={page === 'master'}>
@@ -595,6 +597,7 @@ export const Main : React.FC<MainProps> = props => {
                       sortNewRoundsFirst={sortNewRoundsFirst}
                       puzzleCacheSize={puzzleCacheSize}
                       hideActivity={hideActivity}
+                      disableDiscord={disableDiscord}
                     />
                   </ShowIf>
                   <ShowIf display={page === 'puzzle'}>
@@ -613,6 +616,7 @@ export const Main : React.FC<MainProps> = props => {
                     id='discord'
                     src={initialDiscordUrl}
                     hasExtension={Boolean(extensionVersion)}
+                    disabled={disableDiscord.value}
                   />
                 </div>
               </SplitPane>
@@ -640,48 +644,52 @@ export const Main : React.FC<MainProps> = props => {
             }
             <div className='text-down'>Info</div>
             <div className='flex'/>
-            <span
-              aria-label='Open Discord externally'
-              data-tip
-              data-tip-delay
-              data-place='below left'
-            >
-              <Link
-                href={iframeDetailsRef.current?.['discord']?.url}
-                target='_blank'
-                className='sidebar-icon nostyle'
-              >
-                <ExternalLink/>
-              </Link>
-            </span>
-            <span
-              aria-label='Reload Discord'
-              data-tip
-              data-tip-delay
-              data-place='below left'
-            >
-              <RefreshCw className='sidebar-icon' onClick={() => loadDiscord(slug)}/>
-            </span>
-            {discordVisible.value ?
+            {(!disableDiscord.value || null) &&
+            <>
               <span
-                aria-label='Hide Discord'
+                aria-label='Open Discord externally'
                 data-tip
                 data-tip-delay
                 data-place='below left'
               >
-                <Eye className='sidebar-icon' onClick={() => discordVisible.set(false)}/>
+                <Link
+                  href={iframeDetailsRef.current?.['discord']?.url}
+                  target='_blank'
+                  className='sidebar-icon nostyle'
+                >
+                  <ExternalLink/>
+                </Link>
               </span>
-              :
               <span
-                aria-label='Show Discord'
+                aria-label='Reload Discord'
                 data-tip
                 data-tip-delay
                 data-place='below left'
               >
-                <EyeOff className='sidebar-icon' onClick={() => discordVisible.set(true)}/>
+                <RefreshCw className='sidebar-icon' onClick={() => loadDiscord(slug)}/>
               </span>
+              {discordVisible.value ?
+                <span
+                  aria-label='Hide Discord'
+                  data-tip
+                  data-tip-delay
+                  data-place='below left'
+                >
+                  <Eye className='sidebar-icon' onClick={() => discordVisible.set(false)}/>
+                </span>
+                :
+                <span
+                  aria-label='Show Discord'
+                  data-tip
+                  data-tip-delay
+                  data-place='below left'
+                >
+                  <EyeOff className='sidebar-icon' onClick={() => discordVisible.set(true)}/>
+                </span>
+              }
+              <div className='text-down'>Discord</div>
+            </>
             }
-            <div className='text-down'>Discord</div>
           </div>
         </div>
       </div>

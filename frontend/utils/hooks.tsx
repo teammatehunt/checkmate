@@ -31,11 +31,12 @@ export function useDefaultLocalStorageObject<T>(key: string, defaultValue: T) : 
   const _delete = useCallback(() => {
     sessionStorage.removeItem(key);
   }, [key]);
-  return {
+  const result = useMemo(() => ({
     value: sessionValue,
     set: set,
     delete: _delete,
-  };
+  }), [sessionValue, set, _delete]);
+  return result;
 }
 
 export const usePrevious = (value) => {
