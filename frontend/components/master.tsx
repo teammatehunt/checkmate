@@ -131,7 +131,7 @@ const Round : React.FC<RoundProps> = React.memo(({
       id={`round-${round.slug}`}
     >
       <div className='th sub-master name'><div>
-        <Twemoji>
+        <Twemoji className='sub-master ellipsis'>
           {round.name}
         </Twemoji>
       </div></div>
@@ -261,7 +261,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
       >
         <div className='td sub-master name'><div>
           {Link({
-            className: 'restyle ellipsis',
+            className: 'sub-master restyle ellipsis',
             href: `/puzzles/${puzzle.slug}`,
             load: () => loadSlug(puzzle.slug),
             children: (
@@ -279,7 +279,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
       <div className='td sub-master name'><div>
         {Link({
-          className: 'restyle flex',
+          className: 'sub-master restyle flex ellipsis',
           href: `/puzzles/${puzzle.slug}`,
           load: () => loadSlug(puzzle.slug),
           children: (
