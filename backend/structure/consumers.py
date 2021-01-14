@@ -26,6 +26,9 @@ class ClientConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.version = 0
         self.timestamp = None
+        self.tab = None
+        self.puzzle = None
+
         await self.channel_layer.group_add(
             CLIENT_GROUP_NAME,
             self.channel_name,
@@ -56,12 +59,13 @@ class ClientConsumer(AsyncWebsocketConsumer):
         # similar to update but no versioning
         await self.send(text_data=event['payload'])
 
-    async def receive(self, text_data=None):
+    async def receive(self, text_data=None, data=None):
         if self.timestamp is not None:
-            try:
-                data = json.loads(text_data)
-            except:
-                return
+            if data is None:
+                try:
+                    data = json.loads(text_data)
+                except:
+                    return
             version = data.get('version')
             activity = data.get('activity')
             request = {}
@@ -75,6 +79,8 @@ class ClientConsumer(AsyncWebsocketConsumer):
                 user = self.scope['user']
                 uid = None if user is None else user.id
                 if (isinstance(puzzle, str) or puzzle is None) and isinstance(tab, int) and uid is not None:
+                    self.tab = tab
+                    self.puzzle = puzzle
                     request['activity'] = {
                         'uid': uid,
                         'tab': tab,
@@ -97,6 +103,13 @@ class ClientConsumer(AsyncWebsocketConsumer):
             CLIENT_GROUP_NAME,
             self.channel_name,
         )
+        if self.puzzle is not None and self.tab is not None:
+            await self.receive(data={
+                'activity': {
+                    'puzzle': None,
+                    'tab': self.tab,
+                },
+            })
 
 
 class BroadcastMasterConsumer(SyncConsumer):
