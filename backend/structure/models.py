@@ -49,10 +49,15 @@ class HuntConfig(SingletonModel):
         default=True, help_text='Should be true when the entire round corresponds to one meta.',
     )
     root = CharField(blank=True, help_text='Hunt prefix (protocol, domain, and path prefix). (eg https://example.com)')
-    discord_server_id = models.BigIntegerField(
-        null=True, blank=True,
-        default=settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None))
+    discord_server_id = models.BigIntegerField(null=True, blank=True)
     tag_colors = fields.HStoreField(default=dict, help_text='Tag value to (CSS) color mapping.')
+
+    @classmethod
+    def get(cls):
+        obj = super().get()
+        if obj.discord_server_id is None:
+            obj.discord_server_id = settings.SECRETS.get('DISCORD_CREDENTIALS', {}).get('server_id', None)
+        return obj
 
 class BotConfig(SingletonModel):
     '''Settings for bot that don't need to be passed to web users.'''
