@@ -3,8 +3,12 @@ set -e
 # build js files
 yarn --cwd /app/frontend build
 # purge existing static volume
-rm -rf /build/backend/*
+if [ "$1" == "--keep" ] ; then
+  shift
+else
+  rm -rf /build/backend/*
+fi
 # collect static files
-/app/backend/manage.py collectstatic
+/app/backend/manage.py collectstatic --noinput
 # build extension
 /app/build_extension "$@"

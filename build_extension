@@ -23,7 +23,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Chrome extension
-    subprocess.run(f'zip {STATIC_ROOT}/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
+    subprocess.run(f'zip -FS {STATIC_ROOT}/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
 
     # Firefox extension
     manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
