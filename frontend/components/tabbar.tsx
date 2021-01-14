@@ -58,17 +58,33 @@ const Tab = ({
   puzzleData,
   className,
 }) => {
+  const ref = useRef(null);
+  useEffect(() => {
+    const element = ref.current;
+    const onAuxClick = (e) => {
+      if (e.button === 1) {
+        // middle click
+        e.preventDefault();
+        removeTab(e);
+      }
+    };
+    element.addEventListener('auxclick', onAuxClick, {capture: true});
+    return () => element.removeEventListener('auxclick', onAuxClick, {capture: true});
+  }, [removeTab]);
+
   return (
-    <div className={`tab-container ${className} ${Model.isSolved(puzzleData) ? 'solved' : ''}`}>
+    <div
+      className={`tab-container ${className} ${Model.isSolved(puzzleData) ? 'solved' : ''}`}
+      data-tab={tab}
+      ref={ref}
+    >
       <Link
         key={tab}
         href={`/puzzles/${tab}`}
         className='nostyle'
         load={activateTab}
       >
-        <div
-          className={`tab ${className} ${isActive ? 'active' : ''}`}
-        >
+        <div className={`tab ${className} ${isActive ? 'active' : ''}`}>
           <div className={`tab-content ${className}`}>
             <Twemoji>
               {puzzleData.name}
