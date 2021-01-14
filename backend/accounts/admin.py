@@ -36,7 +36,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         error_message = None
         try:
             member = DiscordManager.sync_threadsafe_get_member(uid)
-            if nick != member['nick']
+            if nick != member['nick']:
                 account.extra_data['nick'] = member['nick']
                 if not account._state.adding:
                     account.save(update_fields=['extra_data'])
