@@ -42,7 +42,8 @@ chrome.webRequest.onBeforeRequest.addListener(
       chrome.webNavigation.getFrame(
         {
           tabId: details.tabId,
-          frameId: details.parentFrameId,
+          // frameId: details.parentFrameId,
+          frameId: 0,
         },
         parentFrame => {
           if (logError()) return;
