@@ -62,10 +62,15 @@ export const IFrame : React.FC<IFrameProps> = ({
 
 export const canonicalUrl = (url: string) => {
   if (!url) return null;
-  const _url = new URL(url);
+  let _url = null;
+  try {
+    _url = new URL(url);
+  } catch (err) {
+    return url;
+  }
   let combined = (_url.origin + _url.pathname).replace(/\/+$/, '');
-  if (_url.host === 'docs.google.com') combined = combined.replace(/\/edit$/, '')
-    return combined;
+  if (_url.host === 'docs.google.com') combined = combined.replace(/\/edit$/, '');
+  return combined;
 };
 
 interface CachedIFrameProps {
@@ -107,16 +112,21 @@ export const CachedIFrame : React.FC<CachedIFrameProps> = ({
   );
 };
 
-export const puzzleUrl = (link, root) => {
-  let hasOrigin = false;
+export const puzzleUrl = (link, root='') => {
+  if (!link) {
+    return undefined;
+  }
+
   try {
-    hasOrigin = Boolean(new URL(link).origin);
+    const hasOrigin = Boolean(new URL(link).origin);
+    if (hasOrigin) {
+      return link;
+    }
   } catch (error) {
   }
-  const root_stripped = (root ?? '').slice(-1) === '/' ? root.slice(0, -1) : (root ?? '');
+  const root_stripped = root.slice(-1) === '/' ? root.slice(0, -1) : root;
   const link_stripped = link[0] === '/' ? link.slice(1) : link;
-  const url = link ? hasOrigin ? link : `${root_stripped}/${link_stripped}` : undefined;
-  return url;
+  return root_stripped ? `${root_stripped}/${link_stripped}` : link_stripped;
 };
 
 export const PuzzleFrame = ({
