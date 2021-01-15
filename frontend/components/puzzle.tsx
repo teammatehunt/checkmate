@@ -13,7 +13,7 @@ import {
   SheetFrame,
 } from 'components/frames';
 import * as Model from 'utils/model';
-import { useDefaultLocalStorageObject } from 'utils/hooks';
+import { LocalStorageObject } from 'utils/hooks';
 
 interface IframeDetails {
   action: 'loaded-subframe';
@@ -38,6 +38,8 @@ interface PuzzlesProps {
   reloadSheetTrigger: number;
   cachedTabSet: Set<string>;
   puzzleSplitVertical: boolean;
+  lsplitter: LocalStorageObject<number>;
+  resetSplits: boolean;
 }
 
 const Puzzles : React.FC<PuzzlesProps> = ({
@@ -56,13 +58,15 @@ const Puzzles : React.FC<PuzzlesProps> = ({
   reloadSheetTrigger,
   cachedTabSet,
   puzzleSplitVertical,
+  lsplitter,
+  resetSplits,
 }) => {
-  const lsplitter = useDefaultLocalStorageObject<number>('frames/lsplitter', null);
-
+  const defaultSplitSize = puzzleSplitVertical ? window.innerWidth / 4 : window.innerHeight / 2;
   return (
     <SplitPane
       split={puzzleSplitVertical ? 'vertical' : 'horizontal'}
-      defaultSize={lsplitter.value || (puzzleSplitVertical ? window.innerWidth / 4 : window.innerHeight / 2)}
+      size={resetSplits ? defaultSplitSize : undefined}
+      defaultSize={lsplitter.value || defaultSplitSize}
       minSize={50}
       maxSize={-50}
       onDragStarted={onDragStarted}

@@ -10,6 +10,7 @@ import {
 } from 'components/drop-ins';
 import {
   Compass,
+  Layout,
   LogOut,
   Menu,
   MoreHorizontal,
@@ -17,6 +18,7 @@ import {
   X,
 } from 'components/react-feather';
 import Twemoji from 'components/twemoji';
+import { LocalStorageObject } from 'utils/hooks';
 import * as Model from 'utils/model';
 
 import Icon from 'assets/icon.svg';
@@ -106,6 +108,7 @@ const Tab = ({
 const NavSettings = ({
   removeSolvedTabs,
   removeAllTabs,
+  resetPanes,
 }) => (
   <div className='nav-item nav-settings'>
     <Menu className='nav-menu'/>
@@ -120,6 +123,12 @@ const NavSettings = ({
         <div>
           <X/>
           <span>Close all tabs</span>
+        </div>
+      </Link>
+      <Link className='nav-item-link nostyle' onClick={resetPanes}>
+        <div>
+          <Layout/>
+          <span>Reset pane sizes</span>
         </div>
       </Link>
       <Link
@@ -165,6 +174,10 @@ interface TabBarProps {
   isConnected: boolean;
   maxVisibleTabs: number;
   setMaxVisibleTabs: any;
+  vsplitter: LocalStorageObject<number>;
+  rhsplitter: LocalStorageObject<number>;
+  lsplitter: LocalStorageObject<number>;
+  setResetSplits: any;
 }
 
 const TabBar : React.FC<TabBarProps> = ({
@@ -177,6 +190,10 @@ const TabBar : React.FC<TabBarProps> = ({
   isConnected,
   maxVisibleTabs,
   setMaxVisibleTabs,
+  vsplitter,
+  rhsplitter,
+  lsplitter,
+  setResetSplits,
 }) => {
   const removeTab = useCallback((e) => {
     const _slug = e.currentTarget.getAttribute('data-tab');
@@ -190,6 +207,13 @@ const TabBar : React.FC<TabBarProps> = ({
     setTabs(tabs.filter(tab => !Model.isSolved(puzzles[tab])));
   }, [puzzles, tabs, setTabs]);
   const removeAllTabs = useCallback(() => setTabs([]), [setTabs]);
+
+  const resetPanes = useCallback(() => {
+    vsplitter.delete();
+    lsplitter.delete();
+    rhsplitter.delete();
+    setResetSplits(true);
+  }, [vsplitter, lsplitter, rhsplitter]);
 
   const ref = useRef(null);
   const resetMaxVisibleTabs = useCallback(() => {
@@ -253,6 +277,7 @@ const TabBar : React.FC<TabBarProps> = ({
         <NavSettings
           removeSolvedTabs={removeSolvedTabs}
           removeAllTabs={removeAllTabs}
+          resetPanes={resetPanes}
         />
       </div>
     </>

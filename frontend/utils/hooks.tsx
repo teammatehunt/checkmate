@@ -29,8 +29,10 @@ export function useDefaultLocalStorageObject<T>(key: string, defaultValue: T) : 
     sessionSet(value);
   }, []);
   const _delete = useCallback(() => {
+    localDelete();
+    sessionSet(defaultValue);
     sessionStorage.removeItem(key);
-  }, [key]);
+  }, [key, defaultValue]);
   const result = useMemo(() => ({
     value: sessionValue,
     set: set,

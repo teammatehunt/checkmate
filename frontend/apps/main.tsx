@@ -67,6 +67,11 @@ export const Main : React.FC<MainProps> = props => {
   const [cachedTabSet, setCachedTabSet] = useState<Set<string>>(new Set());
   const vsplitter = useDefaultLocalStorageObject<number>('frames/vsplitter', null);
   const rhsplitter = useDefaultLocalStorageObject<number>('frames/rhsplitter', null);
+  const lsplitter = useDefaultLocalStorageObject<number>('frames/lsplitter', null);
+  const [resetSplits, setResetSplits] = useState(false);
+  useEffect(() => {
+    if (resetSplits) setResetSplits(false);
+  }, [resetSplits]);
 
   // detect which rows are on screen
   const mainPaneChildRef = useRef(null);
@@ -402,6 +407,10 @@ export const Main : React.FC<MainProps> = props => {
             isConnected,
             maxVisibleTabs,
             setMaxVisibleTabs,
+            vsplitter,
+            rhsplitter,
+            lsplitter,
+            setResetSplits,
           }}
         />
         <div className='hflex'>
@@ -525,6 +534,7 @@ export const Main : React.FC<MainProps> = props => {
             <SplitPane
               split='vertical'
               primary='second'
+              size={resetSplits ? 360 : undefined}
               defaultSize={vsplitter.value || 360}
               minSize={50}
               maxSize={-50}
@@ -570,12 +580,15 @@ export const Main : React.FC<MainProps> = props => {
                       reloadPuzzleTrigger,
                       reloadSheetTrigger,
                       cachedTabSet,
+                      lsplitter,
+                      resetSplits,
                     }}
                   />
                 </ShowIf>
               </div>
               <SplitPane
                 split='horizontal'
+                size={resetSplits ? window.innerHeight / 2 : undefined}
                 defaultSize={rhsplitter.value || window.innerHeight / 2}
                 minSize={50}
                 maxSize={-50}

@@ -176,6 +176,9 @@
 .nav-settings-dropdown > a:hover {
   backdrop-filter: brightness(90%);
 }
+.nav-settings-dropdown > a:active {
+  backdrop-filter: brightness(80%);
+}
 
 .nav-status {
   position: relative;
