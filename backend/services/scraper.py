@@ -142,6 +142,8 @@ def parse_html_mh21(soup):
     main = soup.find('main')
     for section in main.find_all('section'):
         a_round = section.a
+        if a_round.h3 is None:
+            continue
         round_name = a_round.h3.string
         results['rounds'].append({
             'name': round_name,
@@ -150,6 +152,8 @@ def parse_html_mh21(soup):
         for tr_puzzle in section.find_all('tr'):
             tds = tr_puzzle.find_all('td')
             if tds:
+                if tds[0].a.get('href') is None:
+                    continue
                 answer = tds[1].string.strip()
                 puzzle = {
                     'name': tds[0].a.string.strip(),
@@ -157,6 +161,7 @@ def parse_html_mh21(soup):
                     'round_names': [round_name],
                     'answer': answer,
                     'is_solved': bool(answer),
+                    'is_meta': 'meta' in (tr_puzzle.get('class') or []),
                 }
                 results['puzzles'].append(puzzle)
     return results

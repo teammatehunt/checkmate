@@ -355,6 +355,16 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             round_slugs_to_discord_category_ids[round_dict['slug']] = round_dict['discord_category_id']
             round_name = round_dict['name']
             round_slug = round_dict['slug']
+            try:
+                create_puzzle.delay(
+                    discord_category_id=round_dict['discord_category_id'],
+                    name=round_dict['name'],
+                    link=round_dict['link'],
+                    rounds=[round_dict['slug']],
+                    is_meta=True,
+                )
+            except Excetion as e:
+                logger.error(e)
         new_data['rounds'].append(site_round)
         reduced_round_names_to_slugs[reduced_name(round_name)] = round_slug
     for site_puzzle in site_puzzles:
