@@ -252,7 +252,7 @@ async def async_populate_puzzle(
             await google_manager.add_links(
                 sheet_id,
                 checkmate_link=checkmate_link,
-                puzzle_link=puzzle.link,
+                puzzle_link=puzzle_link,
             )
         except Exception as e:
             logger.error(f'Sheets Edit Error: {repr(e)}')

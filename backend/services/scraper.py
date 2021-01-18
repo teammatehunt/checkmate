@@ -152,7 +152,7 @@ def parse_html_mh21(soup):
         for tr_puzzle in section.find_all('tr'):
             tds = tr_puzzle.find_all('td')
             if tds:
-                if tds[0].a.get('href') is None:
+                if tds[0].a is None or tds[0].a.get('href') is None:
                     continue
                 answer = tds[1].string.strip()
                 puzzle = {
@@ -163,5 +163,10 @@ def parse_html_mh21(soup):
                     'is_solved': bool(answer),
                     'is_meta': 'meta' in (tr_puzzle.get('class') or []),
                 }
+                if round_name == 'Infinite Corridor':
+                    continue
+                    if ':' in puzzle['name']:
+                        puzzle['name'] = puzzle['name'][puzzle['name'].find(':'):]
+
                 results['puzzles'].append(puzzle)
     return results
