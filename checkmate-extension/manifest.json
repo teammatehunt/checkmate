@@ -39,6 +39,8 @@
 
   "permissions": [
     "<all_urls>",
+    "clipboardRead",
+    "clipboardWrite",
     "tabs",
     "webNavigation",
     "webRequest",

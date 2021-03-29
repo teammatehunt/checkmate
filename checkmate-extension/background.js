@@ -83,7 +83,7 @@ chrome.webRequest.onHeadersReceived.addListener(
     urls: ['<all_urls>'],
     types: ['sub_frame', 'object'],
   },
-  ['blocking', 'responseHeaders'],
+  ['blocking', 'responseHeaders', 'extraHeaders'],
 );
 
 // Add styles for matching embedded urls
