@@ -50,6 +50,9 @@ class HuntConfig(SingletonModel):
     )
     root = CharField(blank=True, help_text='Hunt prefix (protocol, domain, and path prefix). (eg https://example.com)')
     discord_server_id = models.BigIntegerField(null=True, blank=True)
+    enable_discord_channels = models.BooleanField(
+        default=True, help_text='Whether to enable viewing Discord in Checkmate and creating channels',
+    )
     tag_colors = fields.HStoreField(default=dict, help_text='Tag value to (CSS) color mapping.')
 
     @classmethod

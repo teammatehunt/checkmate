@@ -73,6 +73,11 @@ export const Main : React.FC<MainProps> = props => {
     if (resetSplits) setResetSplits(false);
   }, [resetSplits]);
 
+  const uid = data.uid;
+  const hunt = data.hunt;
+  const puzzles = data.puzzles;
+  const puzzleData = puzzles[slug];
+
   // detect which rows are on screen
   const mainPaneChildRef = useRef(null);
   const [masterYDims, dispatchMasterYDims] = useReducer((state) => {
@@ -117,6 +122,7 @@ export const Main : React.FC<MainProps> = props => {
   const hideActivityRef = useRef(hideActivity.value);
   hideActivityRef.current = hideActivity.value;
   const disableDiscord = useDefaultLocalStorageObject<boolean>('main/disable-discord', false);
+  disableDiscord.value = disableDiscord.value || !hunt.enable_discord_channels;
   const puzzleCacheSize = useDefaultLocalStorageObject<number>('frames/puzzle-cache-size', 3);
 
   // because tabs can update outside of this window
@@ -134,11 +140,6 @@ export const Main : React.FC<MainProps> = props => {
   const [reloadIfChangedTrigger, dispatchReloadIfChangedTrigger] = useReducer(state => state + 1, 0);
   const [reloadPuzzleTrigger, dispatchReloadPuzzleTrigger] = useReducer(state => state + 1, 0);
   const [reloadSheetTrigger, dispatchReloadSheetTrigger] = useReducer(state => state + 1, 0);
-
-  const uid = data.uid;
-  const hunt = data.hunt;
-  const puzzles = data.puzzles;
-  const puzzleData = puzzles[slug];
 
   const dataRef = useRef(data);
   const huntRef = useRef(hunt);
@@ -178,6 +179,8 @@ export const Main : React.FC<MainProps> = props => {
   }, []);
   // custom event for listening to url changes in iframes
   useEffect(() => {
+    iframeDetailsDispatch({[`sheet/${slug}`]: {name: `sheet/${slug}`, url: dataRef.current?.puzzles[slug]?.sheet_link}});
+    iframeDetailsDispatch({[`puzzle/${slug}`]: {name: `puzzle/${slug}`, url: dataRef.current?.puzzles[slug]?.link}});
     const handler = (e) => {
       if (e.detail.name === 'discord' && !('discord' in iframeDetailsRef.current)) {
         loadDiscord(slug, e.detail.frameId);
@@ -212,6 +215,12 @@ export const Main : React.FC<MainProps> = props => {
         const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
         history.pushState({slug: _slug}, '', url);
         setSlug(_slug);
+        if (!(`sheet/${_slug}` in iframeDetailsRef.current)) {
+          iframeDetailsDispatch({[`sheet/${_slug}`]: {name: `sheet/${_slug}`, url: dataRef.current?.puzzles[_slug]?.sheet_link}});
+        }
+        if (!(`puzzle/${_slug}` in iframeDetailsRef.current)) {
+          iframeDetailsDispatch({[`puzzle/${_slug}`]: {name: `puzzle/${_slug}`, url: dataRef.current?.puzzles[_slug]?.link}});
+        }
       }
       loadDiscord(_slug);
     }
@@ -611,6 +620,7 @@ export const Main : React.FC<MainProps> = props => {
                       puzzleCacheSize={puzzleCacheSize}
                       hideActivity={hideActivity}
                       disableDiscord={disableDiscord}
+                      siteDiscordEnabled={hunt.enable_discord_channels}
                     />
                   </ShowIf>
                   <ShowIf display={page === 'puzzle'}>

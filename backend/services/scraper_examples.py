@@ -118,3 +118,38 @@ def parse_html_mh20(soup):
                 }
                 results['puzzles'].append(puzzle)
     return results
+
+def parse_html_mh21(soup):
+    # MH 2020
+    results = defaultdict(list)
+    main = soup.find('main')
+    for section in main.find_all('section'):
+        a_round = section.a
+        if a_round.h3 is None:
+            continue
+        round_name = a_round.h3.string
+        results['rounds'].append({
+            'name': round_name,
+            'link': a_round.get('href'),
+        })
+        for tr_puzzle in section.find_all('tr'):
+            tds = tr_puzzle.find_all('td')
+            if tds:
+                if tds[0].a is None or tds[0].a.get('href') is None:
+                    continue
+                answer = tds[1].string.strip()
+                puzzle = {
+                    'name': tds[0].a.string.strip(),
+                    'link': tds[0].a.get('href'),
+                    'round_names': [round_name],
+                    'answer': answer,
+                    'is_solved': bool(answer),
+                    'is_meta': 'meta' in (tr_puzzle.get('class') or []),
+                }
+                if round_name == 'Infinite Corridor':
+                    continue
+                    if ':' in puzzle['name']:
+                        puzzle['name'] = puzzle['name'][puzzle['name'].find(':'):]
+
+                results['puzzles'].append(puzzle)
+    return results

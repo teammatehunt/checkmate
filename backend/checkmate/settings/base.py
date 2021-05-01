@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-import django_feature_policy
+import django_permissions_policy
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django_feature_policy.PermissionsPolicyMiddleware',
+    'django_permissions_policy.PermissionsPolicyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -248,7 +248,7 @@ WHITENOISE_ROOT = os.path.join(BACKEND_DIR, 'static_root')
 # External services configuration
 # allow all as if they were root document
 PERMISSIONS_POLICY = {
-    feature: '*' for feature in django_feature_policy.FEATURE_NAMES
+    feature: '*' for feature in django_permissions_policy.FEATURE_NAMES
 }
 
 DRIVE_SETTINGS = SECRETS.get('DRIVE_SETTINGS', {})

@@ -123,7 +123,8 @@ def create_puzzle(
         discord_category_id=None,
 ):
     name = name.strip()
-    hunt_root = models.HuntConfig.get().root
+    hunt_config = models.HuntConfig.get()
+    hunt_root = hunt_config.root
     _canonical_link, relpath = canonical_link_pair(link, hunt_root)
     # Construct a regex for resolving the root optionally and stripping trailing slashes
     if relpath and hunt_root:
@@ -161,7 +162,7 @@ def create_puzzle(
         sheet=sheet,
         text=text,
         voice=voice,
-        hunt_root=hunt_root,
+        hunt_config=hunt_config,
         discord_category_id=discord_category_id,
     )
 
@@ -170,21 +171,22 @@ def populate_puzzle(
         puzzle=None,
         slug=None,
         created=False,
-        hunt_root=None,
+        hunt_config=None,
         discord_category_id=None,
         **kwargs,
 ):
     bot_config = models.BotConfig.get()
     webhook = bot_config.alert_new_puzzle_webhook if created else None
-    if hunt_root is None:
-        hunt_root = models.HuntConfig.get().root
+    if hunt_config is None:
+        hunt_config = models.HuntConfig.get()
+    hunt_root = hunt_config.root
     if puzzle is None or webhook:
         puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug or puzzle.slug)
     if discord_category_id is None and (kwargs.get('text') or kwargs.get('voice')):
         discord_category_id = bot_config.default_category_id
     asyncio.get_event_loop().run_until_complete(async_populate_puzzle(
         puzzle,
-        hunt_root=hunt_root,
+        hunt_config=hunt_config,
         webhook=webhook,
         discord_category_id=discord_category_id,
         **kwargs,
@@ -193,7 +195,7 @@ def populate_puzzle(
 async def async_populate_puzzle(
     puzzle,
     *,
-    hunt_root,
+    hunt_config,
     webhook=None,
     sheet=True,
     text=True,
@@ -203,11 +205,14 @@ async def async_populate_puzzle(
     discord_manager = DiscordManager.instance()
     google_manager = GoogleManager.instance()
 
+    hunt_root = hunt_config.root
     checkmate_link = models.Puzzle.get_link(puzzle.slug)
     tasks = {}
     if sheet and not puzzle.sheet_link:
         tasks['sheet'] = google_manager.create(puzzle.name)
+    text &= hunt_config.enable_discord_channels
     text &= puzzle.discord_text_channel_id is None
+    voice &= hunt_config.enable_discord_channels
     voice &= puzzle.discord_voice_channel_id is None
     if text or voice:
         tasks['discord'] = discord_manager.create_channels(
@@ -274,10 +279,13 @@ def create_round(
         *,
         name,
         link=None,
+        enable_discord_channels=None,
         **kwargs):
+    if enable_discord_channels is None:
+        enable_discord_channels = models.HuntConfig.get().enable_discord_channels
     name = name.strip()
     _round, _ = models.Round.objects.get_or_create(name=name, **({} if link is None else {'link': link}), hidden=False, defaults=kwargs)
-    if _round.discord_category_id is None:
+    if enable_discord_channels and _round.discord_category_id is None:
         discord_category_ids = list(models.Round.objects.values_list('discord_category_id', flat=True))
         # create discord category
         discord_manager = DiscordManager.instance()
@@ -307,6 +315,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
         return
     data = api.data_everything()
     hunt_root = data['hunt']['root']
+    enable_discord_channels = data['hunt']['enable_discord_channels']
     now = timezone.now()
     new_data = defaultdict(list)
 
@@ -351,7 +360,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             round_name = site_round['name']
             round_slug = slugify(round_name)
         else:
-            round_dict = create_round(**site_round)
+            round_dict = create_round(**site_round, enable_discord_channels=enable_discord_channels)
             round_slugs_to_discord_category_ids[round_dict['slug']] = round_dict['discord_category_id']
             round_name = round_dict['name']
             round_slug = round_dict['slug']

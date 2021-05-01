@@ -6,6 +6,7 @@ export interface HuntConfig {
   root: string;
   auto_assign_puzzles_to_meta: boolean;
   discord_server_id: number;
+  enable_discord_channels: boolean;
   tag_colors: {[tag: string]: string};
 }
 

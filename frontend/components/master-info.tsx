@@ -27,6 +27,7 @@ interface MasterInfoProps {
   puzzleCacheSize: LocalStorageObject<number>;
   hideActivity: LocalStorageObject<boolean>;
   disableDiscord: LocalStorageObject<boolean>;
+  siteDiscordEnabled: boolean;
 }
 
 const MasterInfo : React.FC<MasterInfoProps> = ({
@@ -37,6 +38,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
   puzzleCacheSize,
   hideActivity,
   disableDiscord,
+  siteDiscordEnabled,
 }) => {
   const defaultFormPuzzleData = {
     name: '',
@@ -76,7 +78,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
     draft[e.target.getAttribute('name')] = value;
   });
 
-  const [formPuzzleData, dispatchFormPuzzleData] = useReducer(formDataReducer, defaultFormPuzzleData);
+  const [formPuzzleData, dispatchFormPuzzleData] = useReducer(formDataReducer, {...defaultFormPuzzleData, text: siteDiscordEnabled, voice: siteDiscordEnabled});
   const [formRoundData, dispatchFormRoundData] = useReducer(formDataReducer, defaultFormRoundData);
 
   const onFormPuzzleChange = (e) => dispatchFormPuzzleData({reduce: e});
@@ -167,14 +169,14 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
               <Tr>
                 <Td></Td>
                 <Td>
-                  <input type='checkbox' name='text' onChange={onFormPuzzleChange} checked={formPuzzleData.text}/>
+                  <input type='checkbox' name='text' onChange={onFormPuzzleChange} checked={formPuzzleData.text} disabled={!siteDiscordEnabled}/>
                   <span>Create text channel</span>
                 </Td>
               </Tr>
               <Tr>
                 <Td></Td>
                 <Td>
-                  <input type='checkbox' name='voice' onChange={onFormPuzzleChange} checked={formPuzzleData.voice}/>
+                  <input type='checkbox' name='voice' onChange={onFormPuzzleChange} checked={formPuzzleData.voice} disabled={!siteDiscordEnabled}/>
                   <span>Create voice channel</span>
                 </Td>
               </Tr>
@@ -241,7 +243,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
           <span>Hide own activity</span>
         </div>
         <div>
-          <input type='checkbox' onChange={(e) => disableDiscord.set(e.target.checked)} checked={disableDiscord.value}/>
+          <input type='checkbox' onChange={(e) => disableDiscord.set(e.target.checked)} checked={disableDiscord.value} disabled={!siteDiscordEnabled}/>
           <span>Disable Discord</span>
         </div>
         <div>
