@@ -131,7 +131,6 @@ TEMPLATES = [
 ]
 
 
-# WSGI_APPLICATION = 'checkmate.wsgi.application'
 ASGI_APPLICATION = 'checkmate.asgi.application'
 
 

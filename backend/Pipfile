@@ -1,0 +1,39 @@
+[[source]]
+url = 'https://pypi.org/simple'
+verify_ssl = true
+name = 'pypi'
+
+[packages]
+aiogoogle = '*'
+aiohttp = {extras = ['speedups'], version = '*'}
+beautifulsoup4 = '*'
+celery = '*'
+channels = '*'
+channels-redis = '*'
+daphne = '*'
+'discord.py' = '*'
+django = '==3.1.8' # django-cachalot does not support django 3.2+
+django-admin-hstore-widget = '*'
+django-allauth = '*'
+django-autoslug = '*'
+django-cachalot = '*'
+django-crum = '*'
+django-extensions = '*'
+django-permissions-policy = '*'
+django-redis = '*'
+djangorestframework = '*'
+html5lib = '*'
+psycopg2 = '*'
+pynacl = '*'
+pyttsx3 = '*'
+pyyaml = '*'
+redis = '*'
+requests = '*'
+twisted = {extras = ['http2', 'tls'], version = '*'}
+unidecode = '*'
+whitenoise = '*'
+
+[dev-packages]
+
+[requires]
+python_version = '3.8'
