@@ -5,7 +5,7 @@ import React, {
   useState,
 } from 'react';
 
-import { featureList } from 'utils/feature-policy';
+import { featureList, sandboxList } from 'utils/feature-policy';
 
 export enum DisplayType {
   HIDE = 0, // false
@@ -52,6 +52,7 @@ export const IFrame : React.FC<IFrameProps> = ({
           title={title}
           src={src}
           allow={featureList}
+          sandbox={sandboxList}
         />
         :
         <p>This puzzle does not have {kind} link.</p>
