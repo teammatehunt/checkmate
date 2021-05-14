@@ -19,6 +19,7 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #docker-compose exec app /app/backend/manage.py makemigrations accounts checkmate structure
 docker-compose exec app /app/backend/manage.py migrate
 docker-compose exec app /app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
+# or `docker-compose exec app /app/backend/manage.py createsuperuser --username admin --email ''` to prompt for password
 docker-compose down
 ```
 
