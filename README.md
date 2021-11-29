@@ -44,9 +44,9 @@ docker-compose exec -w /app/backend app celery -A checkmate call services.tasks.
 ```
 This will be a `dry_run` by default and will print a task id. To check the result, use:
 ```
-docker-compose exec -w /app/backend app celery -A checkmate task [TASK_ID]
+docker-compose exec -w /app/backend app celery -A checkmate result [TASK_ID]
 ```
 or if there was an error:
 ```
-docker-compose exec -w /app/backend app celery -A checkmate task --traceback [TASK_ID]
+docker-compose exec -w /app/backend app celery -A checkmate result --traceback [TASK_ID]
 ```

@@ -16,6 +16,7 @@ services:
       - BUILD_MODE=dev
       - SERVER_ORIGIN=https://localhost:8081
     volumes:
+      - .:/app:rw
       - log_dev:/log
 
 volumes:

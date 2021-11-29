@@ -256,7 +256,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     // shortened complexity when offscreen
     return (
       <div
-        className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}
+        className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${puzzle.is_placeholder ? 'placeholder': ''} ${isPseudoround ? 'pseudoround' : ''}`}
         id={`round-${round}--puzzle-${puzzle.slug}`}
       >
         <div className='td sub-master name'><div>
@@ -266,7 +266,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
             load: () => loadSlug(puzzle.slug),
             children: (
               <span>
-                {puzzle.is_meta ? <span className='metatag'/> : null}{puzzle.name}
+                {puzzle.is_meta ? <span className={`metatag ${puzzle.is_placeholder ? 'placeholdertag' : ''}`}/> : null}{puzzle.name}
               </span>
             ),
           })}
@@ -276,7 +276,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
   }
 
   return (
-    <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${isPseudoround ? 'pseudoround' : ''}`}>
+    <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${puzzle.is_placeholder ? 'placeholder': ''} ${isPseudoround ? 'pseudoround' : ''}`}>
       <div className='td sub-master name'><div>
         {Link({
           className: 'sub-master restyle flex ellipsis',
@@ -284,7 +284,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
           load: () => loadSlug(puzzle.slug),
           children: (
             <Twemoji>
-              {puzzle.is_meta ? <span className='metatag'/> : null}{puzzle.name}
+              {puzzle.is_meta ? <span className={`metatag ${puzzle.is_placeholder ? 'placeholdertag' : ''}`}/> : null}{puzzle.name}
             </Twemoji>
           ),
         })}

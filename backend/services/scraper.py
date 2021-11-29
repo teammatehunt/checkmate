@@ -45,21 +45,22 @@ class Client:
             async with self.session.get(login_page) as resp:
                 data = await resp.read()
             soup = BeautifulSoup(data, 'html5lib')
+            # Django sites usually call the formfield CSRF token csrfmiddlewaretoken
             csrftoken = soup.find('input', {'name': 'csrfmiddlewaretoken'}).get('value')
-        payload = {
-            'team': settings.SECRETS['SECRETLOGIN']['username'],
-            'pass': settings.SECRETS['SECRETLOGIN']['password'],
-            'csrfmiddlewaretoken': csrftoken,
-        }
         login_api = self.bot_config.login_api_endpoint
-        if not login_api:
-            raise RuntimeError('Cannot login without knowing the login endpoint.')
-        async with self.session.post(
-            login_api,
-            data=payload,
-            headers=headers,
-        ) as resp:
-            resp.raise_for_status()
+        if login_api:
+            payload = {
+                'team': settings.SECRETS['LOGIN']['username'],
+                'pass': settings.SECRETS['LOGIN']['password'],
+            }
+            if csrftoken is not None:
+                payload['csrfmiddlewaretoken'] = csrftoken
+            async with self.session.post(
+                login_api,
+                data=payload,
+                headers=headers,
+            ) as resp:
+                resp.raise_for_status()
 
     async def try_fetch(self):
         puzzles_page = self.bot_config.puzzles_page
@@ -134,4 +135,4 @@ def parse_json(data):
     return scraper_examples.parse_json_mh19(data)
 
 def parse_html(soup: BeautifulSoup):
-    return parse_html_ms21(soup)
+    return scraper_examples.parse_html_mh21(soup)

@@ -62,18 +62,30 @@ class GoogleManager:
         return sheet_id
 
     async def add_links(self, sheet_id, checkmate_link=None, puzzle_link=None):
-        if checkmate_link or puzzle_link:
-            await self.client.as_service_account(
-                self.sheets.spreadsheets.values.update(
-                    spreadsheetId=sheet_id,
-                    range='B1:C1',
-                    valueInputOption='USER_ENTERED',
-                    json={
-                        'values': [[
-                            f'=HYPERLINK("{checkmate_link}", "Checkmate Link")' if checkmate_link else None,
-                            f'=HYPERLINK("{puzzle_link}", "Puzzle Link")' if puzzle_link else None,
-                        ]],
-                    },
-                ),
-            )
+        if not checkmate_link or not puzzle_link:
+            return
+        await self.setup()
+        await self.client.as_service_account(
+            self.sheets.spreadsheets.values.update(
+                spreadsheetId=sheet_id,
+                range='A1:B1',
+                valueInputOption='USER_ENTERED',
+                json={
+                    'values': [[
+                        f'=HYPERLINK("{checkmate_link}", "Checkmate Link")' if checkmate_link else None,
+                        f'=HYPERLINK("{puzzle_link}", "Puzzle Link")' if puzzle_link else None,
+                    ]],
+                },
+            ),
+        )
 
+    async def rename(self, file_id, name):
+        await self.setup()
+        await self.client.as_service_account(
+            self.drive.files.update(
+                fileId=file_id,
+                json={
+                    'name': name,
+                },
+            )
+        )

@@ -152,6 +152,8 @@ class Puzzle(Entity):
     status = CharField(blank=True)
     is_meta = models.BooleanField(
         default=False, help_text='Can only be edited directly when there are no feeder puzzles. Adding feeder puzzles will also set this field.')
+    is_placeholder = models.BooleanField(
+        default=False, help_text='Used as a placeholder for information before the puzzle is released.')
 
     # should match statuses in `colors.tsx` in the frontend
     SOLVED_STATUSES = set(['solved', 'backsolved', 'bought'])
@@ -203,6 +205,16 @@ class Puzzle(Entity):
         if self.original_is_solved and not self.is_solved() and self.solved is not None:
             # unsolve
             app.send_task('services.tasks.unsolve_puzzle', args=[self.pk], countdown=60.)
+
+    @property
+    def long_name(self):
+        prefixes = []
+        if self.is_placeholder:
+            prefixes.append('PLACEHOLDER')
+        if self.is_meta:
+            prefixes.append('META')
+        prefix = f'[{" ".join(prefixes)}] ' if prefixes else ''
+        return prefix + self.name
 
 
 class BasePuzzleRelation(models.Model):

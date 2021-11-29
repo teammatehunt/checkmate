@@ -226,3 +226,6 @@ input[type=checkbox] + span:before {
   font-variant: small-caps;
   white-space: pre;
 }
+.metatag.placeholdertag:after {
+  content: '[placeholder] meta: ';
+}

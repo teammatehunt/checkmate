@@ -65,6 +65,7 @@ export interface Puzzle extends Entity {
   solved: string; // timestamp
   solved_by: number; // User.id
   is_meta: boolean;
+  is_placeholder: boolean;
 
   answer: string;
   status: string;

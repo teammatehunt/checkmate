@@ -83,6 +83,33 @@ async def async_post_solve_puzzle(puzzle, bot_config):
         )
 
 @app.task
+def post_update_placeholder_puzzle(slug):
+    bot_config = models.BotConfig.get()
+    puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug)
+    asyncio.get_event_loop().run_until_complete(
+        async_post_update_placeholder_puzzle(puzzle, bot_config))
+
+async def async_post_update_placeholder_puzzle(puzzle, bot_config):
+    discord_manager = DiscordManager.instance()
+    google_manager = GoogleManager.instance()
+    sheet_id = puzzle.sheet_link.split('/')[-1]
+    if sheet_id:
+        logger.warn(f'renaming to: {puzzle.name}')
+        await google_manager.rename(sheet_id, puzzle.long_name)
+    if bot_config.alert_new_puzzle_webhook:
+        session = await discord_manager.get_session()
+        # NB: puzzle needs to have had prefetched_related('rounds')
+        rounds = ', '.join(_round.name for _round in puzzle.rounds.all())
+        prefix = f'[{rounds}]: ' if rounds else ''
+        checkmate_link = models.Puzzle.get_link(puzzle.slug)
+        await session.post(
+            bot_config.alert_new_puzzle_webhook,
+            json={
+                'content': f'{prefix}**[{puzzle.long_name}]({checkmate_link})**',
+            },
+        )
+
+@app.task
 def cleanup_puzzle(slug):
     'Cleanup discord actions.'
     puzzle = models.Puzzle.objects.get(pk=slug)
@@ -111,16 +138,17 @@ def unsolve_puzzle(slug):
 
 @app.task
 def create_puzzle(
-        *,
-        name,
-        link,
-        rounds=None,
-        is_meta=None,
-        sheet=True,
-        text=True,
-        voice=True,
-        force=False,
-        discord_category_id=None,
+    *,
+    name,
+    link,
+    rounds=None,
+    is_meta=None,
+    is_placeholder=None,
+    sheet=True,
+    text=True,
+    voice=True,
+    force=False,
+    discord_category_id=None,
 ):
     name = name.strip()
     hunt_config = models.HuntConfig.get()
@@ -145,6 +173,8 @@ def create_puzzle(
         }
         if is_meta is not None:
             puzzle_kwargs['is_meta'] = is_meta
+        if is_placeholder is not None:
+            puzzle_kwargs['is_placeholder'] = is_placeholder
         puzzle = models.Puzzle(**puzzle_kwargs)
         puzzle.save()
     if rounds:
@@ -168,12 +198,12 @@ def create_puzzle(
 
 @app.task
 def populate_puzzle(
-        puzzle=None,
-        slug=None,
-        created=False,
-        hunt_config=None,
-        discord_category_id=None,
-        **kwargs,
+    puzzle=None,
+    slug=None,
+    created=False,
+    hunt_config=None,
+    discord_category_id=None,
+    **kwargs,
 ):
     bot_config = models.BotConfig.get()
     webhook = bot_config.alert_new_puzzle_webhook if created else None
@@ -209,7 +239,7 @@ async def async_populate_puzzle(
     checkmate_link = models.Puzzle.get_link(puzzle.slug)
     tasks = {}
     if sheet and not puzzle.sheet_link:
-        tasks['sheet'] = google_manager.create(puzzle.name)
+        tasks['sheet'] = google_manager.create(puzzle.long_name)
     text &= hunt_config.enable_discord_channels
     text &= puzzle.discord_text_channel_id is None
     voice &= hunt_config.enable_discord_channels
@@ -270,17 +300,18 @@ async def async_populate_puzzle(
         await session.post(
             webhook,
             json={
-                'content': f'{prefix}**[{puzzle.name}]({checkmate_link})**',
+                'content': f'{prefix}**[{puzzle.long_name}]({checkmate_link})**',
             },
         )
 
 @app.task
 def create_round(
-        *,
-        name,
-        link=None,
-        enable_discord_channels=None,
-        **kwargs):
+    *,
+    name,
+    link=None,
+    enable_discord_channels=None,
+    **kwargs,
+):
     if enable_discord_channels is None:
         enable_discord_channels = models.HuntConfig.get().enable_discord_channels
     name = name.strip()
@@ -307,7 +338,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
     if site_data is scraper.NOT_CONFIGURED:
         return
     if not site_data:
-        logger.error(f'No data was parsed from autocreation task: {site_data}')
+        logger.error(f'No data was parsed from autocreation task')
         return
     site_rounds = site_data.get('rounds', [])
     site_puzzles = site_data.get('puzzles', [])
@@ -349,6 +380,23 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
         slug: _round['discord_category_id'] for slug, _round in data['rounds'].items()
     }
 
+    placeholder_metas = {} # round -> puzzle
+    placeholder_metas_lists = defaultdict(list)
+    for puzzle in data['puzzles'].values():
+        if puzzle['is_meta'] and puzzle['is_placeholder']:
+            for _round in puzzle['rounds']:
+                placeholder_metas_lists[_round].append(puzzle)
+    for round_slug, puzzles in placeholder_metas_lists.items():
+        if len(puzzles) == 1:
+            placeholder_metas[round_slug] = puzzles[0]
+
+    fetched_metas_by_round = defaultdict(list)
+    for site_puzzle in site_puzzles:
+        if site_puzzle.get('is_meta'):
+            round_names = site_puzzle.get('round_names', [])
+            for round_name in round_names:
+                fetched_metas_by_round[round_name].append(site_puzzle)
+
     discord_manager = None
     for site_round in site_rounds:
         if reduced_name(site_round['name']) in reduced_round_names_to_slugs:
@@ -364,16 +412,18 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             round_slugs_to_discord_category_ids[round_dict['slug']] = round_dict['discord_category_id']
             round_name = round_dict['name']
             round_slug = round_dict['slug']
-            try:
+        if not fetched_metas_by_round[round_name]:
+            if not dry_run:
+                # create meta placeholder
                 create_puzzle.delay(
                     discord_category_id=round_dict['discord_category_id'],
                     name=round_dict['name'],
                     link=round_dict['link'],
                     rounds=[round_dict['slug']],
                     is_meta=True,
+                    is_placeholder=True,
                 )
-            except Excetion as e:
-                logger.error(e)
+            new_data['placeholder-metas'].append(round_slug)
         new_data['rounds'].append(site_round)
         reduced_round_names_to_slugs[reduced_name(round_name)] = round_slug
     for site_puzzle in site_puzzles:
@@ -386,12 +436,29 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
         slug = canonical_puzzle_links_to_slugs.get(canonical_link(site_puzzle['link'], hunt_root))
         if slug is None:
             # create puzzle
-            if not dry_run:
+            placedholder_puzzle = None
+            if site_puzzle.get('is_meta'):
+                site_puzzle_rounds = site_puzzle.get('rounds')
+                if isinstance(site_puzzle_rounds, list) and len(site_puzzle_rounds) == 1:
+                    placedholder_puzzle = placeholder_metas.get(site_puzzle_rounds[0])
+            if placedholder_puzzle:
+                slug = placedholder_puzzle['slug']
+                if not dry_run:
+                    puzzle_obj = models.Puzzle.objects.filter(pk=slug).update(
+                        name=site_puzzle['name'],
+                        link=site_puzzle['link'],
+                        original_link=site_puzzle['link'],
+                        is_placeholder=False,
+                    )
+                    post_update_placeholder_puzzle.delay(slug)
+                new_data['placeholder-metas-updated'].append(site_round)
+            else:
                 discord_category_id = None
                 if site_puzzle['rounds']:
                     first_round = site_puzzle['rounds'][0]
                     discord_category_id = round_slugs_to_discord_category_ids.get(first_round)
-                create_puzzle.delay(discord_category_id=discord_category_id, **site_puzzle)
+                if not dry_run:
+                    create_puzzle.delay(discord_category_id=discord_category_id, **site_puzzle)
             new_data['puzzles'].append(site_puzzle)
         else:
             # check for updated solved / answer status

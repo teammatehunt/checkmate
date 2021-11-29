@@ -10,7 +10,7 @@ services:
 
   postgres:
     restart: unless-stopped
-    image: postgres
+    image: postgres:13.2
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -22,7 +22,7 @@ services:
 
   redis:
     restart: unless-stopped
-    image: redis
+    image: redis:6.2.1
     ports:
       - '127.0.0.1:6379:6379'
 

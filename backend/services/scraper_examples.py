@@ -119,8 +119,12 @@ def parse_html_mh20(soup):
                 results['puzzles'].append(puzzle)
     return results
 
-def parse_html_mh21(soup):
-    # MH 2020
+def parse_html_mh21(soup, intro_only=True):
+    '''
+    If `intro_only` is True, only parses the intro round.
+
+    NB: Public access login needs to have {'public': 'public access'} in the payload.
+    '''
     results = defaultdict(list)
     main = soup.find('main')
     for section in main.find_all('section'):
@@ -128,6 +132,9 @@ def parse_html_mh21(soup):
         if a_round.h3 is None:
             continue
         round_name = a_round.h3.string
+        if intro_only and round_name != 'Yew Labs':
+            # only parse intro round
+            continue
         results['rounds'].append({
             'name': round_name,
             'link': a_round.get('href'),
@@ -144,7 +151,7 @@ def parse_html_mh21(soup):
                     'round_names': [round_name],
                     'answer': answer,
                     'is_solved': bool(answer),
-                    'is_meta': 'meta' in (tr_puzzle.get('class') or []),
+                    'is_meta': 'meta' in (tds[0].get('class') or []),
                 }
                 if round_name == 'Infinite Corridor':
                     continue
