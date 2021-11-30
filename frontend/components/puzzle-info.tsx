@@ -38,7 +38,8 @@ interface FeedsProps {
   type: string;
   slugs: string[];
   data: {[slug: string]: Model.Round|Model.Puzzle};
-  prefix?: string;
+  hrefMaker?: (slug: string) => string;
+  externalHref?: boolean;
   loadSlug?: any;
   options: string[];
   changeFeeds: any;
@@ -48,7 +49,8 @@ const Feeds : React.FC<FeedsProps>= ({
   type,
   slugs,
   data,
-  prefix,
+  hrefMaker,
+  externalHref=false,
   loadSlug,
   options,
   changeFeeds,
@@ -111,8 +113,9 @@ const Feeds : React.FC<FeedsProps>= ({
           <div className='comma' key={slug}>
             <Link
               className='restyle'
-              href={prefix === undefined ? undefined : `${prefix}${slug}`}
-              load={() => loadSlug(slug)}
+              href={hrefMaker?.(slug)}
+              load={loadSlug ? () => loadSlug(slug) : undefined}
+              target={externalHref ? '_blank' : undefined}
             >
               <Twemoji>
                 {data[slug]?.name}
@@ -658,6 +661,8 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         type='round'
         slugs={puzzle?.rounds}
         data={data.rounds}
+        hrefMaker={data.hunt.root ? (slug) => `${data.hunt.root}${data.rounds[slug].link}` : undefined}
+        externalHref={true}
         options={Object.keys(data.rounds)}
         changeFeeds={changeFeeds}
       />
@@ -666,7 +671,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         type='meta'
         slugs={puzzle?.metas}
         data={data.puzzles}
-        prefix='/puzzles/'
+        hrefMaker={(slug) => `/puzzles/${slug}`}
         loadSlug={loadSlug}
         options={Object.keys(data.puzzles).filter(_slug => data.puzzles[_slug].is_meta && _slug !== slug)}
         changeFeeds={changeFeeds}
