@@ -21,6 +21,18 @@
   box-sizing: content-box;
 }
 
+.puzzle-link, .sheet-link {
+  border-top: inherit ! important;
+  border-bottom: inherit ! important;
+  border-left: inherit ! important;
+  background-color: inherit ! important;
+}
+.puzzle-link {
+  border-right: inherit ! important;
+}
+
+.sub-master.sizer.puzzle-link { width: 1em; }
+.sub-master.sizer.sheet-link { width: 1em; }
 .sub-master.sizer.name { width: 30ch; }
 .sub-master.sizer.answer { width: 25ch; }
 .sub-master.sizer.status { width: 13ch; }

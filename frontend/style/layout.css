@@ -10,25 +10,6 @@ body {
   font-family: Verdana, sans-serif;
 }
 
-.vflex {
-  display: flex;
-  position: relative;
-  flex-direction: column;
-  flex: 1;
-}
-
-.hflex {
-  display: flex;
-  position: relative;
-  flex-direction: row;
-  flex: 1;
-}
-
-.flex {
-  position: relative;
-  flex: 1;
-}
-
 .pane {
   position: relative;
   flex: 1;
@@ -39,86 +20,6 @@ iframe {
 }
 .resizing iframe {
   pointer-events: none;
-}
-
-.nodisplay {
-  display: none ! important;
-}
-
-.hidden {
-  visibility: hidden;
-}
-
-.clickable {
-  cursor: pointer;
-}
-
-.capitalize {
-  text-transform: capitalize;
-}
-
-.colon:after {
-  content: ': ';
-  white-space: pre;
-}
-
-.comma:not(:last-of-type):after {
-  content: ', ';
-  white-space: pre;
-}
-
-.text-align-left {
-  text-align: left;
-}
-
-.text-align-right {
-  text-align: right;
-}
-
-.answerize {
-  font-family: Courier, 'Courier New', monospace;
-  font-weight: bold;
-}
-
-.larger {
-  font-size: larger;
-}
-
-.smaller {
-  font-size: smaller;
-}
-
-svg {
-  height: 1em;
-  width: 1em;
-  vertical-align: middle;
-}
-
-a {
-  /* even when no href */
-  cursor: pointer;
-}
-
-img.emoji {
-  height: 1em;
-  width: 1em;
-  margin: 0 .05em 0 .1em;
-  vertical-align: -0.1em;
-}
-
-input, select, textarea, button {
-  font: inherit;
-}
-
-input[type=checkbox] {
-  vertical-align: middle;
-}
-input[type=checkbox]:not([disabled]):hover {
-  cursor: pointer;
-}
-input[type=checkbox] + span:before {
-  content: ' ';
-  white-space: pre;
 }
 
 .infopane {

@@ -28,6 +28,7 @@ import Twemoji from 'components/twemoji';
 import { patch } from 'utils/fetch';
 import * as Model from 'utils/model';
 import { Activity, Avatar } from 'utils/activity-manager';
+import sheetsIcon from 'assets/sheets-icon.png';
 
 import 'style/master.css';
 
@@ -35,6 +36,8 @@ const SizingRow = ({maxRoundTags, hasExtra}) => {
   // zero height row to set widths
   return (
     <div className='tr sub-master sizer'>
+      <div className='td sub-master sizer puzzle-link'/>
+      <div className='td sub-master sizer sheet-link'/>
       <div className='td sub-master sizer name'/>
       <div className='td sub-master sizer answer answerize'/>
       <div className='td sub-master sizer status'/>
@@ -130,10 +133,19 @@ const Round : React.FC<RoundProps> = React.memo(({
       className={`tr sub-master round ${round.is_pseudoround ? 'pseudoround' : ''}`}
       id={`round-${round.slug}`}
     >
+      <div className='th sub-master puzzle-link'></div>
+      <div className='th sub-master sheet-link'></div>
       <div className='th sub-master name'><div>
-        <Twemoji className='sub-master ellipsis'>
-          {round.name}
-        </Twemoji>
+        {Link({
+          className: 'restyle uncolored',
+          target: '_blank',
+          href: data.hunt.root && round.link ? `${data.hunt.root}${round.link}` : undefined,
+          children: (
+            <Twemoji className='sub-master ellipsis'>
+              {round.name}
+            </Twemoji>
+          ),
+        })}
       </div></div>
       <div className='th sub-master answer'><div>Answer</div></div>
       <div className='th sub-master status'><div>Status</div></div>
@@ -189,6 +201,7 @@ const Round : React.FC<RoundProps> = React.memo(({
 });
 
 interface PuzzleProps {
+  root: string;
   puzzle: Model.Puzzle;
   round: string;
   roundTags: string[] | null;
@@ -202,6 +215,7 @@ interface PuzzleProps {
 }
 
 const Puzzle : React.FC<PuzzleProps> = React.memo(({
+  root,
   puzzle,
   round,
   roundTags,
@@ -275,8 +289,38 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     );
   }
 
+  const puzzle_link = root && puzzle.link ? `${root}${puzzle.link}` : undefined;
+  const sheet_link = puzzle.sheet_link;
+
   return (
     <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${puzzle.is_placeholder ? 'placeholder': ''} ${isPseudoround ? 'pseudoround' : ''}`}>
+      <div className='td sub-master puzzle-link'><div>
+        {(puzzle_link || null) && (
+          Link({
+            className: 'sub-master restyle',
+            target: '_blank',
+            href: puzzle_link,
+            children: <Twemoji>🧩</Twemoji>,
+          })
+        )}
+      </div></div>
+      <div className='td sub-master sheet-link'><div>
+        {(sheet_link || null) && (
+          Link({
+            className: 'sub-master restyle',
+            target: '_blank',
+            href: sheet_link,
+            children: (
+              <img
+                className='emoji'
+                src={sheetsIcon}
+                alt='📈'
+                draggable={false}
+              />
+            ),
+          })
+        )}
+      </div></div>
       <div className='td sub-master name'><div>
         {Link({
           className: 'sub-master restyle flex ellipsis',
@@ -420,6 +464,7 @@ const Master : React.FC<MasterProps> = ({
           key: `${round.slug}--${puzzle.slug}`,
           Component: Puzzle,
           props: {
+            root: data.hunt.root,
             puzzle: puzzle,
             round: round.slug,
             roundTags: roundTags,

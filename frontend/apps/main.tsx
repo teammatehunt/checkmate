@@ -42,6 +42,7 @@ import baseColors, { statuses as baseStatuses } from 'utils/colors';
 import * as Model from 'utils/model';
 import useActivityManager from 'utils/activity-manager';
 
+import 'style/global.css';
 import 'style/layout.css';
 import 'style/split-pane.css';
 

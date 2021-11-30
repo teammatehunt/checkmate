@@ -23,6 +23,7 @@ import ImgMaster from 'assets/getting-started/master-highlighted.png';
 import ImgPuzzle from 'assets/getting-started/puzzle-highlighted.png';
 import ImgMeta from 'assets/getting-started/meta.png';
 
+import 'style/global.css';
 import 'style/layout.css';
 import 'style/documentation.css';
 

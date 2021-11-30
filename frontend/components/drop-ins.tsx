@@ -29,9 +29,11 @@ export const Th = divInsertClass('th');
 export const Caption = divInsertClass('caption');
 
 export const Link = (props) => {
-  const {load, children, ...rest} = props;
+  const {load, className, children, ...rest} = props;
+  const clickable = !!(load || rest.href || rest.onClick);
   return (
     <a
+      className={`${clickable ? 'clickable' : ''} ${className || ''}`}
       onClick={(e) => {
         if (e.altKey || e.ctrlKey || e.shiftKey) return;
         if (load) {

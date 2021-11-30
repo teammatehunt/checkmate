@@ -8,6 +8,7 @@ import Base from 'components/base';
 import InstallationChrome from 'assets/extension/installation-chrome.png';
 import InstallationFirefox from 'assets/extension/installation-firefox.png';
 
+import 'style/global.css';
 import 'style/layout.css';
 import 'style/documentation.css';
 
