@@ -454,7 +454,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
                 new_data['placeholder-metas-updated'].append(site_round)
             else:
                 discord_category_id = None
-                if site_puzzle['rounds']:
+                if site_puzzle.get('rounds'):
                     first_round = site_puzzle['rounds'][0]
                     discord_category_id = round_slugs_to_discord_category_ids.get(first_round)
                 if not dry_run:

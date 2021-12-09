@@ -1,6 +1,7 @@
 import asyncio
 from collections import defaultdict
 import json
+from urllib.parse import urljoin
 
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -50,8 +51,8 @@ class Client:
         login_api = self.bot_config.login_api_endpoint
         if login_api:
             payload = {
-                'team': settings.SECRETS['LOGIN']['username'],
-                'pass': settings.SECRETS['LOGIN']['password'],
+                'username': settings.SECRETS['LOGIN']['username'],
+                'password': settings.SECRETS['LOGIN']['password'],
             }
             if csrftoken is not None:
                 payload['csrfmiddlewaretoken'] = csrftoken
@@ -62,8 +63,11 @@ class Client:
             ) as resp:
                 resp.raise_for_status()
 
-    async def try_fetch(self):
-        puzzles_page = self.bot_config.puzzles_page
+    async def try_fetch(self, puzzles_page=None):
+        if puzzles_page is None:
+            puzzles_page = self.bot_config.puzzles_page
+        else:
+            puzzles_page = urljoin(self.bot_config.puzzles_page, puzzles_page)
         async with self.session.get(
             puzzles_page,
         ) as resp:
@@ -108,6 +112,7 @@ async def fetch_site_data():
         pass
     if soup is not None:
         return parse_html(soup)
+        # return await async_parse_html(client, soup)
     raise RuntimeError('Unable to parse response')
 
 # These parsers will likely need to be edited on site as the puzzle page format becomes known.
@@ -135,4 +140,7 @@ def parse_json(data):
     return scraper_examples.parse_json_mh19(data)
 
 def parse_html(soup: BeautifulSoup):
-    return scraper_examples.parse_html_mh21(soup)
+    return scraper_examples.parse_html_silph21(soup)
+
+async def async_parse_html(client: Client, soup: BeautifulSoup):
+    return await scraper_examples.parse_html_silph21(client, soup)

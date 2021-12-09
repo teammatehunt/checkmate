@@ -653,8 +653,9 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
   return (
     <>
       <h2>
+        {puzzle?.is_meta ? <span className='metatag'/> : null}
         <Twemoji>
-          {puzzle?.is_meta ? <span className='metatag'/> : null}{puzzle?.name}
+          {puzzle?.name}
         </Twemoji>
       </h2>
       <Feeds

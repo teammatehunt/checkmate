@@ -160,3 +160,106 @@ def parse_html_mh21(soup, intro_only=True):
 
                 results['puzzles'].append(puzzle)
     return results
+
+async def parse_html_gphsite21(client, soup, *, _round=None):
+    # parses gph-site 2021 and fetches round pages
+    # recurses if _round is None
+    results = defaultdict(list)
+    main = soup.find('main')
+    for list_div in soup.find_all('div', class_='puzzles-list'):
+        round_names = []
+        round_name = _round['name'] if _round else None
+        if round_name:
+            results['rounds'].append({'name': round_name})
+            round_names.append(round_name)
+        for entry_div in list_div.find_all('div', class_='puzzles-entry'):
+            a = entry_div.find('a', class_='puzzles-link')
+            answer_div = entry_div.find(class_='solved-title-answer')
+            answer = answer_div and answer_div.text.strip()
+            if a is not None:
+                puzzle = {}
+                puzzle['name'] = a.text.strip()
+                puzzle['link'] = a.get('href')
+                puzzle['round_names'] = round_names
+                if 'puzzles-meta' in (entry_div.get('class') or []):
+                    puzzle['is_meta'] = True
+                if answer:
+                    puzzle['answer'] = answer
+                    puzzle['is_solved'] = True
+                results['puzzles'].append(puzzle)
+    if _round is None:
+        for h2 in soup.find_all('h2'):
+            a = h2.a
+            if a is not None:
+                _round = {
+                    'name': a.text.strip(),
+                    'link': a.get('href'),
+                }
+                round_html = await client.try_fetch(_round['link'])
+                round_soup = BeautifulSoup(round_html, 'html5lib')
+                round_results = await parse_html_gphsite21(client, round_soup, _round=_round)
+                results['rounds'].extend(round_results['rounds'])
+                results['puzzles'].extend(round_results['puzzles'])
+    return results
+
+def parse_html_dp20(soup):
+    # parses DP Hunt 2020
+    results = defaultdict(list)
+    for h4 in soup.find_all('h4'):
+        round_name = h4.text.strip()
+        results['rounds'].append({'name': round_name})
+    for table in soup.find_all('table', class_='gph-list-table'):
+        h4 = table.find_previous_sibling('h4')
+        round_names = []
+        if h4 is not None:
+            round_name = h4.text.strip()
+            round_names.append(round_name)
+        for tr_puzzle in table.find_all('tr'):
+            tds = tr_puzzle.find_all('td')
+            if not tds:
+                continue
+            a = tds[0].a
+            elt_answer = tr_puzzle.find(class_='solved-title-answer')
+            answer = elt_answer and elt_answer.text.strip()
+            if a is not None:
+                puzzle = {}
+                puzzle['name'] = a.text.strip()
+                puzzle['link'] = a.get('href')
+                puzzle['round_names'] = round_names
+                if answer:
+                    puzzle['answer'] = answer
+                    puzzle['is_solved'] = True
+                if puzzle['name'].startswith('META:'):
+                    puzzle['is_meta'] = True
+                results['puzzles'].append(puzzle)
+    return results
+
+def parse_html_silph21(soup):
+    results = defaultdict(list)
+    for btn in soup.find_all('button', class_='tablink'):
+        round_name = btn.text.strip()
+        results['rounds'].append({'name': round_name})
+    btn in soup.find('button', class_='tab-selected')
+    round_name = btn.text.strip()
+    for table in soup.find_all('table', class_='gph-list-table'):
+        round_names = []
+        round_names.append(round_name)
+        for tr_puzzle in table.find_all('tr'):
+            tds = tr_puzzle.find_all('td')
+            if not tds:
+                continue
+            a = tds[0].a
+            elt_answer = tr_puzzle.find(class_='solved-title-answer')
+            answer = elt_answer and elt_answer.text.strip()
+            if a is not None:
+                puzzle = {}
+                puzzle['name'] = a.text.strip()
+                puzzle['link'] = a.get('href')
+                puzzle['round_names'] = round_names
+                if answer:
+                    puzzle['answer'] = answer
+                    puzzle['is_solved'] = True
+                if puzzle['name'].startswith('META:'):
+                    puzzle['is_meta'] = True
+                results['puzzles'].append(puzzle)
+    return results

@@ -327,9 +327,12 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
           href: `/puzzles/${puzzle.slug}`,
           load: () => loadSlug(puzzle.slug),
           children: (
-            <Twemoji>
-              {puzzle.is_meta ? <span className={`metatag ${puzzle.is_placeholder ? 'placeholdertag' : ''}`}/> : null}{puzzle.name}
-            </Twemoji>
+            <>
+              {puzzle.is_meta ? <span className={`metatag ${puzzle.is_placeholder ? 'placeholdertag' : ''}`}/> : null}
+              <Twemoji>
+                {puzzle.name}
+              </Twemoji>
+            </>
           ),
         })}
       </div></div>
