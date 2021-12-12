@@ -29,6 +29,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         username = account.extra_data.get('username')
         discriminator = account.extra_data.get('discriminator')
         nick = account.extra_data.get('nick')
+        roles = account.extra_data.get('roles')
         if username is None or discriminator is None:
             user = f'User {uid}'
         else:
@@ -36,10 +37,18 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         error_message = None
         try:
             member = DiscordManager.sync_threadsafe_get_member(uid)
+
+            adding = False
             if nick != member['nick']:
                 account.extra_data['nick'] = member['nick']
-                if not account._state.adding:
-                    account.save(update_fields=['extra_data'])
+                adding = True
+            if roles != member.get('roles'):
+                account.extra_data.pop('roles', None)
+                if member.get('roles') is not None:
+                    account.extra_data['roles'] = member.get('roles')
+                adding = True
+            if adding and not account._state.adding:
+                account.save(update_fields=['extra_data'])
         except discord.HTTPException as e:
             if isinstance(e, discord.NotFound):
                 error_message = f'{user} is not a member of the Discord server.'

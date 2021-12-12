@@ -53,6 +53,7 @@ class HuntConfig(SingletonModel):
     enable_discord_channels = models.BooleanField(
         default=True, help_text='Whether to enable viewing Discord in Checkmate and creating channels',
     )
+    role_colors = fields.HStoreField(default=dict, help_text='Discord role id to color mapping.')
     tag_colors = fields.HStoreField(default=dict, help_text='Tag value to (CSS) color mapping.')
 
     @classmethod

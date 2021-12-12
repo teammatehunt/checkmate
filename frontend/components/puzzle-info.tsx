@@ -743,7 +743,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
       }
       <div className='sub-puzzleinfo viewers'>
         <span className='colon'>Viewers</span>
-        {puzzleActivities?.map(activity => Avatar(data.users[activity.uid], activity))}
+        {puzzleActivities?.map(activity => Avatar(data.users[activity.uid], activity, data.hunt))}
       </div>
     </>
   );

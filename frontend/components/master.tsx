@@ -201,7 +201,7 @@ const Round : React.FC<RoundProps> = React.memo(({
 });
 
 interface PuzzleProps {
-  root: string;
+  huntConfig: Model.HuntConfig;
   puzzle: Model.Puzzle;
   round: string;
   roundTags: string[] | null;
@@ -215,7 +215,7 @@ interface PuzzleProps {
 }
 
 const Puzzle : React.FC<PuzzleProps> = React.memo(({
-  root,
+  huntConfig,
   puzzle,
   round,
   roundTags,
@@ -289,7 +289,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     );
   }
 
-  const puzzle_link = root && puzzle.link ? `${root}${puzzle.link}` : undefined;
+  const puzzle_link = huntConfig.root && puzzle.link ? `${huntConfig.root}${puzzle.link}` : undefined;
   const sheet_link = puzzle.sheet_link;
 
   return (
@@ -360,7 +360,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
         {hasCreated ? humanDuration : null}
       </div></div>
       <div className='td sub-master viewers'><div>
-        {viewers?.map(({user, activity}) => Avatar(user, activity))}
+        {viewers?.map(({user, activity}) => Avatar(user, activity, huntConfig))}
       </div></div>
       {(roundTags ?? []).map(tag => (
         <TdEditable
@@ -467,7 +467,7 @@ const Master : React.FC<MasterProps> = ({
           key: `${round.slug}--${puzzle.slug}`,
           Component: Puzzle,
           props: {
-            root: data.hunt.root,
+            huntConfig: data.hunt,
             puzzle: puzzle,
             round: round.slug,
             roundTags: roundTags,

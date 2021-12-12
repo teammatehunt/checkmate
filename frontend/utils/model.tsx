@@ -7,6 +7,7 @@ export interface HuntConfig {
   auto_assign_puzzles_to_meta: boolean;
   discord_server_id: number;
   enable_discord_channels: boolean;
+  role_colors: {[role_id: string]: string};
   tag_colors: {[tag: string]: string};
 }
 
@@ -19,6 +20,7 @@ export interface SocialAccount {
     discriminator?: string;
     avatar?: string;
     nick?: string;
+    roles?: string[];
     flags?: number;
     public_flags?: number;
     locale?: string;
@@ -31,7 +33,7 @@ export interface User {
   username: string;
   first_name: string;
   last_name: string;
-  socialaccounts: SocialAccount[];
+  socialaccount: SocialAccount[];
 }
 
 export interface Entity {
