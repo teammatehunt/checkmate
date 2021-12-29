@@ -61,6 +61,7 @@ interface RoundProps {
   editable: boolean;
   setNumTagsWithEditing: any;
   numTotalTagColumns: number;
+  isFinished: boolean;
 }
 
 const Round : React.FC<RoundProps> = React.memo(({
@@ -70,6 +71,7 @@ const Round : React.FC<RoundProps> = React.memo(({
   editable,
   setNumTagsWithEditing,
   numTotalTagColumns,
+  isFinished,
 }) => {
   const [editState, setEditState] = useState(EditState.DEFAULT);
   const prevRoundTagsRef = useRef(null);
@@ -130,7 +132,7 @@ const Round : React.FC<RoundProps> = React.memo(({
   // Round is always visible (we need it because it is sticky)
   return (
     <div
-      className={`tr sub-master round ${round.is_pseudoround ? 'pseudoround' : ''}`}
+      className={`tr sub-master round ${round.is_pseudoround ? 'pseudoround' : ''} ${isFinished ? 'round-finished' : ''}`}
       id={`round-${round.slug}`}
     >
       <div className='th sub-master puzzle-link'></div>
@@ -400,6 +402,7 @@ interface MasterProps {
   colors: {[value: string]: string};
   activities: {[puzzle: string]: Activity[]};
   hideSolved: boolean;
+  hideFinishedRounds: boolean;
   editable: boolean;
   sortNewRoundsFirst: boolean;
   yDims: {[key: string]: number};
@@ -413,6 +416,7 @@ const Master : React.FC<MasterProps> = ({
   colors,
   activities,
   hideSolved,
+  hideFinishedRounds,
   editable,
   sortNewRoundsFirst,
   yDims,
@@ -449,6 +453,7 @@ const Master : React.FC<MasterProps> = ({
   const orderedRoundEntries = sortNewRoundsFirst ? Object.entries(roundsWithExtras).reverse() : Object.entries(roundsWithExtras);
   let rows = orderedRoundEntries.filter(([slug, round]) => round?.hidden === false).map(([slug, round]) => {
     const roundTags = round?.round_tags ?? null;
+    const isFinished = round?.puzzles.length && round?.puzzles.every(_slug => data.puzzles[_slug]?.is_meta ? Model.isSolved(data.puzzles[_slug]) : data.puzzles[_slug]?.metas.length);
     return [
       {
         key: round.slug,
@@ -460,9 +465,10 @@ const Master : React.FC<MasterProps> = ({
           editable: editable,
           setNumTagsWithEditing: setNumTagsWithEditing,
           numTotalTagColumns: numTotalTagColumns,
+          isFinished: isFinished,
         },
       },
-      ...orderBy(round.puzzles.map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle))), ['is_meta'], ['desc']).map(puzzle => (
+      ...orderBy((hideFinishedRounds && isFinished ? [] : round.puzzles).map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle))), ['is_meta'], ['desc']).map(puzzle => (
         {
           key: `${round.slug}--${puzzle.slug}`,
           Component: Puzzle,

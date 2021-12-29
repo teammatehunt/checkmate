@@ -120,8 +120,11 @@
 .sub-master.td:first-child {
   border-left: 2px solid lightgray;
 }
-.sub-master.pseudoround .td {
+.sub-master.pseudoround > .td {
   background-color: beige;
+}
+.sub-master.round-finished > .th {
+  background-color: darkolivegreen;
 }
 
 .sub-master.name {

@@ -22,6 +22,7 @@ import 'style/master-info.css';
 interface MasterInfoProps {
   data: Model.Data;
   hideSolved: LocalStorageObject<boolean>;
+  hideFinishedRounds: LocalStorageObject<boolean>;
   editable: LocalStorageObject<boolean>;
   sortNewRoundsFirst: LocalStorageObject<boolean>;
   puzzleCacheSize: LocalStorageObject<number>;
@@ -33,6 +34,7 @@ interface MasterInfoProps {
 const MasterInfo : React.FC<MasterInfoProps> = ({
   data,
   hideSolved,
+  hideFinishedRounds,
   editable,
   sortNewRoundsFirst,
   puzzleCacheSize,
@@ -227,28 +229,54 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
       <h2>Settings</h2>
       <div className='master-settings'>
         <div>
-          <input type='checkbox' onChange={(e) => hideSolved.set(e.target.checked)} checked={hideSolved.value}/>
-          <span>Hide solved</span>
+          <label>
+            <input type='checkbox' onChange={(e) => hideSolved.set(e.target.checked)} checked={hideSolved.value}/>
+            <span>Hide solved puzzles</span>
+          </label>
         </div>
         <div>
-          <input type='checkbox' onChange={(e) => sortNewRoundsFirst.set(e.target.checked)} checked={sortNewRoundsFirst.value}/>
-          <span>Newest rounds at top</span>
+          <label>
+            <input type='checkbox' onChange={(e) => hideFinishedRounds.set(e.target.checked)} checked={hideFinishedRounds.value}/>
+            <span
+              aria-label='All non-metas feed a meta and all metas solved.'
+              data-tip
+              data-tip-delay
+              data-tip-size='smaller'
+              data-place='below to right'
+            >
+              Hide finished rounds
+            </span>
+          </label>
         </div>
         <div>
-          <input type='checkbox' onChange={(e) => editable.set(e.target.checked)} checked={editable.value}/>
-          <span>Edit tags</span>
+          <label>
+            <input type='checkbox' onChange={(e) => sortNewRoundsFirst.set(e.target.checked)} checked={sortNewRoundsFirst.value}/>
+            <span>Newest rounds at top</span>
+          </label>
         </div>
         <div>
-          <input type='checkbox' onChange={(e) => hideActivity.set(e.target.checked)} checked={hideActivity.value}/>
-          <span>Hide own activity</span>
+          <label>
+            <input type='checkbox' onChange={(e) => editable.set(e.target.checked)} checked={editable.value}/>
+            <span>Edit tags</span>
+          </label>
         </div>
         <div>
-          <input type='checkbox' onChange={(e) => disableDiscord.set(e.target.checked)} checked={disableDiscord.value} disabled={!siteDiscordEnabled}/>
-          <span>Disable Discord</span>
+          <label>
+            <input type='checkbox' onChange={(e) => hideActivity.set(e.target.checked)} checked={hideActivity.value}/>
+            <span>Hide own activity</span>
+          </label>
         </div>
         <div>
-          <span className='colon'>Max puzzles to cache</span>
-          <input className='puzzle-cache-input' type='number' min={1} onChange={(e) => puzzleCacheSize.set(Number(e.target.value))} value={puzzleCacheSize.value}/>
+          <label>
+            <input type='checkbox' onChange={(e) => disableDiscord.set(e.target.checked)} checked={disableDiscord.value} disabled={!siteDiscordEnabled}/>
+            <span>Disable Discord</span>
+          </label>
+        </div>
+        <div>
+          <label>
+            <span className='colon'>Max puzzles to cache</span>
+            <input className='puzzle-cache-input' type='number' min={1} onChange={(e) => puzzleCacheSize.set(Number(e.target.value))} value={puzzleCacheSize.value}/>
+          </label>
         </div>
       </div>
 

@@ -117,6 +117,7 @@ export const Main : React.FC<MainProps> = props => {
   }, [slug]);
 
   const hideSolved = useDefaultLocalStorageObject<boolean>('master/hide-solved', false);
+  const hideFinishedRounds = useDefaultLocalStorageObject<boolean>('master/hide-finished-rounds', false);
   const editable = useDefaultLocalStorageObject<boolean>('master/editable', false);
   const sortNewRoundsFirst = useDefaultLocalStorageObject<boolean>('master/sort-new-rounds-first', false);
   const hideActivity = useDefaultLocalStorageObject<boolean>('main/hide-activity', false);
@@ -567,6 +568,7 @@ export const Main : React.FC<MainProps> = props => {
                     colors={colors}
                     activities={activities}
                     hideSolved={hideSolved.value}
+                    hideFinishedRounds={hideFinishedRounds.value}
                     editable={editable.value}
                     sortNewRoundsFirst={sortNewRoundsFirst.value}
                     yDims={masterYDims}
@@ -616,6 +618,7 @@ export const Main : React.FC<MainProps> = props => {
                     <MasterInfo
                       data={data}
                       hideSolved={hideSolved}
+                      hideFinishedRounds={hideFinishedRounds}
                       editable={editable}
                       sortNewRoundsFirst={sortNewRoundsFirst}
                       puzzleCacheSize={puzzleCacheSize}

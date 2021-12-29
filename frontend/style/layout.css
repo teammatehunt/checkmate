@@ -121,6 +121,17 @@ iframe {
   top: 100%;
   right: 100%;
 }
+[data-place='below to right']:after {
+  top: 100%;
+  left: 0%;
+}
+[data-place='below to left']:after {
+  top: 100%;
+  right: 0%;
+}
+[data-tip-size=smaller]:after {
+  font-size: smaller;
+}
 
 .metatag:after {
   content: 'meta: ';
