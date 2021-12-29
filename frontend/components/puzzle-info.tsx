@@ -58,7 +58,8 @@ const Feeds : React.FC<FeedsProps>= ({
   const [editState, setEditState] = useState(EditState.DEFAULT);
   const [prevSlugs, setPrevSlugs] = useState(slugs);
 
-  const slugSet = new Set(slugs);
+  const visibleSlugs = slugs?.filter(slug => data[slug]?.hidden === false);
+  const slugSet = new Set(visibleSlugs);
   const optionsSlugs = options.filter(slug => !slugSet.has(slug));
   useEffect(() => {
     if (editState === EditState.WAITING) {
@@ -103,11 +104,9 @@ const Feeds : React.FC<FeedsProps>= ({
     }
   };
 
-  const visibleSlugs = slugs?.filter(slug => data[slug]?.hidden === false);
-
   return (
     <div className={`feeds feeds-${type}`}>
-      <div className={`capitalize colon title-${type}`}>{type}{visibleSlugs.length > 1 ? 's' : ''}</div>
+      <div className={`capitalize bold colon title-${type}`}>{type}{visibleSlugs.length > 1 ? 's' : ''}</div>
       {editState === EditState.DEFAULT ?
         visibleSlugs?.map((slug) => (
           <div className='comma' key={slug}>
@@ -255,8 +254,9 @@ const Feeders : React.FC<FeedersProps>= ({
   const [draggingItem, setDraggingItem] = useState(null);
   const ref = useRef(null);
 
+  const visibleSlugs = slugs?.filter(slug => data[slug]?.hidden === false);
   const feederType = type === 'round' ? 'puzzles' : 'feeders';
-  const slugSet = new Set(slugs);
+  const slugSet = new Set(visibleSlugs);
   const optionsSlugs = options.filter(slug => !slugSet.has(slug));
 
   useEffect(() => {
@@ -363,7 +363,7 @@ const Feeders : React.FC<FeedersProps>= ({
     if (copied) setCopied(false);
   }, [copied]);
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(slugs.map(slug => [data[slug].name, data[slug].answer].join('\t')).join('\n'));
+    navigator.clipboard.writeText(visibleSlugs.map(slug => [data[slug].name, data[slug].answer].join('\t')).join('\n'));
     setCopied(true);
   };
 
@@ -373,7 +373,7 @@ const Feeders : React.FC<FeedersProps>= ({
   return (
     <div className='feeders'>
       <div className='feeders-header'>
-        <div className={`capitalize colon title-${feederType}`}>{feederType}</div>
+        <div className={`capitalize bold colon title-${feederType}`}>{feederType}</div>
         {(() => {
           switch (editState) {
             case EditState.DEFAULT:
@@ -572,10 +572,11 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
 }) => {
   const puzzle = data.puzzles[slug];
   if (!puzzle) return null;
+  const visibleRounds = puzzle.rounds?.filter(round => data.rounds[round]?.hidden === false);
 
   const [isAdding, setIsAdding] = useState(false);
 
-  const patchValue = (key, isTags=false, isRoundTag=false) => {
+  const patchValue = (key, {isTags=false, isRoundTag=false, roundSlug=null}={}) => {
     return async (value) => {
       if (key === null) {
         setIsAdding(false);
@@ -586,7 +587,11 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         if (isRoundTag && (key in draft) && !value) delete draft[key];
         else draft[key] = value;
       })};
-      return await patch({slug, data: _data});
+      return await patch({
+        slug: roundSlug ?? slug,
+        data: _data,
+        type: roundSlug ? 'round' : 'puzzle',
+      });
     };
   };
 
@@ -647,50 +652,50 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
     return await changeRelations({feeds: slug, ...kwargs});
   };
 
-  const roundTags = new Set(puzzle.rounds.map(round => data.rounds[round].round_tags).flat());
+  const roundTags = new Set(visibleRounds.map(round => data.rounds[round].round_tags).flat());
   const tags = [...new Set([...Object.keys(puzzle.tags ?? {}), ...roundTags])].sort();
 
   return (
     <>
       <h2>
-        {puzzle?.is_meta ? <span className='metatag'/> : null}
+        {puzzle.is_meta ? <span className='metatag'/> : null}
         <Twemoji>
-          {puzzle?.name}
+          {puzzle.name}
         </Twemoji>
       </h2>
       <Feeds
         type='round'
-        slugs={puzzle?.rounds}
+        slugs={puzzle.rounds}
         data={data.rounds}
         hrefMaker={data.hunt.root ? (slug) => `${data.hunt.root}${data.rounds[slug].link}` : undefined}
         externalHref={true}
-        options={Object.keys(data.rounds)}
+        options={Object.keys(data.rounds).filter(_slug => data.rounds[_slug]?.hidden !== false)}
         changeFeeds={changeFeeds}
       />
-      {(puzzle?.metas?.length || !puzzle?.is_meta || null) &&
+      {(puzzle.metas?.length || !puzzle.is_meta || null) &&
       <Feeds
         type='meta'
-        slugs={puzzle?.metas}
+        slugs={puzzle.metas}
         data={data.puzzles}
         hrefMaker={(slug) => `/puzzles/${slug}`}
         loadSlug={loadSlug}
-        options={Object.keys(data.puzzles).filter(_slug => data.puzzles[_slug].is_meta && _slug !== slug)}
+        options={Object.keys(data.puzzles).filter(_slug => data.puzzles[_slug].is_meta && data.puzzles[_slug]?.hidden !== false && _slug !== slug)}
         changeFeeds={changeFeeds}
       />
       }
       <div className='is-meta'>
-        <input type='checkbox' name='is_meta' onChange={(e) => patchValue('is_meta')(e.target.checked)} checked={puzzle?.is_meta} disabled={Boolean(puzzle?.feeders?.length)}/>
+        <input type='checkbox' name='is_meta' onChange={(e) => patchValue('is_meta')(e.target.checked)} checked={puzzle.is_meta} disabled={Boolean(puzzle.feeders?.length)}/>
         <span>Is meta</span>
       </div>
       <Table className='puzzleinfo-tags'>
         <Tbody>
-          <TextField className='answerize' name='answer' value={puzzle?.answer} patchValue={patchValue('answer')} canReset={false}/>
-          <TextField name='status' value={puzzle?.status} patchValue={patchValue('status')} options={Object.keys(statuses)} colors={statuses}/>
-          <TextField name='notes' textarea value={puzzle?.notes} patchValue={patchValue('notes')} colors={colors}/>
+          <TextField className='answerize' name='answer' value={puzzle.answer} patchValue={patchValue('answer')} canReset={false}/>
+          <TextField name='status' value={puzzle.status} patchValue={patchValue('status')} options={Object.keys(statuses)} colors={statuses}/>
+          <TextField name='notes' textarea value={puzzle.notes} patchValue={patchValue('notes')} colors={colors}/>
           {tags.map(tag => (
             <TextField key={tag} name={tag} value={puzzle.tags[tag] ?? ''}
               patchKey={roundTags.has(tag) ? undefined : patchKey(tag)}
-              patchValue={patchValue(tag, true, roundTags.has(tag))}
+              patchValue={patchValue(tag, {isTags: true, isRoundTag: roundTags.has(tag)})}
               remove={roundTags.has(tag) ? undefined : removeTag(tag)}
               colors={colors}
             />
@@ -698,7 +703,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
           {isAdding ?
             <TextField name={null} value=''
               patchKey={patchKey(null)}
-              patchValue={patchValue(null, true)}
+              patchValue={patchValue(null, {isTags: true})}
               remove={removeTag(null)}
               colors={colors}
             />
@@ -720,17 +725,31 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
           }
         </Tbody>
       </Table>
-      {(puzzle?.is_meta || null) &&
+      {(visibleRounds?.length || null) &&
+      <>
+        <div className={`bold colon`}>Round Notes</div>
+        <Table className='puzzleinfo-tags'>
+          <Tbody>
+            {visibleRounds.map(round => (
+              <TextField key={round} name={`${data.rounds[round]?.name}`} textarea value={data.rounds[round]?.notes}
+                patchValue={patchValue('notes', {roundSlug: round})}
+              />
+            ))}
+          </Tbody>
+        </Table>
+      </>
+      }
+      {(puzzle.is_meta || null) &&
       <>
         <Feeders
           type='meta'
-          slugs={puzzle?.feeders}
+          slugs={puzzle.feeders}
           data={data.puzzles}
           loadSlug={loadSlug}
           options={(() => {
             let slugSet = new Set();
-            const puzzles = puzzle.rounds.map(round => data.rounds[round].puzzles).flat().filter(_slug => {
-              const add = !slugSet.has(_slug) && _slug !== slug;
+            const puzzles = visibleRounds.map(round => data.rounds[round].puzzles).flat().filter(_slug => {
+              const add = !slugSet.has(_slug) && _slug !== slug && data.puzzles[_slug]?.hidden !== false;
               slugSet.add(_slug);
               return add;
             });
@@ -742,7 +761,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
       </>
       }
       <div className='sub-puzzleinfo viewers'>
-        <span className='colon'>Viewers</span>
+        <span className='bold colon'>Viewers</span>
         {puzzleActivities?.map(activity => Avatar(data.users[activity.uid], activity, data.hunt))}
       </div>
     </>
