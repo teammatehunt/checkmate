@@ -1,9 +1,13 @@
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django import forms
 from django.db import transaction
 
 from django_admin_hstore_widget.forms import HStoreFormWidget
 from . import models
+
+# Patch User validators
+User.username.field.validators.clear()
 
 # Inline models first (for relationships)
 class DeferredUniqueForm(forms.ModelForm):
