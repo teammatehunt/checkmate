@@ -23,6 +23,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Chrome extension
+    os.makedirs(STATIC_ROOT, exist_ok=True)
     subprocess.run(f'zip -FS {STATIC_ROOT}/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
 
     # Firefox extension
