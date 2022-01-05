@@ -310,6 +310,7 @@ def create_round(
     name,
     link=None,
     enable_discord_channels=None,
+    create_placeholder=True,
     **kwargs,
 ):
     if enable_discord_channels is None:
@@ -326,6 +327,16 @@ def create_round(
                 _round.slug, discord_category_ids=discord_category_ids))
         _round.save(update_fields=['discord_category_id'])
     round_dict = {key: getattr(_round, key) for key in api.BaseRoundSerializer().fields.keys()}
+    if create_placeholder:
+        # create meta placeholder
+        create_puzzle.delay(
+            discord_category_id=_round.discord_category_id,
+            name=_round.name,
+            link=_round.link,
+            rounds=[_round.slug],
+            is_meta=True,
+            is_placeholder=True,
+        )
     return round_dict
 
 @app.task
@@ -408,22 +419,17 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             round_name = site_round['name']
             round_slug = slugify(round_name)
         else:
-            round_dict = create_round(**site_round, enable_discord_channels=enable_discord_channels)
+            create_placeholder = not fetched_metas_by_round[round_name]
+            round_dict = create_round(
+                **site_round,
+                enable_discord_channels=enable_discord_channels,
+                create_placeholder=create_placeholder,
+            )
             round_slugs_to_discord_category_ids[round_dict['slug']] = round_dict['discord_category_id']
             round_name = round_dict['name']
             round_slug = round_dict['slug']
-        if not fetched_metas_by_round[round_name]:
-            if not dry_run:
-                # create meta placeholder
-                create_puzzle.delay(
-                    discord_category_id=round_dict['discord_category_id'],
-                    name=round_dict['name'],
-                    link=round_dict['link'],
-                    rounds=[round_dict['slug']],
-                    is_meta=True,
-                    is_placeholder=True,
-                )
-            new_data['placeholder-metas'].append(round_slug)
+            if create_placeholder:
+                new_data['placeholder-metas'].append(round_slug)
         new_data['rounds'].append(site_round)
         reduced_round_names_to_slugs[reduced_name(round_name)] = round_slug
     for site_puzzle in site_puzzles:

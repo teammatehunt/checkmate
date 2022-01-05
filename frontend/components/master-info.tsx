@@ -55,6 +55,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
   const defaultFormRoundData = {
     name: '',
     link: '',
+    create_placeholder: true,
   };
 
   const formDataReducer = produce((draft, {set, reduce}) => {
@@ -218,6 +219,13 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
                 </Td>
                 <Td>
                   <input type='text' name='link' onChange={onFormRoundChange} value={formRoundData.link} autoComplete='off'/>
+                </Td>
+              </Tr>
+              <Tr>
+                <Td></Td>
+                <Td>
+                  <input type='checkbox' name='create_placeholder' onChange={onFormRoundChange} checked={formRoundData.create_placeholder}/>
+                  <span>Create placeholder puzzle</span>
                 </Td>
               </Tr>
             </Tbody>
