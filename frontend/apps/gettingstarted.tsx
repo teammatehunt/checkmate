@@ -63,10 +63,12 @@ export const GettingStarted = () => {
           <li>
             <span className='cyan'>Settings</span>: These settings are per browser tab.
             <ul>
-              <li><span>Hide solved</span>: Hide solved puzzles from the table.</li>
+              <li><span>Hide solved puzzles</span>: Hide solved puzzles from the table.</li>
+              <li><span>Hide finished rounds</span>: Hide rounds where all non-metas feed a meta and all metas are solved.</li>
               <li><span>Newest rounds at top</span>: Reverse the order of rounds displayed. This will also show a group of all metas at the top.</li>
               <li><span>Edit tags</span>: Enable adding and removing round tags. A value for the tag can be set for each puzzle in the round.</li>
               <li><span>Hide own activity</span>: If toggled, the activity of which puzzle you currently have open will not be broadcast to the rest of the team. Not recommended.</li>
+              <li><span>Disable Discord</span>: Disables the Discord iframe and integrations.</li>
               <li><span>Max puzzles to cache</span>: Checkmate will cache your most recent puzzle tabs so that the embedded web pages do not have to reload. If your machine can handle it and you like quickly switching between puzzles, set this higher. If Checkmate is using a high proportion of your system's RAM, set this lower.</li>
             </ul>
           </li>
