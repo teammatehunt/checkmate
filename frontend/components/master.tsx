@@ -20,6 +20,7 @@ import {
   Td,
 } from 'components/drop-ins';
 import { Plus, X } from 'components/react-feather';
+import { puzzleUrl } from 'components/frames';
 import {
   EditState,
   TdEditable,
@@ -291,7 +292,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     );
   }
 
-  const puzzle_link = huntConfig.root && puzzle.link ? `${huntConfig.root}${puzzle.link}` : undefined;
+  const puzzle_link = puzzleUrl(puzzle.link, huntConfig.root);
   const sheet_link = puzzle.sheet_link;
 
   return (
