@@ -68,7 +68,8 @@ class BotConfig(SingletonModel):
     # Hunt site and scraper settings
     puzzles_page = CharField(blank=True, help_text='Page with puzzles list (or data endpoint) to be queried by scraper.')
     login_page = CharField(blank=True, help_text='Login page (used by scraper).')
-    login_api_endpoint = CharField(blank=True, help_text='Login endpoint (used by scraper).')
+    login_api_endpoint = CharField(blank=True, help_text='Login endpoint (used by scraper). POST request.')
+    login_followup_endpoint = CharField(blank=True, help_text='Secondary login endpoint (used by scraper, not needed in most cases). GET request.')
     enable_scraping = models.BooleanField(default=False, help_text='Enable auto scraping for new puzzles.')
 
     # Discord settings

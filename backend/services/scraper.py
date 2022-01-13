@@ -40,14 +40,21 @@ class Client:
     async def login(self):
         login_page = self.bot_config.login_page
         headers = {}
+        csrftoken_name = 'csrfmiddlewaretoken'
         csrftoken = None
         if login_page:
             headers['Referer'] = login_page
-            async with self.session.get(login_page) as resp:
+            async with self.session.get(
+                login_page,
+                allow_redirects=False,
+            ) as resp:
+                if resp.status == 302:
+                    # Assume redirects mean we are already logged in
+                    return
                 data = await resp.read()
             soup = BeautifulSoup(data, 'html5lib')
             # Django sites usually call the formfield CSRF token csrfmiddlewaretoken
-            csrftoken = soup.find('input', {'name': 'csrfmiddlewaretoken'}).get('value')
+            csrftoken = (soup.find('input', {'name': csrftoken_name}) or {}).get('value')
         login_api = self.bot_config.login_api_endpoint
         if login_api:
             payload = {
@@ -55,13 +62,18 @@ class Client:
                 'password': settings.SECRETS['LOGIN']['password'],
             }
             if csrftoken is not None:
-                payload['csrfmiddlewaretoken'] = csrftoken
+                payload[csrftoken_name] = csrftoken
             async with self.session.post(
                 login_api,
                 data=payload,
                 headers=headers,
             ) as resp:
                 resp.raise_for_status()
+            if self.bot_config.login_followup_endpoint:
+                async with self.session.get(
+                    self.bot_config.login_followup_endpoint,
+                ) as resp:
+                    resp.raise_for_status()
 
     async def try_fetch(self, puzzles_page=None):
         if puzzles_page is None:
@@ -140,7 +152,7 @@ def parse_json(data):
     return scraper_examples.parse_json_mh19(data)
 
 def parse_html(soup: BeautifulSoup):
-    return scraper_examples.parse_html_silph21(soup)
+    return scraper_examples.parse_html_starrats(soup)
 
 async def async_parse_html(client: Client, soup: BeautifulSoup):
     return await scraper_examples.parse_html_silph21(client, soup)

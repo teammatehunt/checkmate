@@ -263,3 +263,39 @@ def parse_html_silph21(soup):
                     puzzle['is_meta'] = True
                 results['puzzles'].append(puzzle)
     return results
+
+def parse_html_starrats(soup):
+    results = defaultdict(list)
+    div_puzzles = soup.find(class_='puzzles')
+    round_name = None
+    logger.warning(soup.find('div', class_='actions'))
+    for div in div_puzzles.children:
+        if div.name != 'div':
+            continue
+        table = div.find('table')
+        if table is None:
+            continue
+        for tr in table.tbody.find_all('tr'):
+            td_or_th = tr.find_all(True, recursive=False)[0]
+            if td_or_th.name == 'th':
+                round_name = td_or_th.string
+                _round = {'name': round_name}
+                if td_or_th.a:
+                    _round['link'] = td_or_th.a.get('href')
+                results['rounds'].append(_round)
+            else:
+                a = td_or_th.a
+                if a is not None:
+                    puzzle = {}
+                    puzzle['name'] = a.text.strip()
+                    puzzle['link'] = a.get('href')
+                    if round_name is not None:
+                        puzzle['round_names'] = [round_name]
+                    answer = None
+                    if answer:
+                        puzzle['answer'] = answer
+                        puzzle['is_solved'] = True
+                    if 'meta' in a.get('class', []):
+                        puzzle['is_meta'] = True
+                    results['puzzles'].append(puzzle)
+    return results
