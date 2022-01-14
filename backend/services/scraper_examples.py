@@ -321,7 +321,6 @@ async def parse_html_mh22(client, soup):
                 for tr in table.tbody.find_all('tr')[1:]:
                     tds_or_ths = tr.find_all(True, recursive=False)
                     if len(tds_or_ths) != 2:
-                        logger.warning('Scraper found row without 2 columns')
                         continue
                     puzzle = {}
                     puzzle['name'] = tds_or_ths[0].text.strip()
