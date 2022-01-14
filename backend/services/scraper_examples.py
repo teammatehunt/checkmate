@@ -268,7 +268,6 @@ def parse_html_starrats(soup):
     results = defaultdict(list)
     div_puzzles = soup.find(class_='puzzles')
     round_name = None
-    logger.warning(soup.find('div', class_='actions'))
     for div in div_puzzles.children:
         if div.name != 'div':
             continue
