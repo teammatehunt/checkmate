@@ -298,3 +298,43 @@ def parse_html_starrats(soup):
                         puzzle['is_meta'] = True
                     results['puzzles'].append(puzzle)
     return results
+
+async def parse_html_mh22(client, soup):
+    results = defaultdict(list)
+    content = soup.find(id='main-content')
+    round_name = None
+    for h2 in content.find_all('h2'):
+        if h2.name == 'h2':
+            # round
+            round_name = h2.text.strip()
+            _round = {'name': round_name}
+            a = h2.a
+            if h2.a:
+                _round['link'] = h2.a.get('href')
+            results['rounds'].append(_round)
+            round_html = await client.try_fetch(_round['link'])
+            round_soup = BeautifulSoup(round_html, 'html5lib')
+            div = round_soup.find(class_='round-table-container')
+            table = div.table
+            if table:
+                # list of puzzles
+                for tr in table.tbody.find_all('tr')[1:]:
+                    tds_or_ths = tr.find_all(True, recursive=False)
+                    if len(tds_or_ths) != 2:
+                        logger.warning('Scraper found row without 2 columns')
+                        continue
+                    puzzle = {}
+                    puzzle['name'] = tds_or_ths[0].text.strip()
+                    a = tds_or_ths[0].a
+                    if a:
+                        puzzle['link'] = a.get('href')
+                    if round_name is not None:
+                        puzzle['round_names'] = [round_name]
+                    answer = tds_or_ths[1].text.strip()
+                    if answer:
+                        puzzle['answer'] = answer
+                        puzzle['is_solved'] = True
+                    if 'meta' in a.get('class', []):
+                        puzzle['is_meta'] = True
+                    results['puzzles'].append(puzzle)
+    return results
