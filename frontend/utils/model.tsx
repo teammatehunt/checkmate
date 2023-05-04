@@ -1,4 +1,4 @@
-import produce, { Draft } from 'immer';
+import { produce, Draft } from 'immer';
 
 import { solvedStatuses } from 'utils/colors';
 

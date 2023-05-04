@@ -11,8 +11,8 @@ celery = '*'
 channels = '*'
 channels-redis = '*'
 daphne = '*'
-'discord.py' = '*'
-django = '==3.1.8' # django-cachalot does not support django 3.2+
+'discord.py' = '==1.7.2'
+django = '==3.1.14' # django-cachalot does not support django 3.2+
 django-admin-hstore-widget = '*'
 django-allauth = '*'
 django-autoslug = '*'
@@ -36,4 +36,4 @@ whitenoise = '*'
 [dev-packages]
 
 [requires]
-python_version = '3.8'
+python_version = '3.9'

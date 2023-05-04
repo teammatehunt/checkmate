@@ -1,3 +1,5 @@
+# vim: filetype=caddyfile
+
 {$SERVER_HOSTNAME} {
   log {
     output file /log/caddy.log {

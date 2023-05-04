@@ -3,7 +3,7 @@ import React, {
   useState,
 } from 'react';
 
-import produce from 'immer';
+import { produce } from 'immer';
 import Collapsible from 'react-collapsible';
 
 import { LocalStorageObject } from 'utils/hooks';

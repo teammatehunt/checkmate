@@ -1,5 +1,3 @@
-import produce from 'immer';
-
 export const getCookie = (name) => {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {

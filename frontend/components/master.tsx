@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 
-import produce from 'immer';
+import { produce } from 'immer';
 import orderBy from 'lodash/orderBy';
 import humanizeDuration from 'humanize-duration';
 

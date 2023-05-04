@@ -3,7 +3,7 @@ version: '3.7'
 services:
   caddy:
     restart: unless-stopped
-    image: caddy:2.2.1-alpine
+    image: caddy:2.6.4-alpine
     volumes:
       - caddy_data:/data
       - caddy_config:/config

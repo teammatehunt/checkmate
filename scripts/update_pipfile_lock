@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+REAL_SOURCE="$(perl -e "use Cwd 'abs_path'; print abs_path('${BASH_SOURCE}')")"
+cd "$(dirname "$(dirname "${REAL_SOURCE}")")"
+
+if docker inspect checkmate_app &>/dev/null
+then
+  docker run --rm -it -v "$(pwd)/backend:/host" -u "$(id -u):$(id -g)" -w /host -e WORKON_HOME=/tmp/virtualenvs checkmate_app pipenv lock
+else
+  >&2 echo 'Error: First run `./scripts/initialize_dev` to build the image (may need to revert the Pipfile config first)'
+  exit 1
+fi
