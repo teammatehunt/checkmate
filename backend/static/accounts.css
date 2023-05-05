@@ -98,14 +98,19 @@ form.login > button[type=submit] {
   margin-left: auto;
 }
 
-a.socialaccount_provider.discord {
+button.socialaccount_provider.discord {
   display: block;
   --discord-scale: 0.2;
   height: calc(272.1px * var(--discord-scale));
   width: calc(800px * var(--discord-scale));
+  border: none;
   border-radius: calc(27.21px * var(--discord-scale));
   background-image: url('Discord-Logo+Wordmark-White.svg');
   background-repeat: no-repeat;
   background-color: #7289da; /* blueple */
   font-size: 0;
+}
+
+button.socialaccount_provider.discord:hover {
+  cursor: pointer;
 }

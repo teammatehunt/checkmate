@@ -179,7 +179,6 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login'
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = None
 ACCOUNT_ADAPTER = 'accounts.admin.AccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.admin.SocialAccountAdapter'
-SOCIALACCOUNT_LOGIN_ON_GET = True
 
 SITE_ID = 1
 
