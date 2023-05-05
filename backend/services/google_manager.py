@@ -35,7 +35,6 @@ class GoogleManager:
         if self.drive is None:
             self.drive = await self.client.discover('drive', 'v3')
             self.sheets = await self.client.discover('sheets', 'v4')
-            await self.client._ensure_session_set()
 
     async def create(self, name):
         await self.setup()
@@ -49,6 +48,8 @@ class GoogleManager:
             ),
         )
         sheet_id = sheet_file['id']
+        # TODO: Google now requires consent of the new owner
+        '''
         await self.client.as_service_account(
             self.drive.permissions.update(
                 fileId=sheet_id,
@@ -59,6 +60,7 @@ class GoogleManager:
                 },
             ),
         )
+        '''
         return sheet_id
 
     async def add_links(self, sheet_id, checkmate_link=None, puzzle_link=None):
