@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -23,8 +24,38 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
     def is_open_for_signup(self, request, sociallogin):
         return True
 
+    def add_google(self, request, sociallogin):
+        scope = request.GET.get('scope', '')
+        token = sociallogin.token
+        uid = sociallogin.account.uid
+        extra_data = sociallogin.account.extra_data
+        email = extra_data.get('email', '')
+        name = extra_data.get('name', '')
+        missing_scopes = (
+            set(settings.SOCIALACCOUNT_PROVIDERS['google']['SCOPE'])
+            - set(scope.split())
+        )
+        if missing_scopes:
+            e = ValueError(f'You need to allow all scopes: {" ".join(missing_scopes)}')
+            messages.error(request, e)
+            raise ImmediateHttpResponse(redirect('/accounts/social/login/error/')) from e
+
+        # TODO: save token in database
+        print({
+            'name': name,
+            'email': email,
+            'refresh': token.token_secret,
+            'token': token.token,
+            'uid': uid,
+            'scope': scope,
+        })
+
     def pre_social_login(self, request, sociallogin):
-        account = sociallogin.account.get_provider_account().account
+        account = sociallogin.account
+        if account.provider == 'google':
+            self.add_google(request, sociallogin)
+            raise ImmediateHttpResponse(redirect('/'))
+
         uid = account.uid
         username = account.extra_data.get('username')
         discriminator = account.extra_data.get('discriminator')

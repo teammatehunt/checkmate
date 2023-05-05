@@ -27,6 +27,8 @@ services:
     environment:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
+      - ASGI_NUM_PROCS=4
+      - CELERY_NUM_PROCS=2
     volumes:
       - .:/app:ro
       - ./frontend/.docker.yarnrc:/app/frontend/.yarnrc:ro

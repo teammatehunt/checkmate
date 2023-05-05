@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.discord',
+    'allauth.socialaccount.providers.google',
     'rest_framework',
     'cachalot',
 ]
@@ -182,13 +183,29 @@ SOCIALACCOUNT_ADAPTER = 'accounts.admin.SocialAccountAdapter'
 
 SITE_ID = 1
 
+DRIVE_SETTINGS = SECRETS.get('DRIVE_SETTINGS', {})
+if 'credentials_file' in DRIVE_SETTINGS:
+    with open(PROJECT_DIR / DRIVE_SETTINGS['credentials_file'], 'rt') as f:
+        DRIVE_SETTINGS['credentials'] = json.load(f)
 DISCORD_CREDENTIALS = SECRETS.get('DISCORD_CREDENTIALS', {})
 
 SOCIALACCOUNT_PROVIDERS = {
     'discord': {
         'SCOPE': ['identify'],
         'APP': DISCORD_CREDENTIALS,
-    }
+    },
+    'google': {
+        'SCOPE': [
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/userinfo.profile',
+        ],
+        'APP': DRIVE_SETTINGS.get('oauth', {}),
+        'AUTH_PARAMS': {
+            'access_type': 'offline',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    },
 }
 
 # Password validation
@@ -249,11 +266,6 @@ WHITENOISE_ROOT = os.path.join(BACKEND_DIR, 'static_root')
 PERMISSIONS_POLICY = {
     feature: '*' for feature in django_permissions_policy.FEATURE_NAMES
 }
-
-DRIVE_SETTINGS = SECRETS.get('DRIVE_SETTINGS', {})
-if 'credentials_file' in DRIVE_SETTINGS:
-    with open(PROJECT_DIR / DRIVE_SETTINGS['credentials_file'], 'rt') as f:
-        DRIVE_SETTINGS['credentials'] = json.load(f)
 
 # Celery
 CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DATABASE_ENUM.CELERY}'

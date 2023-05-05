@@ -48,6 +48,17 @@ class GoogleManager:
             ),
         )
         sheet_id = sheet_file['id']
+        await self.client.as_service_account(
+            self.drive.permissions.update(
+                fileId=sheet_id,
+                permissionId=self.owner_id,
+                json={
+                    'role': 'writer',
+                    'type': 'user',
+                    'pendingOwner': True,
+                },
+            ),
+        )
         # TODO: Google now requires consent of the new owner
         '''
         await self.client.as_service_account(
