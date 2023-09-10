@@ -96,7 +96,7 @@ class GoogleSheetOwner(SingletonModel):
     scopes = CharField(help_text='List of Google OAuth scopes')
     refresh_token = CharField()
     access_token = CharField()
-    expires_at = models.BigIntegerField(help_text='Unix timestamp')
+    expires_at = models.DateTimeField()
 
     @property
     def user_creds(self):
@@ -105,7 +105,7 @@ class GoogleSheetOwner(SingletonModel):
         return UserCreds(
             access_token=self.access_token,
             refresh_token=self.refresh_token,
-            expires_at=datetime.datetime.utcfromtimestamp(self.expires_at),
+            expires_at=self.expires_at.astimezone(datetime.timezone.utc).replace(tzinfo=None),
             scopes=self.scopes,
         )
 

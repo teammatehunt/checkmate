@@ -20,6 +20,10 @@ Drive:
 1. Do the same for the Sheets API.
 1. [Create a service account.](https://console.cloud.google.com/iam-admin/serviceaccounts)
 1. Create a key and download the json to `credentials`. Rename or add the filename to `SECRETS.yaml`.
+1. [Set up an OAuth 2 client application for Google.](https://developers.google.com/identity/protocols/oauth2)
+    1. Use a "web" client type.
+    1. Add users who should be able to give credentials to become the owner of puzzle sheets to the "Test users".
+    1. Add the OAuth client id and secret to `SECRETS.yaml`.
 
 Ensure the database is setup (choose a better password):
 ```sh

@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import threading
 
 from allauth.socialaccount.models import SocialAccount
 from asgiref.sync import sync_to_async
@@ -10,6 +9,8 @@ from django import http
 
 import aiohttp
 import discord
+
+from .threadsafe_manager import ThreadsafeManager
 
 logger = logging.getLogger(__name__)
 
@@ -23,30 +24,7 @@ class StaticDiscordHttpClient(discord.http.HTTPClient):
         return self._HTTPClient__session
 
 
-class DiscordManager:
-    __main_instance = None
-    __thread_instance = None
-    __thread = None
-
-    @classmethod
-    def instance(cls):
-        '''
-        Get a threadsafe instance.
-        '''
-        if threading.current_thread() is threading.main_thread():
-            if cls.__main_instance is None:
-                cls.__main_instance = cls(asyncio.get_event_loop())
-            return cls.__main_instance
-        else:
-            if cls.__thread_instance is None:
-                cls.__thread_instance = cls(asyncio.new_event_loop())
-                def f():
-                    asyncio.set_event_loop(cls.__thread_instance.loop)
-                    cls.__thread_instance.loop.run_forever()
-                cls.__thread = threading.Thread(target=f)
-                cls.__thread.start()
-            return cls.__thread_instance
-
+class DiscordManager(ThreadsafeManager):
     @staticmethod
     async def initiate_gateway():
         '''
@@ -60,10 +38,11 @@ class DiscordManager:
         logger.warning('connected to discord')
 
     def __init__(self, loop):
+        super().__init__(loop)
+
         self.server_id = settings.DISCORD_CREDENTIALS['server_id']
         self.bot_token = settings.DISCORD_CREDENTIALS['bot_token']
 
-        self.loop = loop
         self.client = None
         self.__setup_done = False
 
@@ -169,14 +148,8 @@ class DiscordManager:
 
     @classmethod
     def sync_threadsafe_get_member(cls, uid):
-        '''
-        Threadsafe at the cost of running its own event loop.
-        This cannot be called from an async context.
-        '''
-        dmgr = cls.instance()
-        return asyncio.run_coroutine_threadsafe(dmgr.get_member(uid), dmgr.loop).result()
+        return cls._run_sync_threadsafe(cls.get_member, uid).result()
 
     @classmethod
     def sync_threadsafe_move_member(cls, uid, channel_id):
-        dmgr = cls.instance()
-        return asyncio.run_coroutine_threadsafe(dmgr.move_member(uid, channel_id), dmgr.loop).result()
+        return cls._run_sync_threadsafe(cls.move_member, uid, channel_id).result()

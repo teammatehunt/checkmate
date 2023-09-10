@@ -321,7 +321,7 @@ def google_sheets_owner_data(request):
         owner = {
             'name': owner.name,
             'email': owner.email,
-            'expires_at': datetime.datetime.utcfromtimestamp(owner.expires_at).isoformat(),
+            'expires_at': owner.expires_at,
         }
     return {
         'owner': owner,

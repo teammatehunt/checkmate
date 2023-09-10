@@ -116,5 +116,5 @@ button.socialaccount_provider.discord:hover {
 }
 
 .socialaccount_provider.google {
-  /* display: none; */
+  display: none;
 }

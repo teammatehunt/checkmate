@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from django.conf import settings
@@ -44,7 +45,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             uid=sociallogin.account.uid,
             refresh_token=token.token_secret,
             access_token=token.token,
-            expires_at=extra_data.get('exp'),
+            expires_at=datetime.datetime.utcfromtimestamp(extra_data.get('exp')).replace(tzinfo=datetime.timezone.utc),
             scopes=scopes,
         )
         if not GoogleManager.sync_check_access(owner):
@@ -52,6 +53,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             messages.error(request, e)
             raise ImmediateHttpResponse(redirect('/accounts/social/login/error/')) from e
         owner.save()
+        raise ImmediateHttpResponse(redirect('/google'))
 
     def pre_social_login(self, request, sociallogin):
         account = sociallogin.account

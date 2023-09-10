@@ -45,7 +45,7 @@ export const SheetsOwner : React.FC<SheetsOwnerProps> = ({
 
         <form
           method="post"
-          action="/accounts/google/login/?process=login&next=%2F"
+          action="/accounts/google/login/?process=login"
         >
           <input type="hidden" name="csrfmiddlewaretoken" value={csrfmiddlewaretoken}/>
           <button type="submit">

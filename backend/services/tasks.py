@@ -215,7 +215,7 @@ def populate_puzzle(
         puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug or puzzle.slug)
     if discord_category_id is None and (kwargs.get('text') or kwargs.get('voice')):
         discord_category_id = bot_config.default_category_id
-    new_user_creds = asyncio.get_event_loop().run_until_complete(async_populate_puzzle(
+    updated_user_creds = asyncio.get_event_loop().run_until_complete(async_populate_puzzle(
         puzzle,
         hunt_config=hunt_config,
         sheet_owner=sheet_owner,
@@ -223,13 +223,16 @@ def populate_puzzle(
         discord_category_id=discord_category_id,
         **kwargs,
     ))
-    if new_user_creds is not None:
-        new_access_token = new_user_creds.access_token
+    if updated_user_creds is not None:
+        new_access_token = updated_user_creds.access_token
         if new_access_token != sheet_owner.access_token:
             (
                 models.GoogleSheetOwner.objects
                 .filter(refresh_token=sheet_owner.refresh_token)
-                .update(access_token=new_access_token)
+                .update(
+                    access_token=new_access_token,
+                    expires_at=updated_user_creds.expires_at.replace(tzinfo=datetime.timezone.utc),
+                )
             )
 
 async def async_populate_puzzle(
@@ -245,7 +248,7 @@ async def async_populate_puzzle(
 ):
     discord_manager = DiscordManager.instance()
     google_manager = GoogleManager.instance()
-    new_user_creds = None
+    updated_user_creds = None
 
     hunt_root = hunt_config.root
     checkmate_link = models.Puzzle.get_link(puzzle.slug)
@@ -273,7 +276,7 @@ async def async_populate_puzzle(
         sheet_id = None
     else:
         sheet_id = sheet_data.get('sheet_id')
-        new_user_creds = sheet_data.get('new_user_creds')
+        updated_user_creds = sheet_data.get('updated_user_creds')
     update_fields = []
     if sheet_id is not None:
         puzzle.sheet_link = f'https://docs.google.com/spreadsheets/d/{sheet_id}'
@@ -318,7 +321,7 @@ async def async_populate_puzzle(
                 'content': f'{prefix}**[{puzzle.long_name}]({checkmate_link})**',
             },
         )
-    return new_user_creds
+    return updated_user_creds
 
 @app.task
 def create_round(

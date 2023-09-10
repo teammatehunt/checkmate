@@ -1,8 +1,11 @@
 from aiogoogle import Aiogoogle
-from aiogoogle.auth.creds import ServiceAccountCreds
+from aiogoogle.auth.creds import ClientCreds, ServiceAccountCreds
+from aiogoogle.auth.managers import Oauth2Manager
 from aiogoogle.excs import HTTPError
 from celery.utils.log import get_task_logger
 from django.conf import settings
+
+from .threadsafe_manager import ThreadsafeManager
 
 logger = get_task_logger(__name__)
 
@@ -10,26 +13,22 @@ scopes = [
     'https://www.googleapis.com/auth/drive',
 ]
 
-class GoogleManager:
-    __instance = None
+class GoogleManager(ThreadsafeManager):
+    def __init__(self, loop):
+        super().__init__(loop)
 
-    @classmethod
-    def instance(cls):
-        '''
-        Get a single instance per process.
-        '''
-        if cls.__instance is None:
-            cls.__instance = cls()
-        return cls.__instance
-
-    def __init__(self):
-        self.creds = ServiceAccountCreds(
+        self.service_account_creds = ServiceAccountCreds(
             scopes=scopes,
             **settings.DRIVE_SETTINGS['credentials'],
         )
+        self.oauth_client_creds = ClientCreds(
+            client_id=settings.DRIVE_SETTINGS['oauth']['client_id'],
+            client_secret=settings.DRIVE_SETTINGS['oauth']['secret'],
+        )
         self.template_id = settings.DRIVE_SETTINGS['template_id']
         self.puzzle_folder_id = settings.DRIVE_SETTINGS['puzzle_folder_id']
-        self.client = Aiogoogle(service_account_creds=self.creds)
+        self.client = Aiogoogle(service_account_creds=self.service_account_creds)
+        self.oauth_client = Oauth2Manager(client_creds=self.oauth_client_creds)
 
         self.drive = None
         self.sheets = None
@@ -41,36 +40,31 @@ class GoogleManager:
 
     async def check_access(self, user):
         await self.setup()
+        async def get_capability(file_id, capability):
+            resp = await self.client.as_user(
+                self.drive.files.get(
+                    fileId=file_id,
+                    fields=f'capabilities/{capability}',
+                ),
+                user_creds=user.user_creds,
+            )
+            return resp['capabilities'][capability]
         try:
-            folder_metadata = await self.client.as_user(
-                self.drive.files.get(
-                    fileId=self.puzzle_folder_id,
-                ),
-                user_creds=user.user_creds,
-            )
-            template_metadata = await self.client.as_user(
-                self.drive.files.get(
-                    fileId=self.template_id,
-                ),
-                user_creds=user.user_creds,
-            )
+            return all((
+                await get_capability(self.puzzle_folder_id, 'canAddChildren'),
+                await get_capability(self.template_id, 'canCopy'),
+            ))
         except HTTPError as e:
             logger.error(f'User Access Error: {repr(e)}')
             return False
-        else:
-            return all((
-                folder_metadata['capabilities']['canAddChildren'],
-                template_metadata['capabilities']['canCopy'],
-            ))
 
     @classmethod
     def sync_check_access(cls, user):
-        gmgr = cls.instance()
-        return asyncio.get_event_loop().run_until_complete(gmgr.check_access(user))
+        return cls._run_sync_threadsafe(cls.check_access, user)
 
     async def create(self, name, owner):
         await self.setup()
-        new_user_creds = None
+        updated_user_creds = None
         copy_request = self.drive.files.copy(
             fileId=self.template_id,
             json={
@@ -81,20 +75,18 @@ class GoogleManager:
         try:
             if owner is None:
                 raise RuntimeError('No one has been authenticated as a sheets owner')
+            _, updated_user_creds = await self.oauth_client.refresh(owner.user_creds)
             sheet_file = await self.client.as_user(
                 copy_request,
-                user_creds=owner.user_creds,
+                user_creds=updated_user_creds,
             )
-            new_user_creds = sheet_file.user_creds
         except Exception as e:
             logger.error(f'Sheets Owner Error: {repr(e)}')
-            sheet_file = await self.client.as_service_account(
-                copy_request,
-            )
+            sheet_file = await self.client.as_service_account(copy_request)
         sheet_id = sheet_file['id']
         return {
             'sheet_id': sheet_id,
-            'new_user_creds': new_user_creds,
+            'updated_user_creds': updated_user_creds,
         }
 
     async def add_links(self, sheet_id, checkmate_link=None, puzzle_link=None):
