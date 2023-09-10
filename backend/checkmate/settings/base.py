@@ -187,6 +187,9 @@ DRIVE_SETTINGS = SECRETS.get('DRIVE_SETTINGS', {})
 if 'credentials_file' in DRIVE_SETTINGS:
     with open(PROJECT_DIR / DRIVE_SETTINGS['credentials_file'], 'rt') as f:
         DRIVE_SETTINGS['credentials'] = json.load(f)
+if 'oauth' in DRIVE_SETTINGS:
+    # Google OAuth uses the secret but not the key field, but it needs to exist
+    DRIVE_SETTINGS['oauth']['key'] = ''
 DISCORD_CREDENTIALS = SECRETS.get('DISCORD_CREDENTIALS', {})
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -197,6 +200,7 @@ SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
             'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/drive.readonly',
             'https://www.googleapis.com/auth/userinfo.email',
             'https://www.googleapis.com/auth/userinfo.profile',
         ],

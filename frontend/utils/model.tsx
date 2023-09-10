@@ -28,6 +28,14 @@ export interface SocialAccount {
   };
 }
 
+
+export interface SheetsOwner {
+  name: string;
+  email: string;
+  expires_at: string;
+}
+
+
 export interface User {
   id: number;
   username: string;

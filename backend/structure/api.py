@@ -5,6 +5,7 @@ import logging
 import discord
 from django import db
 from django.contrib.auth.decorators import login_required
+from django.middleware import csrf
 from django.db import transaction
 from django.db.models import F
 from django.conf import settings
@@ -244,13 +245,15 @@ def process_relation(cls, pk, request):
     except db.Error as e:
         raise exceptions.APIException(e)
 
+
 def data_everything():
     # using Django REST Framework serializers directly is slow
     # hunt_config = HuntConfigSerializer(models.HuntConfig.get()).data
     def cast(objs):
-        return [{key: value.isoformat() if isinstance(value, datetime.datetime) else value
-                 for key, value in obj.items()}
-                for obj in objs]
+        return [{
+            key: value.isoformat() if isinstance(value, datetime.datetime) else value
+            for key, value in obj.items()
+        } for obj in objs]
     hunt_config = models.HuntConfig.get()
     hunt_config = {key: getattr(hunt_config, key) for key in HuntConfigSerializer().fields.keys()}
     users = cast(User.objects.values(*(key for key in UserSerializer().fields.keys() if key != 'socialaccounts')))
@@ -310,6 +313,20 @@ def data_everything_with_uid(request):
     data = data_everything()
     data['uid'] = request.user.id
     return data
+
+@login_required
+def google_sheets_owner_data(request):
+    owner = models.GoogleSheetOwner.get()
+    if owner is not None:
+        owner = {
+            'name': owner.name,
+            'email': owner.email,
+            'expires_at': datetime.datetime.utcfromtimestamp(owner.expires_at).isoformat(),
+        }
+    return {
+        'owner': owner,
+        'csrfmiddlewaretoken': csrf.get_token(request),
+    }
 
 @decorators.api_view(['POST'])
 @login_required

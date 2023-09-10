@@ -48,6 +48,12 @@ def getting_started(request):
     return render_app(request, page)
 
 @login_required
+def google_sheets_owner(request):
+    page = 'googlesheetsowner'
+    props = api.google_sheets_owner_data(request)
+    return render_app(request, page, props)
+
+@login_required
 def extension(request):
     page = 'extension'
     props = {

@@ -27,4 +27,5 @@ urlpatterns = [
     path('puzzles/<slug:slug>', views.puzzle),
     path('extension/', views.extension),
     path('getting-started/', views.getting_started),
+    path('google/', views.google_sheets_owner),
 ]

@@ -26,13 +26,14 @@ def CharField(*args, **kwargs):
     return models.CharField(*args, max_length=MAX_LENGTH, **kwargs)
 
 class SingletonModel(models.Model):
+    POPULATE_DEFAULTS = True
     class Meta:
         abstract = True
 
     @classmethod
     def get(cls):
         obj = cls.objects.last()
-        if obj is None:
+        if obj is None and cls.POPULATE_DEFAULTS:
             obj = cls()
             for field in obj._meta.fields:
                 setattr(obj, field.name, field.get_default())
@@ -84,6 +85,29 @@ class BotConfig(SingletonModel):
         blank=True, help_text='Discord webhook for solved puzzle alerts.')
     afk_voice_channel_id = models.BigIntegerField(
         null=True, blank=True, help_text='Discord channel to put people in when deleting channels.')
+
+class GoogleSheetOwner(SingletonModel):
+    '''Token management for setting the owner for sheets.'''
+    POPULATE_DEFAULTS = False
+
+    name = CharField()
+    email = CharField()
+    uid = CharField()
+    scopes = CharField(help_text='List of Google OAuth scopes')
+    refresh_token = CharField()
+    access_token = CharField()
+    expires_at = models.BigIntegerField(help_text='Unix timestamp')
+
+    @property
+    def user_creds(self):
+        import datetime
+        from aiogoogle.auth.creds import UserCreds
+        return UserCreds(
+            access_token=self.access_token,
+            refresh_token=self.refresh_token,
+            expires_at=datetime.datetime.utcfromtimestamp(self.expires_at),
+            scopes=self.scopes,
+        )
 
 class Entity(models.Model):
     slug = autoslug.AutoSlugField(max_length=MAX_LENGTH, primary_key=True,

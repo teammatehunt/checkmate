@@ -171,7 +171,7 @@ class DiscordManager:
     def sync_threadsafe_get_member(cls, uid):
         '''
         Threadsafe at the cost of running its own event loop.
-        This cannot be called from an async context
+        This cannot be called from an async context.
         '''
         dmgr = cls.instance()
         return asyncio.run_coroutine_threadsafe(dmgr.get_member(uid), dmgr.loop).result()

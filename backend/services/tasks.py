@@ -209,23 +209,34 @@ def populate_puzzle(
     webhook = bot_config.alert_new_puzzle_webhook if created else None
     if hunt_config is None:
         hunt_config = models.HuntConfig.get()
+    sheet_owner = models.GoogleSheetOwner.get()
     hunt_root = hunt_config.root
     if puzzle is None or webhook:
         puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug or puzzle.slug)
     if discord_category_id is None and (kwargs.get('text') or kwargs.get('voice')):
         discord_category_id = bot_config.default_category_id
-    asyncio.get_event_loop().run_until_complete(async_populate_puzzle(
+    new_user_creds = asyncio.get_event_loop().run_until_complete(async_populate_puzzle(
         puzzle,
         hunt_config=hunt_config,
+        sheet_owner=sheet_owner,
         webhook=webhook,
         discord_category_id=discord_category_id,
         **kwargs,
     ))
+    if new_user_creds is not None:
+        new_access_token = new_user_creds.access_token
+        if new_access_token != sheet_owner.access_token:
+            (
+                models.GoogleSheetOwner.objects
+                .filter(refresh_token=sheet_owner.refresh_token)
+                .update(access_token=new_access_token)
+            )
 
 async def async_populate_puzzle(
     puzzle,
     *,
     hunt_config,
+    sheet_owner=None,
     webhook=None,
     sheet=True,
     text=True,
@@ -234,12 +245,13 @@ async def async_populate_puzzle(
 ):
     discord_manager = DiscordManager.instance()
     google_manager = GoogleManager.instance()
+    new_user_creds = None
 
     hunt_root = hunt_config.root
     checkmate_link = models.Puzzle.get_link(puzzle.slug)
     tasks = {}
     if sheet and not puzzle.sheet_link:
-        tasks['sheet'] = google_manager.create(puzzle.long_name)
+        tasks['sheet'] = google_manager.create(puzzle.long_name, sheet_owner)
     text &= hunt_config.enable_discord_channels
     text &= puzzle.discord_text_channel_id is None
     voice &= hunt_config.enable_discord_channels
@@ -255,10 +267,13 @@ async def async_populate_puzzle(
     keys, values = zip(*tasks.items()) if tasks else ((), ())
     _results = await asyncio.gather(*values, return_exceptions=True)
     results = dict(zip(keys, _results))
-    sheet_id = results.get('sheet')
-    if isinstance(sheet_id, Exception):
-        logger.error(f'Sheets Creation Error: {repr(sheet_id)}')
+    sheet_data = results.get('sheet', {})
+    if isinstance(sheet_data, Exception):
+        logger.error(f'Sheets Creation Error: {repr(sheet_data)}')
         sheet_id = None
+    else:
+        sheet_id = sheet_data.get('sheet_id')
+        new_user_creds = sheet_data.get('new_user_creds')
     update_fields = []
     if sheet_id is not None:
         puzzle.sheet_link = f'https://docs.google.com/spreadsheets/d/{sheet_id}'
@@ -303,6 +318,7 @@ async def async_populate_puzzle(
                 'content': f'{prefix}**[{puzzle.long_name}]({checkmate_link})**',
             },
         )
+    return new_user_creds
 
 @app.task
 def create_round(

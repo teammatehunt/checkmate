@@ -114,3 +114,7 @@ button.socialaccount_provider.discord {
 button.socialaccount_provider.discord:hover {
   cursor: pointer;
 }
+
+.socialaccount_provider.google {
+  /* display: none; */
+}

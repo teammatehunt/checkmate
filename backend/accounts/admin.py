@@ -11,6 +11,7 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.exceptions import ImmediateHttpResponse
 
 from services.discord_manager import DiscordManager
+from services.google_manager import GoogleManager
 from structure import models
 
 logger = logging.getLogger(__name__)
@@ -25,30 +26,32 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         return True
 
     def add_google(self, request, sociallogin):
-        scope = request.GET.get('scope', '')
-        token = sociallogin.token
-        uid = sociallogin.account.uid
-        extra_data = sociallogin.account.extra_data
-        email = extra_data.get('email', '')
-        name = extra_data.get('name', '')
+        scopes = request.GET.get('scope', '')
         missing_scopes = (
             set(settings.SOCIALACCOUNT_PROVIDERS['google']['SCOPE'])
-            - set(scope.split())
+            - set(scopes.split())
         )
         if missing_scopes:
             e = ValueError(f'You need to allow all scopes: {" ".join(missing_scopes)}')
             messages.error(request, e)
             raise ImmediateHttpResponse(redirect('/accounts/social/login/error/')) from e
 
-        # TODO: save token in database
-        print({
-            'name': name,
-            'email': email,
-            'refresh': token.token_secret,
-            'token': token.token,
-            'uid': uid,
-            'scope': scope,
-        })
+        extra_data = sociallogin.account.extra_data
+        token = sociallogin.token
+        owner = models.GoogleSheetOwner(
+            name=extra_data.get('name', ''),
+            email=extra_data.get('email', ''),
+            uid=sociallogin.account.uid,
+            refresh_token=token.token_secret,
+            access_token=token.token,
+            expires_at=extra_data.get('exp'),
+            scopes=scopes,
+        )
+        if not GoogleManager.sync_check_access(owner):
+            e = ValueError(f'{owner.email} does not have access to the template sheet and the puzzle folder')
+            messages.error(request, e)
+            raise ImmediateHttpResponse(redirect('/accounts/social/login/error/')) from e
+        owner.save()
 
     def pre_social_login(self, request, sociallogin):
         account = sociallogin.account

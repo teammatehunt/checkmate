@@ -56,6 +56,10 @@ class HuntConfigAdmin(ModelAdmin):
 class BotConfigAdmin(ModelAdmin):
     pass
 
+@admin.register(models.GoogleSheetOwner)
+class GoogleSheetOwnerAdmin(ModelAdmin):
+    pass
+
 @admin.register(models.Round)
 class RoundAdmin(ModelAdmin):
     list_display = ('name', 'slug', 'hidden', 'created', 'created_by')
