@@ -214,7 +214,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   if (details.parentFrameId !== 0) return;
   // set site-specific CSS
   if (details.url.match(DISCORD_REGEX)) {
-    chrome.tabs.insertCSS(
+    chrome.scripting.insertCSS(
       details.tabId,
       {
         frameId: details.frameId,
@@ -224,7 +224,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
     );
   }
   if (details.url.match(DRIVE_REGEX)) {
-    chrome.tabs.insertCSS(
+    chrome.scripting.insertCSS(
       details.tabId,
       {
         frameId: details.frameId,
@@ -251,7 +251,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   };
   if (!(details.tabId in frameNames)) frameNames[details.tabId] = {};
   const name = frameNames[details.tabId][details.frameId];
-  chrome.tabs.executeScript(
+  chrome.scripting.executeScript(
     details.tabId,
     {
       frameId: details.frameId,
@@ -259,7 +259,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
     },
     logError,
   );
-  chrome.tabs.executeScript(
+  chrome.scripting.executeScript(
     details.tabId,
     {
       frameId: details.frameId,

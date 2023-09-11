@@ -1,23 +1,18 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Checkmate Extension",
   "version": "0.0.5",
   "author": "Brian Shimanuki",
   "description": "Helper enabling iframe management for puzzle solving using Checkmate, a puzzle management tool for teammate in the MIT Mystery Hunt.",
-
   "icons": {
     "16": "icon16.png",
     "32": "icon32.png",
     "48": "icon48.png",
     "128": "icon128.png"
   },
-
   "background": {
-    "scripts": [
-      "background.js"
-    ]
+    "service_worker": "service_worker.js"
   },
-
   "content_scripts": [
     {
       "matches": [
@@ -31,12 +26,17 @@
       "run_at": "document_start"
     }
   ],
-
   "web_accessible_resources": [
-    "discord.css",
-    "drive.css"
+    {
+      "resources": [
+        "discord.css",
+        "drive.css"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
   ],
-
   "permissions": [
     "<all_urls>",
     "clipboardRead",
@@ -45,6 +45,8 @@
     "tabs",
     "webNavigation",
     "webRequest",
-    "webRequestBlocking"
-  ]
+    "webRequestBlocking",
+    "scripting"
+  ],
+  "content_security_policy": {}
 }
