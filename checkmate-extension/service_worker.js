@@ -55,6 +55,39 @@ chrome.webRequest.onBeforeRequest.addListener(
       } else {
         checkmateTabIds.delete(details.tabId);
       }
+      chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [1, 2],
+        addRules: [
+          {
+            id: 1,
+            condition: {
+              tabIds: Array.from(checkmateTabIds),
+            },
+            action: {
+              type: 'modifyHeaders',
+              responseHeaders: STRIPPED_HEADERS.map(header => ({
+                  header,
+                  operation: 'remove',
+              })),
+            },
+          },
+          {
+            id: 2,
+            condition: {
+              tabIds: Array.from(checkmateTabIds),
+              resourceTypes: ['sub_frame'],
+            },
+            action: {
+              type: 'modifyHeaders',
+              requestHeaders: [{
+                header: 'sec-fetch-dest',
+                operation: 'set',
+                value: 'frame',
+              }],
+            },
+          },
+        ],
+      });
     }
   },
   {
@@ -63,6 +96,8 @@ chrome.webRequest.onBeforeRequest.addListener(
   },
 );
 
+// TODO: maybe re-add cookie injection? might be hard with Manifest V3 restrictions
+/*
 chrome.webRequest.onBeforeSendHeaders.addListener(
   details => {
     if (details.tabId < 0) return;
@@ -120,19 +155,6 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
   },
   SUBFRAME_FILTER,
   ['blocking', 'requestHeaders', 'extraHeaders'],
-);
-
-chrome.webRequest.onHeadersReceived.addListener(
-  details => {
-    if (details.tabId < 0) return;
-    if (!checkmateTabIds.has(details.tabId)) return;
-    details.responseHeaders = details.responseHeaders.filter(
-      x => !STRIPPED_HEADERS.includes(x.name.toLowerCase())
-    );
-    return {responseHeaders: details.responseHeaders};
-  },
-  SUBFRAME_FILTER,
-  ['blocking', 'responseHeaders', 'extraHeaders'],
 );
 
 // set cookies
@@ -207,6 +229,7 @@ const setCookieStores = () => {
 };
 chrome.tabs.onCreated.addListener(setCookieStores);
 setCookieStores();
+*/
 
 // Add styles for top level of iframes
 chrome.webNavigation.onDOMContentLoaded.addListener(details => {
@@ -214,24 +237,22 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   if (details.parentFrameId !== 0) return;
   // set site-specific CSS
   if (details.url.match(DISCORD_REGEX)) {
-    chrome.scripting.insertCSS(
-      details.tabId,
-      {
-        frameId: details.frameId,
-        file: 'discord.css',
+    chrome.scripting.insertCSS({
+      target: {
+        tabId: details.tabId,
+        frameIds: [details.frameId],
       },
-      logError,
-    );
+      files: ['discord.css'],
+    }).then(logError);
   }
   if (details.url.match(DRIVE_REGEX)) {
-    chrome.scripting.insertCSS(
-      details.tabId,
-      {
-        frameId: details.frameId,
-        file: 'drive.css',
+    chrome.scripting.insertCSS({
+      target: {
+        tabId: details.tabId,
+        frameIds: [details.frameId],
       },
-      logError,
-    );
+      files: ['drive.css'],
+    }).then(logError);
   }
   // tell parent that url loaded / changed
   const sendUrl = (name) => {
@@ -251,41 +272,40 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   };
   if (!(details.tabId in frameNames)) frameNames[details.tabId] = {};
   const name = frameNames[details.tabId][details.frameId];
-  chrome.scripting.executeScript(
-    details.tabId,
-    {
-      frameId: details.frameId,
-      file: '/keyhandler.js',
+  chrome.scripting.executeScript({
+    target: {
+      tabId: details.tabId,
+      frameIds: [details.frameId],
     },
-    logError,
-  );
-  chrome.scripting.executeScript(
-    details.tabId,
-    {
-      frameId: details.frameId,
-      file: '/subframe.js',
-      runAt: 'document_start',
+    files: ['/keyhandler.js'],
+  }).then(logError);
+  chrome.scripting.executeScript({
+    target: {
+      tabId: details.tabId,
+      frameIds: [details.frameId],
     },
-    (results) => {
-      if (logError()) return;
-      if (details.url.match(DISCORD_REGEX)) {
-        const message = (discordInfo[details.tabId]||{})[details.frameId];
-        if (message) sendLoadDiscord(details.tabId, message);
-      }
-      if (name === undefined) {
-        if (results && results.length) {
-          const [result] = results;
-          frameNames[details.tabId][details.frameId] = result;
-          sendUrl(result);
-          if (details.parentFrameId === 0 && result === DISCORD_FRAME) {
-            discordFrame[details.tabId] = details.frameId;
-          }
-        }
-      } else {
+    files: ['/subframe.js'],
+    injectImmediately: true,
+  }).then((results) => {
+    if (logError()) return;
+    if (details.url.match(DISCORD_REGEX)) {
+      const message = (discordInfo[details.tabId]||{})[details.frameId];
+      if (message) sendLoadDiscord(details.tabId, message);
+    }
+    if (name === undefined) {
+      if (results && results.length) {
+        const [result] = results;
+        const name = result.result;
+        frameNames[details.tabId][details.frameId] = name;
         sendUrl(name);
+        if (details.parentFrameId === 0 && name === DISCORD_FRAME) {
+          discordFrame[details.tabId] = details.frameId;
+        }
       }
-    },
-  );
+    } else {
+      sendUrl(name);
+    }
+  });
 });
 
 const moveDiscordVoiceHandler = async (message, sender, sendResponse) => {

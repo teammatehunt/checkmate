@@ -2,10 +2,6 @@
 
 Checkmate is a website constructed by teammate to organize puzzles during Mystery Hunt.
 
-**NB: This uses some features which have been deprecated:**
-- The Chrome/Firefox extension included uses API features that are deprecated and which are supposed to stop working in Chrome circa January 2023 (among general usage of the Manifest V2).
-- The Google Drive integration uses the v2 permission API (not supported after March 2022) instead of v3.
-
 # Setup
 
 To start a server or to develop, you will need docker and docker-compose. On Ubuntu, you can install with `sudo apt install docker.io docker-compose`.
