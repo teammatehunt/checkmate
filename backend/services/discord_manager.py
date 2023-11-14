@@ -148,8 +148,8 @@ class DiscordManager(ThreadsafeManager):
 
     @classmethod
     def sync_threadsafe_get_member(cls, uid):
-        return cls._run_sync_threadsafe(cls.get_member, uid).result()
+        return cls._run_sync_threadsafe(cls.get_member, uid)
 
     @classmethod
     def sync_threadsafe_move_member(cls, uid, channel_id):
-        return cls._run_sync_threadsafe(cls.move_member, uid, channel_id).result()
+        return cls._run_sync_threadsafe(cls.move_member, uid, channel_id)

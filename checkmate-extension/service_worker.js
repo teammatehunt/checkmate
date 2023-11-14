@@ -55,9 +55,9 @@ chrome.webRequest.onBeforeRequest.addListener(
       } else {
         checkmateTabIds.delete(details.tabId);
       }
-      chrome.declarativeNetRequest.updateSessionRules({
-        removeRuleIds: [1, 2],
-        addRules: [
+      let rules = [];
+      if (checkmateTabIds.size) {
+        rules = [
           {
             id: 1,
             condition: {
@@ -86,7 +86,11 @@ chrome.webRequest.onBeforeRequest.addListener(
               }],
             },
           },
-        ],
+        ];
+      }
+      chrome.declarativeNetRequest.updateSessionRules({
+        removeRuleIds: [1, 2],
+        addRules: rules,
       });
     }
   },
