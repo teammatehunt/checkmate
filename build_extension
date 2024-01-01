@@ -46,23 +46,7 @@ if __name__ == '__main__':
             with tempfile.TemporaryDirectory() as tmpdir:
                 ff_ext_root = Path(tmpdir) / 'ff-checkmate-extension'
                 shutil.copytree(CHROME_EXT_ROOT, ff_ext_root)
-                with open(ff_ext_root / 'manifest.json', 'r') as f:
-                    manifest = json.load(f)
-                with open(ff_ext_root / '.web-extension-id', 'r') as f:
-                    for line in f:
-                        if not line.startswith('#'):
-                            ff_ext_id = line
-                (
-                    manifest
-                    .setdefault('browser_specific_settings', {})
-                    .setdefault('gecko', {})
-                    .update({'id': ff_ext_id})
-                )
-                manifest['background']['scripts'] = [
-                    manifest['background'].pop('service_worker'),
-                ]
-                with open(ff_ext_root / 'manifest.json', 'w') as f:
-                    json.dump(manifest, f)
+                shutil.move(ff_ext_root / 'manifest.ff.json', ff_ext_root / 'manifest.json')
                 subprocess.run([
                     'web-ext', 'sign',
                     '--api-key', api_key,
