@@ -41,6 +41,5 @@
     "start:dev": "webpack --mode development --watch",
     "start:prod": "sleep infinity",
     "build": "webpack --mode production"
-  },
-  "type": "module"
+  }
 }

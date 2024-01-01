@@ -7,8 +7,10 @@ import argparse
 import json
 import logging
 import os
+from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 
 import yaml
 
@@ -16,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 WEB_EXT_ROOT = '/web-ext-artifacts'
 STATIC_ROOT = '/build/backend/static'
+CHROME_EXT_ROOT = '/app/checkmate-extension'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -24,31 +27,53 @@ if __name__ == '__main__':
 
     # Chrome extension
     os.makedirs(STATIC_ROOT, exist_ok=True)
-    subprocess.run(f'zip -FS {STATIC_ROOT}/checkmate-extension.zip *', shell=True, cwd='/app/checkmate-extension')
+    subprocess.run(f'zip -FS {STATIC_ROOT}/checkmate-extension.zip *', shell=True, cwd=CHROME_EXT_ROOT)
 
     # Firefox extension
     manifest_path = os.path.join(os.path.dirname(__file__), 'checkmate-extension', 'manifest.json')
     with open(manifest_path, 'rt') as f:
         manifest = json.load(f)
     version = manifest['version']
+    secrets_path = os.path.join(os.path.dirname(__file__), 'SECRETS.yaml')
+    with open(secrets_path, 'rt') as f:
+        SECRETS = yaml.safe_load(f)
+    ff_ext_name = SECRETS['FIREFOX']['name'].replace('-', '_')
     if args.sign:
-        secrets_path = os.path.join(os.path.dirname(__file__), 'SECRETS.yaml')
-        with open(secrets_path, 'rt') as f:
-            SECRETS = yaml.safe_load(f)
         api_key = SECRETS['FIREFOX']['api_key']
         api_secret = SECRETS['FIREFOX']['api_secret']
 
         if api_key and api_secret:
-            subprocess.run([
-                'web-ext', 'sign',
-                '--api-key', api_key,
-                '--api-secret', api_secret,
-                '--artifacts-dir', WEB_EXT_ROOT,
-                '--no-input',
-            ], cwd='/app/checkmate-extension')
+            with tempfile.TemporaryDirectory() as tmpdir:
+                ff_ext_root = Path(tmpdir) / 'ff-checkmate-extension'
+                shutil.copytree(CHROME_EXT_ROOT, ff_ext_root)
+                with open(ff_ext_root / 'manifest.json', 'r') as f:
+                    manifest = json.load(f)
+                with open(ff_ext_root / '.web-extension-id', 'r') as f:
+                    for line in f:
+                        if not line.startswith('#'):
+                            ff_ext_id = line
+                (
+                    manifest
+                    .setdefault('browser_specific_settings', {})
+                    .setdefault('gecko', {})
+                    .update({'id': ff_ext_id})
+                )
+                manifest['background']['scripts'] = [
+                    manifest['background'].pop('service_worker'),
+                ]
+                with open(ff_ext_root / 'manifest.json', 'w') as f:
+                    json.dump(manifest, f)
+                subprocess.run([
+                    'web-ext', 'sign',
+                    '--api-key', api_key,
+                    '--api-secret', api_secret,
+                    '--artifacts-dir', WEB_EXT_ROOT,
+                    '--no-input',
+                ], cwd=ff_ext_root)
         else:
             logger.error('Firefox extension not built because no signing credentials were found.')
-    firefox_extension = f'{WEB_EXT_ROOT}/checkmate_extension-{version}-an+fx.xpi'
+
+    firefox_extension = f'{WEB_EXT_ROOT}/{ff_ext_name}-{version}.xpi'
     if os.path.isfile(firefox_extension):
         shutil.copy(firefox_extension, f'{STATIC_ROOT}/checkmate-extension.xpi')
     else:
