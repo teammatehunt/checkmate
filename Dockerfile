@@ -5,6 +5,7 @@ RUN apt-get update -qq && apt-get install --no-install-recommends -y \
       espeak \
       ffmpeg \
       gcc \
+      g++ \
       libpq-dev \
       opus-tools \
       python-is-python3 \
