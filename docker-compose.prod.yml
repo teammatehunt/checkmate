@@ -5,8 +5,8 @@ services:
     environment:
       - SERVER_HOSTNAME=checkmate.teammatehunt.com
     ports:
-      - '80:80'
-      - '443:443'
+      - '20080:80'
+      - '20443:443'
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
       - build_prod:/srv:ro
