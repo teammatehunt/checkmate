@@ -207,6 +207,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'APP': DRIVE_SETTINGS.get('oauth', {}),
         'AUTH_PARAMS': {
             'access_type': 'offline',
+            'prompt': 'consent',
         },
         'OAUTH_PKCE_ENABLED': True,
     },
