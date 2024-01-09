@@ -4,6 +4,10 @@ export const solvedStatuses = [
   'bought',
 ];
 
+export const blockedStatuses = [
+  'blocked',
+];
+
 export const statuses = {
   new: 'whitesmoke',
   working: 'lightgray',
@@ -15,6 +19,7 @@ export const statuses = {
   'claimed offline': 'khaki',
   backsolved: 'lime',
   bought: 'lime',
+  blocked: '^gray',
 };
 
 

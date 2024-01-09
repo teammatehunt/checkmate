@@ -217,11 +217,14 @@ export const Main : React.FC<MainProps> = props => {
         const url = isBlank(_slug) ? '/' : `/puzzles/${_slug}`;
         history.pushState({slug: _slug}, '', url);
         setSlug(_slug);
-        if (!(`sheet/${_slug}` in iframeDetailsRef.current)) {
-          iframeDetailsDispatch({[`sheet/${_slug}`]: {name: `sheet/${_slug}`, url: dataRef.current?.puzzles[_slug]?.sheet_link}});
+        const blocked = Model.isBlocked(dataRef.current?.puzzles[_slug]?.status);
+        const link = blocked ? '' : dataRef.current?.puzzles[_slug]?.link;
+        const sheet_link = blocked ? '' : dataRef.current?.puzzles[_slug]?.sheet_link;
+        if (!(`sheet/${_slug}` in iframeDetailsRef.current) || iframeDetailsRef.current?.[`sheet/${_slug}`].sheet_link != sheet_link) {
+          iframeDetailsDispatch({[`sheet/${_slug}`]: {name: `sheet/${_slug}`, url: sheet_link}});
         }
-        if (!(`puzzle/${_slug}` in iframeDetailsRef.current)) {
-          iframeDetailsDispatch({[`puzzle/${_slug}`]: {name: `puzzle/${_slug}`, url: dataRef.current?.puzzles[_slug]?.link}});
+        if (!(`puzzle/${_slug}` in iframeDetailsRef.current) || iframeDetailsRef.current?.[`sheet/${_slug}`].link != link) {
+          iframeDetailsDispatch({[`puzzle/${_slug}`]: {name: `puzzle/${_slug}`, url: link}});
         }
       }
       loadDiscord(_slug);

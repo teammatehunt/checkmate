@@ -60,7 +60,22 @@ def post_autodetected_solve_puzzle(slug):
 def post_solve_puzzle(slug):
     cleanup_puzzle.apply_async(args=[slug], countdown=5*60.)
     bot_config = models.BotConfig.get()
-    puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug)
+    puzzle = models.Puzzle.objects.prefetch_related('rounds', 'metas__feeders').get(pk=slug)
+    # unblock metas where all feeders are solved
+    unblocked_metas = []
+    for meta in puzzle.metas.all():
+        if meta.status == models.Puzzle.BLOCKED_STATUS:
+            solved = 0
+            unsolved = 0
+            for feeder in meta.feeders.all():
+                if feeder.is_solved():
+                    solved += 1
+                else:
+                    unsolved += 1
+            if solved and not unsolved:
+                meta.status = ''
+                unblocked_metas.append(meta)
+    models.Puzzle.objects.bulk_update(unblocked_metas, ['status'])
     asyncio.get_event_loop().run_until_complete(
         async_post_solve_puzzle(puzzle, bot_config))
 
@@ -186,6 +201,19 @@ def create_puzzle(
             else:
                 if discord_category_id is None:
                     discord_category_id = models.Round.objects.get(pk=_round).discord_category_id
+    if puzzle.is_meta and hunt_config.block_metas_on_feeders:
+        # initialize status of metas to blocked unless all feeders are solved
+        solved = 0
+        unsolved = 0
+        # NB: use filter() to force fetch feeders after meta-feeder relations have been saved
+        for feeder in puzzle.feeders.filter():
+            if feeder.is_solved():
+                solved += 1
+            else:
+                unsolved += 1
+        if unsolved or not solved:
+            puzzle.status = models.Puzzle.BLOCKED_STATUS
+            puzzle.save(update_fields=['status'])
     populate_puzzle(
         puzzle=puzzle,
         created=creating,
@@ -231,7 +259,7 @@ def populate_puzzle(
                 .filter(refresh_token=sheet_owner.refresh_token)
                 .update(
                     access_token=new_access_token,
-                    expires_at=updated_user_creds.expires_at.replace(tzinfo=datetime.timezone.utc),
+                    expires_at=datetime.datetime.fromisoformat(updated_user_creds.expires_at).replace(tzinfo=datetime.timezone.utc),
                 )
             )
 

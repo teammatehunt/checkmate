@@ -1,6 +1,6 @@
 import { produce, Draft } from 'immer';
 
-import { solvedStatuses } from 'utils/colors';
+import { blockedStatuses, solvedStatuses } from 'utils/colors';
 
 export interface HuntConfig {
   root: string;
@@ -85,6 +85,7 @@ export interface Puzzle extends Entity {
 }
 
 export const isSolved = (puzzle) => solvedStatuses.includes(puzzle?.status);
+export const isBlocked = (puzzle) => blockedStatuses.includes(puzzle?.status);
 
 
 export interface Users {

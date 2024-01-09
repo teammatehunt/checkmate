@@ -292,6 +292,7 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     );
   }
 
+  const blocked = Model.isBlocked(puzzle);
   const puzzle_link = puzzleUrl(puzzle.link, huntConfig.root);
   const sheet_link = puzzle.sheet_link;
 
@@ -299,6 +300,9 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
     <div className={`tr sub-master puzzle ${puzzle.is_meta ? 'meta' : ''} ${puzzle.is_placeholder ? 'placeholder': ''} ${isPseudoround ? 'pseudoround' : ''}`}>
       <div className='td sub-master puzzle-link'><div>
         {(puzzle_link || null) && (
+          blocked ?
+          <Twemoji>🚫</Twemoji>
+          :
           Link({
             className: 'sub-master restyle',
             target: '_blank',
@@ -309,6 +313,9 @@ const Puzzle : React.FC<PuzzleProps> = React.memo(({
       </div></div>
       <div className='td sub-master sheet-link'><div>
         {(sheet_link || null) && (
+          blocked ?
+          <Twemoji>🚫</Twemoji>
+          :
           Link({
             className: 'sub-master restyle',
             target: '_blank',

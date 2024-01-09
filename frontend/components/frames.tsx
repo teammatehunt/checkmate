@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 
 import { featureList, sandboxList } from 'utils/feature-policy';
+import * as Model from 'utils/model';
 
 export enum DisplayType {
   HIDE = 0, // false
@@ -33,6 +34,7 @@ interface IFrameProps {
   src: string;
   title: string;
   display?: DisplayType;
+  blocked?: boolean;
 };
 
 export const IFrame : React.FC<IFrameProps> = ({
@@ -41,10 +43,13 @@ export const IFrame : React.FC<IFrameProps> = ({
   src,
   title,
   display=DisplayType.DISPLAY,
+  blocked,
 }) => {
   return (
     <ShowIf display={display}>
-      {src ?
+      {blocked ?
+        <p>This meta has been blocked until its feeders are solved.</p>
+      : src ?
         <iframe
           name={id}
           width='100%'
@@ -79,6 +84,7 @@ interface CachedIFrameProps {
   kind: string;
   src: string;
   title: string;
+  blocked?: boolean;
   isActive: boolean;
   isCached: boolean;
   currentUrl: string;
@@ -147,6 +153,7 @@ export const PuzzleFrame = ({
       kind='puzzle'
       src={src}
       title={puzzleData?.name}
+      blocked={Model.isBlocked(puzzleData)}
       isActive={isActive}
       isCached={isCached}
       currentUrl={currentUrl}
@@ -171,6 +178,7 @@ export const SheetFrame = ({
       kind='sheet'
       src={puzzleData?.sheet_link}
       title={puzzleData?.name && `Spreadsheet for ${puzzleData?.name}`}
+      blocked={Model.isBlocked(puzzleData)}
       isActive={isActive}
       isCached={isCached}
       currentUrl={currentUrl}

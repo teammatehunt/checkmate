@@ -56,6 +56,9 @@ class HuntConfig(SingletonModel):
     )
     role_colors = fields.HStoreField(default=dict, help_text='Discord role id to color mapping.')
     tag_colors = fields.HStoreField(default=dict, help_text='Tag value to (CSS) color mapping.')
+    block_metas_on_feeders = models.BooleanField(
+        default=False, help_text='Whether to block access to meta pages until feeders are solved by default.',
+    )
 
     @classmethod
     def get(cls):
@@ -183,6 +186,7 @@ class Puzzle(Entity):
 
     # should match statuses in `colors.tsx` in the frontend
     SOLVED_STATUSES = set(['solved', 'backsolved', 'bought'])
+    BLOCKED_STATUS = 'blocked'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -196,6 +200,9 @@ class Puzzle(Entity):
 
     def is_solved(self):
         return self.status in self.SOLVED_STATUSES
+
+    def is_blocked(self):
+        return self.status == self.BLOCKED_STATUS
 
     def save(self, *args, **kwargs):
         feeder_ids = set(self.feeders.through.objects.filter(meta_id=self.pk))
