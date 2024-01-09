@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict
-from datetime import timedelta
+import datetime
 import itertools
 import re
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -180,7 +180,7 @@ def create_puzzle(
     # If a puzzle with the same link exists and the force flag is not set, or
     # if the puzzle was created in the past minute, assume this is a duplicate
     # request.
-    creating = puzzle is None or (force and (timezone.localtime() - puzzle.created) > timedelta(minutes=1))
+    creating = puzzle is None or (force and (timezone.localtime() - puzzle.created) > datetime.timedelta(minutes=1))
     if creating:
         puzzle_kwargs = {
             'name': name,
@@ -466,6 +466,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             round_name = site_round['name']
             round_slug = slugify(round_name)
         else:
+            round_name = site_round['name']
             create_placeholder = not fetched_metas_by_round[round_name]
             round_dict = create_round(
                 **site_round,
@@ -473,7 +474,6 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
                 create_placeholder=create_placeholder,
             )
             round_slugs_to_discord_category_ids[round_dict['slug']] = round_dict['discord_category_id']
-            round_name = round_dict['name']
             round_slug = round_dict['slug']
             if create_placeholder:
                 new_data['placeholder-metas'].append(round_slug)

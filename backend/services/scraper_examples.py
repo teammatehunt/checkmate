@@ -337,3 +337,23 @@ async def parse_html_mh22(client, soup):
                         puzzle['is_meta'] = True
                     results['puzzles'].append(puzzle)
     return results
+
+def parse_json_mh23(data):
+    # MH 2023 when live
+    results = defaultdict(list)
+    rounds = set()
+    for puzzle in data:
+        round_name = puzzle['round']
+        if round_name not in rounds:
+            results['rounds'].append({
+                'name': round_name,
+            })
+        results['puzzles'].append({
+            'name': puzzle['name'],
+            'link': puzzle['url'],
+            'round_names': [round_name],
+            'is_meta': puzzle['isMeta'],
+            'is_solved': bool(puzzle['answer']),
+            'answer': puzzle['answer'] or '',
+        })
+    return results

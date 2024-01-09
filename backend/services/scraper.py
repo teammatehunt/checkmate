@@ -111,12 +111,13 @@ async def fetch_site_data():
     client = Client(bot_config)
     data = await client.fetch()
     json_data = None
-    # try:
-        # json_data = json.loads(data)
-    # except:
-        # pass
+    try:
+        json_data = json.loads(data)
+    except:
+        pass
     if json_data is not None:
-        return parse_json(data)
+        return parse_json(json_data)
+    '''
     soup = None
     try:
         soup = BeautifulSoup(data, 'html5lib')
@@ -125,6 +126,7 @@ async def fetch_site_data():
     if soup is not None:
         # return parse_html(soup)
         return await async_parse_html(client, soup)
+    '''
     raise RuntimeError('Unable to parse response')
 
 # These parsers will likely need to be edited on site as the puzzle page format becomes known.
@@ -149,7 +151,7 @@ async def fetch_site_data():
 }
 
 def parse_json(data):
-    return scraper_examples.parse_json_mh19(data)
+    return scraper_examples.parse_json_mh23(data)
 
 def parse_html(soup: BeautifulSoup):
     return scraper_examples.parse_html_mh22(soup)
