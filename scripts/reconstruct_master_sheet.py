@@ -2,6 +2,9 @@
 import argparse
 import json
 
+def escape(s):
+    return s.replace('"', '""')
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -21,7 +24,7 @@ def main():
                 continue
             if puzzle['is_meta']:
                 print('\t'.join([
-                    f'=HYPERLINK("{puzzle["sheet_link"]}", "META: {puzzle["name"]}")',
+                    f'=HYPERLINK("{puzzle["sheet_link"]}", "META: {escape(puzzle["name"])}")',
                     puzzle['answer'],
                     puzzle['status'],
                     puzzle['notes'].replace('\n', ' '),
@@ -32,7 +35,7 @@ def main():
                 continue
             if not puzzle['is_meta']:
                 print('\t'.join([
-                    f'=HYPERLINK("{puzzle["sheet_link"]}", "{puzzle["name"]}")',
+                    f'=HYPERLINK("{puzzle["sheet_link"]}", "{escape(puzzle["name"])}")',
                     puzzle['answer'],
                     puzzle['status'],
                     puzzle['notes'].replace('\n', ' '),
@@ -45,7 +48,7 @@ def main():
             continue
         if not puzzle['rounds']:
             print('\t'.join([
-                f'=HYPERLINK("{puzzle["sheet_link"]}", "{puzzle["name"]}")',
+                f'=HYPERLINK("{puzzle["sheet_link"]}", "{escape(puzzle["name"])}")',
                 puzzle['answer'],
                 puzzle['status'],
                 puzzle['notes'].replace('\n', ' '),
