@@ -4,7 +4,7 @@ REAL_SOURCE="$(perl -e "use Cwd 'abs_path'; print abs_path('${BASH_SOURCE}')")"
 cd "$(dirname "$(dirname "${REAL_SOURCE}")")"
 
 docker-compose() {
-  command docker-compose -f docker-compose.yml -f docker-compose.dev.yml "$@"
+  command docker compose -f docker-compose.yml -f docker-compose.dev.yml "$@"
 }
 
 docker-compose build

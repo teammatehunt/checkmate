@@ -5,11 +5,11 @@ cd "$(dirname "$(dirname "${REAL_SOURCE}")")"
 
 if [ "$1" = "--localhost" ]; then
   docker-compose() {
-    command docker-compose -f docker-compose.yml -f docker-compose.prod.localhost.yml "$@"
+    command docker compose -f docker-compose.yml -f docker-compose.prod.localhost.yml "$@"
   }
 else
   docker-compose() {
-    command docker-compose -f docker-compose.yml -f docker-compose.prod.yml "$@"
+    command docker compose -f docker-compose.yml -f docker-compose.prod.yml "$@"
   }
 fi
 
