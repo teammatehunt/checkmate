@@ -31,8 +31,9 @@ div[class^=pill_] {
 }
 
 /* Reduce channel sidebar */
-div[class^=sidebar_] {
-  width: min-content;
+/* NB: Repeat the selector to increase specificity to override Discord's css */
+div[class^=sidebar_][class^=sidebar_][class^=sidebar_][class^=sidebar_] {
+  width: min-content ! important;
 }
 div[class^=sidebar_] > nav[class^=container_],
 div[class^=sidebar_] > nav[class^='privateChannels_'] {
