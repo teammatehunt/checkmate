@@ -70,6 +70,10 @@ class RoundAdmin(ModelAdmin):
     def get_queryset(self, *args, **kwargs):
         return super().get_queryset(*args, **kwargs).select_related('created_by')
 
+@admin.register(models.LockedPuzzle)
+class LockedPuzzleAdmin(ModelAdmin):
+    list_display = ('name',)
+
 @admin.register(models.Puzzle)
 class PuzzleAdmin(ModelAdmin):
     list_display = ('name', 'slug', 'get_rounds', 'hidden', 'created', 'created_by')

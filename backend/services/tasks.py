@@ -98,12 +98,14 @@ async def async_post_solve_puzzle(puzzle, bot_config):
         )
 
 @app.task
-def create_locked_puzzle(name, description, round_names):
+def create_locked_puzzle(name, notes, round_names):
+    bot_config = models.BotConfig.get()
     asyncio.get_event_loop().run_until_complete(
-        async_create_locked_puzzle(name, description, round_names))
+        async_create_locked_puzzle(name, notes, round_names, bot_config))
+    models.LockedPuzzle.objects.create(name=name, notes=notes)
 
 @app.task
-async def async_create_locked_puzzle(name, description, round_names):
+async def async_create_locked_puzzle(name, description, round_names, bot_config):
     dmgr = DiscordManager.instance()
     round_name = ', '.join(round_names)
     if bot_config.alert_locked_puzzle_webhook:
@@ -111,10 +113,9 @@ async def async_create_locked_puzzle(name, description, round_names):
         await session.post(
             bot_config.alert_locked_puzzle_webhook,
             json={
-                'content': f'**{name}({round_name})** was unlocked!\n{description}',
+                'content': f'**{name}** ({round_name}) was unlocked!\n{description}',
             },
         )
-    models.LockedPuzzle.objects.create(name=name, description=description)
 
 @app.task
 def post_update_placeholder_puzzle(slug):
@@ -181,6 +182,7 @@ def create_puzzle(
     sheet=True,
     text=True,
     voice=True,
+    notes='',
     force=False,
     discord_category_id=None,
 ):
@@ -209,6 +211,8 @@ def create_puzzle(
             puzzle_kwargs['is_meta'] = is_meta
         if is_placeholder is not None:
             puzzle_kwargs['is_placeholder'] = is_placeholder
+        if notes:
+            puzzle_kwargs['notes'] = notes
         puzzle = models.Puzzle(**puzzle_kwargs)
         puzzle.save()
     if rounds:
@@ -512,7 +516,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             # MH25 locked puzzles
             if not models.LockedPuzzle.objects.filter(name=site_puzzle['name']).exists():
                 if not dry_run:
-                    create_locked_puzzle.delay(site_puzzle['name'], site_puzzle.get('notes'), round_names)
+                    create_locked_puzzle(site_puzzle['name'], site_puzzle.get('notes'), round_names)
             continue
         slug = canonical_puzzle_links_to_slugs.get(canonical_link(site_puzzle['link'], hunt_root))
         if slug is None:
