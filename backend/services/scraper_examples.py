@@ -386,7 +386,7 @@ async def parse_html_mh25(client, soup):
                             if title is None:
                                 continue
                             puzzle = {}
-                            puzzle['name'] = title.text.strip()
+                            puzzle['name'] = title.get_text(strip=True, separator=' ')
                             if title.get('href'):
                                 puzzle['link'] = title.get('href')
                             if round_name is not None:
@@ -398,6 +398,7 @@ async def parse_html_mh25(client, soup):
                                 puzzle['is_solved'] = True
                         elif td.get('class') == ['desc']:
                             puzzle['notes'] = td.text.strip()
+                if puzzle.get('name'):
                     results['puzzles'].append(puzzle)
     return results
 
