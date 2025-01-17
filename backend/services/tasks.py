@@ -98,6 +98,25 @@ async def async_post_solve_puzzle(puzzle, bot_config):
         )
 
 @app.task
+def create_locked_puzzle(name, description, round_names):
+    asyncio.get_event_loop().run_until_complete(
+        async_create_locked_puzzle(name, description, round_names))
+
+@app.task
+async def async_create_locked_puzzle(name, description, round_names):
+    dmgr = DiscordManager.instance()
+    round_name = ', '.join(round_names)
+    if bot_config.alert_locked_puzzle_webhook:
+        session = await dmgr.get_session()
+        await session.post(
+            bot_config.alert_locked_puzzle_webhook,
+            json={
+                'content': f'**{name}({round_name})** was unlocked!\n{description}',
+            },
+        )
+    models.LockedPuzzle.objects.create(name=name, description=description)
+
+@app.task
 def post_update_placeholder_puzzle(slug):
     bot_config = models.BotConfig.get()
     puzzle = models.Puzzle.objects.prefetch_related('rounds').get(pk=slug)
@@ -394,6 +413,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
         return
     site_data = asyncio.get_event_loop().run_until_complete(scraper.fetch_site_data())
     if site_data is scraper.NOT_CONFIGURED:
+        logger.error(f'Site data not configured for autocreation task')
         return
     if not site_data:
         logger.error(f'No data was parsed from autocreation task')
@@ -484,8 +504,16 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
         round_names = site_puzzle.pop('round_names', None)
         is_solved = site_puzzle.pop('is_solved', None)
         answer = site_puzzle.pop('answer', None)
+        link = site_puzzle.get('link')
         if round_names is not None:
             site_puzzle['rounds'] = [reduced_round_names_to_slugs[reduced_name(name)] for name in round_names]
+        link = site_puzzle.get('link')
+        if link is None:
+            # MH25 locked puzzles
+            if not models.LockedPuzzle.objects.filter(name=site_puzzle['name']).exists():
+                if not dry_run:
+                    create_locked_puzzle.delay(site_puzzle['name'], site_puzzle.get('notes'), round_names)
+            continue
         slug = canonical_puzzle_links_to_slugs.get(canonical_link(site_puzzle['link'], hunt_root))
         if slug is None:
             # create puzzle
@@ -521,6 +549,9 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
                 updates['solved'] = now
             if answer is not None and answer != puzzle['answer']:
                 updates['answer'] = answer
+            # MH25
+            if link is not None and puzzle.get('link') is None:
+                updates['link'] = link
             if updates and not dry_run:
                 puzzle_obj = models.Puzzle.objects.get(pk=slug)
                 for key, value in updates.items():

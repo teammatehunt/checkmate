@@ -357,3 +357,47 @@ def parse_json_mh23(data):
             'answer': puzzle['answer'] or '',
         })
     return results
+
+async def parse_html_mh25(client, soup):
+    results = defaultdict(list)
+    content = soup.find(id='all-puzzles-root')
+    round_name = None
+    for h3 in content.find_all('h3'):
+        if h3.name == 'h3':
+            # round
+            round_name = h3.text.strip()
+            _round = {'name': round_name}
+            if h3.a:
+                _round['link'] = h3.a.get('href')
+            results['rounds'].append(_round)
+            table = None
+            siblings = list(h3.next_siblings)
+            if siblings and siblings[0].name == 'table':
+                table = siblings[0]
+            if table:
+                # list of puzzles
+                puzzle = {}
+                for tr in table.tbody.find_all('tr'):
+                    for td in tr.find_all('td'):
+                        if td.get('class') == ['puzzle-name']:
+                            if puzzle.get('name'):
+                                results['puzzles'].append(puzzle)
+                            title = td.find(class_='puzzle-link-title')
+                            if title is None:
+                                continue
+                            puzzle = {}
+                            puzzle['name'] = title.text.strip()
+                            if title.get('href'):
+                                puzzle['link'] = title.get('href')
+                            if round_name is not None:
+                                puzzle['round_names'] = [round_name]
+                        elif td.get('class') == ['puzzle-answer']:
+                            answer = td.get_text(strip=True, separator=' ')
+                            if answer:
+                                puzzle['answer'] = answer
+                                puzzle['is_solved'] = True
+                        elif td.get('class') == ['desc']:
+                            puzzle['notes'] = td.text.strip()
+                    results['puzzles'].append(puzzle)
+    return results
+

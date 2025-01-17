@@ -86,6 +86,8 @@ class BotConfig(SingletonModel):
         blank=True, help_text='Discord webhook for new puzzle alerts.')
     alert_solved_puzzle_webhook = CharField(
         blank=True, help_text='Discord webhook for solved puzzle alerts.')
+    alert_locked_puzzle_webhook = CharField(
+        blank=True, help_text='Discord webhook for new locked puzzle alerts.')
     afk_voice_channel_id = models.BigIntegerField(
         null=True, blank=True, help_text='Discord channel to put people in when deleting channels.')
 
@@ -170,6 +172,9 @@ class Round(Entity):
     round_tags = fields.ArrayField(
         CharField(), default=list, blank=True,
         help_text='Tag categories that should be displayed / set for each puzzle in the round.')
+
+class LockedPuzzle(Entity):
+    pass
 
 class Puzzle(Entity):
     feeders = models.ManyToManyField('Puzzle', through='MetaFeeder', related_name='metas')
