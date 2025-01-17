@@ -669,7 +669,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         data={data.rounds}
         hrefMaker={data.hunt.root ? (slug) => `${data.hunt.root}${data.rounds[slug].link}` : undefined}
         externalHref={true}
-        options={Object.keys(data.rounds).filter(_slug => data.rounds[_slug]?.hidden !== false)}
+        options={Object.keys(data.rounds).filter(_slug => data.rounds[_slug]?.hidden !== true)}
         changeFeeds={changeFeeds}
       />
       {(puzzle.metas?.length || !puzzle.is_meta || null) &&
@@ -679,7 +679,7 @@ const PuzzleInfo : React.FC<PuzzleInfoProps> = ({
         data={data.puzzles}
         hrefMaker={(slug) => `/puzzles/${slug}`}
         loadSlug={loadSlug}
-        options={Object.keys(data.puzzles).filter(_slug => data.puzzles[_slug].is_meta && data.puzzles[_slug]?.hidden !== false && _slug !== slug)}
+        options={Object.keys(data.puzzles).filter(_slug => data.puzzles[_slug].is_meta && data.puzzles[_slug]?.hidden !== true && _slug !== slug)}
         changeFeeds={changeFeeds}
       />
       }
