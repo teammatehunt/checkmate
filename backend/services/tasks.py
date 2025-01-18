@@ -113,7 +113,7 @@ async def async_create_locked_puzzle(name, description, round_names, bot_config)
         await session.post(
             bot_config.alert_locked_puzzle_webhook,
             json={
-                'content': f'**{name}** ({round_name}) was discovered (locked)!\n{description}',
+                'content': f'Discovered a puzzle!\n**{name}** ({round_name})\n{description}',
             },
         )
 
