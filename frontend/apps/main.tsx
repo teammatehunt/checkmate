@@ -182,7 +182,7 @@ export const Main : React.FC<MainProps> = props => {
   // custom event for listening to url changes in iframes
   useEffect(() => {
     iframeDetailsDispatch({[`sheet/${slug}`]: {name: `sheet/${slug}`, url: dataRef.current?.puzzles[slug]?.sheet_link}});
-    iframeDetailsDispatch({[`puzzle/${slug}`]: {name: `puzzle/${slug}`, url: dataRef.current?.puzzles[slug]?.link}});
+    iframeDetailsDispatch({[`puzzle/${slug}`]: {name: `puzzle/${slug}`, url: puzzleUrl(dataRef.current?.puzzles[slug]?.link, hunt.root)}});
     const handler = (e) => {
       if (e.detail.name === 'discord' && !('discord' in iframeDetailsRef.current)) {
         loadDiscord(slug, e.detail.frameId);
@@ -224,7 +224,7 @@ export const Main : React.FC<MainProps> = props => {
           iframeDetailsDispatch({[`sheet/${_slug}`]: {name: `sheet/${_slug}`, url: sheet_link}});
         }
         if (!(`puzzle/${_slug}` in iframeDetailsRef.current) || iframeDetailsRef.current?.[`sheet/${_slug}`].link != link) {
-          iframeDetailsDispatch({[`puzzle/${_slug}`]: {name: `puzzle/${_slug}`, url: link}});
+          iframeDetailsDispatch({[`puzzle/${_slug}`]: {name: `puzzle/${_slug}`, url: puzzleUrl(link, hunt.root)}});
         }
       }
       loadDiscord(_slug);
