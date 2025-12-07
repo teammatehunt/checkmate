@@ -108,6 +108,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'crum.CurrentRequestUserMiddleware',
@@ -133,6 +134,11 @@ TEMPLATES = [
 
 
 ASGI_APPLICATION = 'checkmate.asgi.application'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+SILENCED_SYSTEM_CHECKS = [
+    'staticfiles.W004', # STATICFILES_DIRS contains dirs that exist in prod but not dev
+    'cachalot.W003', # cachalot supports django.db.backends.postgresql, which django.db.backends.postgresql_psycopg2' wraps
+]
 
 
 # Database
@@ -147,6 +153,7 @@ DATABASES = {
         'PASSWORD': 'postgres',
     }
 }
+CACHALOT_DATABASES=('default',)
 
 class REDIS_DATABASE_ENUM:
     CACHE = 1
@@ -177,7 +184,7 @@ CHANNEL_LAYERS = {
 
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login'
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = None
+ACCOUNT_RATE_LIMITS = False
 ACCOUNT_ADAPTER = 'accounts.admin.AccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.admin.SocialAccountAdapter'
 
@@ -269,7 +276,7 @@ WHITENOISE_ROOT = os.path.join(BACKEND_DIR, 'static_root')
 # External services configuration
 # allow all as if they were root document
 PERMISSIONS_POLICY = {
-    feature: '*' for feature in django_permissions_policy.FEATURE_NAMES
+    feature: '*' for feature in django_permissions_policy._FEATURE_NAMES
 }
 
 # Celery

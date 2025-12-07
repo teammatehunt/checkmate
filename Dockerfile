@@ -1,5 +1,5 @@
 # base contains system packages
-FROM node:18.16-bullseye-slim AS base
+FROM node:25.2-trixie-slim AS base
 
 RUN apt-get update -qq && apt-get install --no-install-recommends -y \
       espeak \
@@ -18,10 +18,11 @@ RUN apt-get update -qq && apt-get install --no-install-recommends -y \
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PIP_NO_CACHE_DIR=1
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
-RUN pip3 install --upgrade pip && pip3 install pipenv
+RUN pip3 install pipenv
 
 # node_modules generates node_modules
 FROM base AS node_modules

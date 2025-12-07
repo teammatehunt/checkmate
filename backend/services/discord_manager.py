@@ -15,10 +15,6 @@ from .threadsafe_manager import ThreadsafeManager
 logger = logging.getLogger(__name__)
 
 class StaticDiscordHttpClient(discord.http.HTTPClient):
-    async def static_login(self, token, *, bot):
-        self._HTTPClient__session = aiohttp.ClientSession()
-        self._token(token, bot=bot)
-
     @property
     def session(self):
         return self._HTTPClient__session
@@ -53,8 +49,8 @@ class DiscordManager(ThreadsafeManager):
     async def setup(self):
         assert asyncio.get_running_loop() is self.loop
         if not self.__setup_done:
-            self.client = StaticDiscordHttpClient(self.bot_token, loop=self.loop)
-            await self.client.static_login(self.bot_token, bot=True)
+            self.client = StaticDiscordHttpClient(loop=self.loop)
+            await self.client.static_login(self.bot_token)
             self.__setup_done = True
 
     async def close(self):

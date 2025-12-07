@@ -39,9 +39,9 @@ def canonical_link(*args, **kwargs):
     _canonical_link, _ = canonical_link_pair(*args, **kwargs)
     return _canonical_link
 
-alphanumeric_regex = re.compile('[\W_]+', re.UNICODE)
+non_alphanumeric_regex = re.compile(r'[\W_]+', re.UNICODE)
 def reduced_name(name):
-    return alphanumeric_regex.sub('', unidecode(name)).lower()
+    return non_alphanumeric_regex.sub('', unidecode(name)).lower()
 
 @app.task
 def discord_initiate_gateway():

@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 import discord
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.exceptions import ImmediateHttpResponse
+from allauth.core.exceptions import ImmediateHttpResponse
 
 from services.discord_manager import DiscordManager
 from services.google_manager import GoogleManager

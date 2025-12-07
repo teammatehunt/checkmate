@@ -1,26 +1,24 @@
-# version: '3.7'
-
 services:
   caddy:
     restart: unless-stopped
-    image: caddy:2.6.4-alpine
+    image: caddy:2.10.2-alpine
     volumes:
       - caddy_data:/data
       - caddy_config:/config
 
   postgres:
     restart: unless-stopped
-    image: postgres:13.2
+    image: postgres:18.1
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/18/docker
 
   redis:
     restart: unless-stopped
-    image: redis:6.2.1
+    image: redis:8.4.0
 
   app:
     build: .
