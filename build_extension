@@ -2,6 +2,8 @@
 '''
 Build extension for Chrome and Firefox.
 Note that Firefox will sign the extension, which can only be done once per version.
+
+This should be called with `docker compose exec app /app/build_extension`.
 '''
 import argparse
 import json

@@ -29,6 +29,9 @@ export const SheetsOwner : React.FC<SheetsOwnerProps> = ({
         <p>
           Checkmate needs Google OAuth 2 credentials to create puzzle sheets owned by a Google user account. This is needed for custom functions to run in Sheets. Otherwise, the puzzle sheets will be created under a service account and will not be able to run custom functions.
         </p>
+        <p>
+          Use this to give Checkmate permissions as yourself to copy the sheet template for new puzzles. In the likely case that the Google OAuth client is unpublished, you will need to be on the list of test users (configured in GCP) to be able to add your credentials.
+        </p>
 
         {
           !owner ?

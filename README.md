@@ -2,51 +2,126 @@
 
 Checkmate is a website constructed by teammate to organize puzzles during Mystery Hunt.
 
-# Setup
-
 To start a server or to develop, you will need docker.
 
-After everything is set up, use the following to build the components and start the server.
+You will also need credentials in Discord and in Google Drive.
 
-You will need credentials in Discord and in Drive.
+# Setup credentials
 
-Drive:
+Copy `SECRETS.template.yaml` to `SECRETS.yaml`. You will need to populate its values.
+
+## Google Drive credentials
 1. Create or select a project [here](https://console.developers.google.com/).
 1. [Enable the Drive API Instructions.](https://developers.google.com/drive/api/v3/enable-drive-api)
 1. Do the same for the Sheets API.
 1. [Create a service account.](https://console.cloud.google.com/iam-admin/serviceaccounts)
-1. Create a key and download the json to `credentials`. Rename or add the filename to `SECRETS.yaml`.
+1. Create a key and download the json to `credentials/drive-credentials.json`.
+   This filename should match `SECRETS.yaml`.
 1. [Set up an OAuth 2 client application for Google.](https://developers.google.com/identity/protocols/oauth2)
     1. Use a "web" client type.
-    1. Add users who should be able to give credentials to become the owner of puzzle sheets to the "Test users".
+    1. Set the authorized redirect urls to
+       `https://localhost:8081/accounts/google/login/callback/` and
+       `https://<YOUR_DOMAIN>/accounts/google/login/callback/`.
+    1. Under Audience, add users who should be able to give credentials to
+       become the owner of puzzle sheets to the "Test users".
     1. Add the OAuth client id and secret to `SECRETS.yaml`.
 
-Ensure the database is setup (choose a better password):
+## Discord credentials
+1. Create a Discord application [here](https://discord.com/developers/applications).
+1. In OAuth2, add `https://localhost:8081/accounts/discord/login/callback/` and
+   `https://<YOUR_DOMAIN>/accounts/discord/login/callback/` to the redirects
+   list.
+1. You can use the OAuth2 URL generator to create an invite link to add your
+   Discord bot to your server. You need these scopes and should end up with the
+   url
+   `https://discord.com/oauth2/authorize?client_id=<YOUR_BOT_CLIENT_ID>&permissions=17828880&integration_type=0&scope=bot`
+   (replacing `<YOUR_BOT_CLIENT_ID>`).
+![image](docs/discord-bot-oauth-settings.png)
+1. Checkmate supports webhooks for new puzzle alerts and solved puzzle alerts.
+   Create these webhooks in your Discord server settings (Integrations -> New
+   Webhook), and then add the webhook urls to the Bot config in the Django
+   admin settings.
+
+# Start the server
+
+## Run in production environment
 ```sh
-docker compose build
-mkdir frontend/node_modules
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#docker compose exec app /app/backend/manage.py makemigrations accounts checkmate structure
-docker compose exec app /app/backend/manage.py migrate
-docker compose exec app /app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
-# or `docker compose exec app /app/backend/manage.py createsuperuser --username admin --email ''` to prompt for password
-docker compose down
+./scripts/initialize_prod
+# This will create an admin user with access to the Django admin panel.
+docker compose exec app /app/backend/manage.py createsuperuser --username admin --email '' # will prompt to pick a password
+# Or this to set the password in the command. (Pick a better password.)
+# docker compose exec app /app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
 ```
+
+## Run dev environment
 
 To run in `dev` mode, run the following:
 ```sh
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+./scripts/initialize_dev
+docker compose exec app /app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
 ```
-Note that the checkmate-extension zip file is not created in dev mode but it exists (unzipped) in the repository. The `build_extension` script for Firefox requires credentials for a Firefox developer account.
+Note that the checkmate-extension zip file is not created in dev mode but it
+exists (unzipped) in the repository. The `build_extension` script for Firefox
+requires credentials for a Firefox developer account.
 
-To run in `prod` mode, run the following (replace `docker-compose.prod.yml` with `docker-compose.prod.localhost.yml` if running locally):
+You can also run prod mode locally (which can test static build and prod Caddy
+setup but not DNS or OAuth redirection) with:
 ```sh
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-docker compose exec app /app/build_static
-# remove --sign if the current version of the firefox extension already exists
-docker compose exec app /app/build_extension --sign
-docker compose restart app
+./scripts/initialize_prod --localhost
 ```
+
+## Teardown
+To stop the server:
+```sh
+./scripts/teardown
+```
+
+## Django admin settings
+The admin page is located at `https://<YOUR_DOMAIN>/admin`. You shouldn't need
+to touch most of this in most cases. This is mainly helpful for setting up
+puzzle scraping, Discord alerting, and deleting accidental / duplicate puzzles
+and rounds.
+
+There should only be at most one instance of the Bot config and Hunt config.
+(This will be enforced by the backend, so you won't be able to mess this up.)
+Defaults are used if the respective config does not exist.
+
+The primary config you might want to edit is the Bot config. This tells the
+scraper how to login, and what page has the list of puzzles. To enable
+scraping, you should expect to need to parse out the puzzles from the page in
+python. In the unexpected case that the Hunt site is exceedingly complex, you
+may also need to fiddle with the scraper to make it auth as your team
+correctly. This contains the checkbox to enable scraping for real.
+
+The Bot config is also where you can define the webhook urls that can be used
+to send Discord alerts when new puzzles are created and when puzzles are marked
+as solved.
+
+The Hunt config generally does not need to be created. It does have some niche
+options like coloring puzzles on the main sheet based on tags, if you also
+define tags in the admin panel for a round.
+
+Rounds and puzzles can only be deleted from the admin panel. Additionally, you
+can update round / puzzle metadata here. Note that puzzle scraping uses a mix
+of round name and round link for determining which rounds are new, and uses the
+puzzle link for determining which puzzles are new. Messing with the name or
+link values could cause duplicates to be created the next time the scraper is
+run.
+
+# Utilities
+
+## Puzzle autocreation / scraping
+If you implement an all puzzles page parser, Checkmate can auto-scrape for new
+puzzles every minute. (This needs to be setup during the Hunt because you need
+to know how the Hunt site is structured.)
+
+This is done in [backend/services/scraper.py](./backend/services/scraper.py)
+and
+[backend/services/scraper_examples.py](./backend/services/scraper_examples.py).
+
+In [backend/services/scraper.py](./backend/services/scraper.py), you will need
+to make `async_parse_html` parse the all puzzles page and return a dict of
+rounds and puzzles. See that file for more info.
 
 To test autocreating puzzles, use this command:
 ```sh
@@ -61,6 +136,7 @@ or if there was an error:
 docker compose exec -w /app/backend app celery -A checkmate result --traceback [TASK_ID]
 ```
 
+## Database export
 To migrate a postgres database between servers:
 ```sh
 # on old server
@@ -68,3 +144,24 @@ docker compose exec -u postgres postgres pg_dump postgres > dumpfile.dump
 # on new server
 docker compose exec -T -u postgres postgres psql -U postgres < dumpfile.dump
 ```
+
+## Checkmate browser extension
+The Checkmate browser extension is needed to display Discord within the
+Checkmate website. Sometimes this is also needed to display the Hunt website
+within Checkmate (depending on the Hunt website's x-frame-options).
+
+To build a new version of the Checkmate browser extension for Chrome, run
+```
+docker compose exec app /app/build_extension
+```
+
+Firefox needs a signed version of the app. You can sign one with this command.
+```
+docker compose exec app /app/build_extension --sign
+```
+Note that Firefox will only sign a version number once, so the version needs to
+be incremented each time.
+
+If not modifying extension code, then neither of these steps are necessary, and
+Checkmate will construct the Chrome extension from source and distribute the
+Firefox extension from the `web-ext-artifacts` folder.

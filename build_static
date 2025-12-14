@@ -1,4 +1,6 @@
 #!/bin/bash
+# This will build the static files so they can be served directly with Caddy in the prod deploy.
+# This should be called with `docker compose exec app /app/build_static`.
 set -e
 # build js files
 yarn --cwd /app/frontend build
@@ -11,4 +13,4 @@ fi
 # collect static files
 /app/backend/manage.py collectstatic --noinput
 # build extension
-/app/build_extension "$@"
+/app/build_scripts/build_extension "$@"

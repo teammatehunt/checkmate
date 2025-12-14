@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   MoreHorizontal,
+  Package,
   Tool,
   X,
 } from 'components/react-feather';
@@ -149,6 +150,16 @@ const NavSettings = ({
         <div>
           <Tool/>
           <span>Extension instructions</span>
+        </div>
+      </Link>
+      <Link
+        href='/google'
+        className='nav-item-link nostyle'
+        target='_blank'
+      >
+        <div>
+          <Package/>
+          <span>Set Google Sheets owner</span>
         </div>
       </Link>
       <Link
