@@ -51,6 +51,7 @@ if __name__ == '__main__':
                     'web-ext', 'sign',
                     '--api-key', api_key,
                     '--api-secret', api_secret,
+                    '--channel', 'unlisted',
                     '--artifacts-dir', WEB_EXT_ROOT,
                     '--no-input',
                 ], cwd=ff_ext_root)
