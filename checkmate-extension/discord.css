@@ -3,17 +3,25 @@ section[class^=panels_][aria-label='User area'] {
   position: fixed;
   top: 0;
   right: 0;
-  left: 102px;
+  left: 132px;
+  height: min-content;
 }
-section[class^=panels_][aria-label='User area'] > div[class^=container_] > div[class^=avatarWrapper_] {
+
+section[class^=panels_][aria-label='User area']>div[class^=container_] {
+  margin-right: 132px;
+}
+
+section[class^=panels_][aria-label='User area']>div[class^=container_]>div[class^=avatarWrapper_] {
   flex-grow: 1;
 }
+
 div[class^=chat_],
-div[class^=content_] > div[class^=sidebar_] + div[class^=container_] {
-  margin-top: 52px;
+div[class^=content_]>div[class^=sidebarList_]+div[class^=container_] {
+  margin-top: 22px; /* 52px avatar - 32px bar */
 }
+
 body[voice-state*=in-voice] div[class^=chat_],
-body[voice-state*=in-voice] div[class^=content_] > div[class^=sidebar_] + div[class^=container_] {
+body[voice-state*=in-voice] div[class^=content_]>div[class^=sidebarList_]+div[class^=container_] {
   margin-top: 142px;
 }
 
@@ -22,56 +30,58 @@ nav[class*=guilds_] {
   width: 12px;
   transition: width 0.2s;
 }
+
 nav[class*=guilds_]:hover {
   width: 72px;
   transition-delay: 0.5s;
 }
+
 div[class^=pill_] {
   opacity: 0.25 ! important;
 }
 
 /* Reduce channel sidebar */
-/* NB: Repeat the selector to increase specificity to override Discord's css */
-div[class^=sidebar_][class^=sidebar_][class^=sidebar_][class^=sidebar_] {
-  width: min-content ! important;
-}
-div[class^=sidebar_] > nav[class^=container_],
-div[class^=sidebar_] > nav[class^='privateChannels_'] {
-  width: 90px;
+div[class^=sidebarList_] {
+  width: 120px;
   transition: width 0.2s;
 }
-nav[class*=guilds_]:hover + div[class*=base_] div[class^=sidebar_] > nav[class^=container_],
-nav[class*=guilds_]:hover + div[class*=base_] div[class^=sidebar_] > nav[class^='privateChannels_'] {
-  width: 30px;
+
+nav[class*=guilds_]:hover+div[class*=base_] div[class^=sidebarList_] {
+  width: 60px;
   transition-delay: 0.5s;
 }
+
 [aria-label='Create Invite'] {
   display: none ! important;
 }
 
 /* Don't hide channel links */
-div[class^=sidebar_] > nav[class^=container_] > div:first-child {
+div[class^=sidebarList_]>nav[class^=container_]>div:first-child {
   position: sticky;
   top: 0;
   background-color: var(--background-secondary);
   z-index: 2;
 }
-div[class^=sidebar_] > nav[class^=container_] {
+
+div[class^=sidebarList_]>nav[class^=container_] {
   display: block;
   overflow: hidden auto;
   /* scrollbar properties for firefox */
   scrollbar-color: var(--scrollbar-thin-thumb) var(--scrollbar-thin-track);
   scrollbar-width: thin;
 }
+
 /* scrollbar properties for chrome */
-div[class^=sidebar_] > nav[class^=container_]::-webkit-scrollbar {
+div[class^=sidebarList_]>nav[class^=container_]::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-div[class^=sidebar_] > nav[class^=container_]::-webkit-scrollbar-corner {
+
+div[class^=sidebarList_]>nav[class^=container_]::-webkit-scrollbar-corner {
   background-color: transparent;
 }
-div[class^=sidebar_] > nav[class^=container_]::-webkit-scrollbar-thumb {
+
+div[class^=sidebarList_]>nav[class^=container_]::-webkit-scrollbar-thumb {
   visibility: hidden;
   background-clip: padding-box;
   border: 2px solid transparent;
@@ -79,14 +89,16 @@ div[class^=sidebar_] > nav[class^=container_]::-webkit-scrollbar-thumb {
   background-color: var(--scrollbar-thin-thumb);
   min-height: 40px;
 }
-div[class^=sidebar_] > nav[class^=container_]::-webkit-scrollbar-track {
-    visibility: hidden;
-    border-color: var(--scrollbar-thin-track);
-    background-color: var(--scrollbar-thin-track);
-    border: 2px solid var(--scrollbar-thin-track);
+
+div[class^=sidebarList_]>nav[class^=container_]::-webkit-scrollbar-track {
+  visibility: hidden;
+  border-color: var(--scrollbar-thin-track);
+  background-color: var(--scrollbar-thin-track);
+  border: 2px solid var(--scrollbar-thin-track);
 }
-div[class^=sidebar_] > nav[class^=container_]:hover::-webkit-scrollbar-thumb,
-div[class^=sidebar_] > nav[class^=container_]:hover::-webkit-scrollbar-track {
+
+div[class^=sidebarList_]>nav[class^=container_]:hover::-webkit-scrollbar-thumb,
+div[class^=sidebarList_]>nav[class^=container_]:hover::-webkit-scrollbar-track {
   visibility: visible;
 }
 
@@ -94,24 +106,30 @@ div[class^=sidebar_] > nav[class^=container_]:hover::-webkit-scrollbar-track {
 div#channels {
   overflow: initial ! important;
 }
-div#channels div[role=listtem] > div[class^=content_] {
+
+div#channels div[role=listtem]>div[class^=content_] {
   padding: 0;
 }
-div#channels div[class^=children_] > div[class^=iconItem_] {
+
+div#channels div[class^=children_]>div[class^=iconItem_] {
   margin: 0;
 }
+
 div[class^=message_] {
   padding-right: 0 ! important;
   padding-left: 0.5rem ! important;
 }
-div[class^=contents_][role=document] {
+
+div[class^=message_]>div[class^=contents_] {
   margin-left: 0;
   padding-left: 0;
   text-indent: 0;
 }
-div[class^=contents_][role=document] > img[class^=avatar_] {
+
+div[class^=message_]>div[class^=contents_]>img[class^=avatar_] {
   display: none;
 }
+
 span[class*=timestamp_] {
   float: right;
   width: min-content ! important;
@@ -121,75 +139,92 @@ span[class*=timestamp_] {
 }
 
 /* Split channel header bar into 2 rows */
-div[class^=chat_] > section[class^=title] {
+div[class^=subtitleContainer_]>section[class^=title_] {
   height: 72px;
+}
+
+div[class^=subtitleContainer_]>section[class^=title_]>div[class^=upperContainer_] {
   flex-direction: column;
   align-items: initial;
   padding: 0 0;
 }
-div[class^=chat_] > section[class^=title] > * {
+
+div[class^=subtitleContainer_]>section[class^=title_]>div[class^=upperContainer_]>* {
   flex: 1;
   padding: 0 8px;
 }
-div[class^=chat_] > section[class^=title] > div[class^=toolbar_] {
+
+div[class^=subtitleContainer_]>section[class^=title_]>div[class^=upperContainer_]>div[class^=toolbar_] {
   margin-left: auto;
 }
-div[class^=chat_] > section[class^=title] > div[class^=toolbar_] > div[class^=iconWrapper_] {
+
+div[class^=subtitleContainer_]>section[class^=title_]>div[class^=upperContainer_]>div[class^=toolbar_]>div[class^=iconWrapper_] {
   margin-left: 2px;
   margin-right: 2px;
 }
 
 /* Channel chat spacing and buttons */
-main[class^=chatContent_] > form[class^=form_] {
+main[class^=chatContent_]>form[class^=form_] {
   padding: 4px;
 }
+
 div[class^=channelTextArea_] {
   margin-bottom: 4px;
 }
+
 button[class^=attachButton_] {
   padding-left: 2px;
   padding-right: 2px;
 }
+
 div[class^=channelTextArea_] div[class^=buttons_] {
   flex-direction: column;
   align-items: center;
   justify-content: space-evenly;
 }
+
 button[aria-label='Send a gift'] {
   display: none;
 }
-div[class^=channelTextArea_] div[class^=buttons_] > * {
+
+div[class^=channelTextArea_] div[class^=buttons_]>* {
   height: 50%;
   width: 80%;
 }
+
 div[class^=channelTextArea_] div[class^=buttons_] div[class^=buttonContainer_] {
   width: 100%;
 }
+
 div[class^=channelTextArea_] div[class^=buttons_] div[class^=contents_] {
   padding: 0;
   transform: scale(0.8);
 }
+
 div[class^=channelTextArea_] div[class^=buttons_] button {
   margin: 0;
 }
 
 /* Reduce channel list padding */
-div[class*='iconVisibility_'] > div[class^=content_] {
+div[class*='iconVisibility_']>div[class^=content_] {
   margin-left: 0px;
   padding-left: 0px;
 }
+
 /* Reduce voice channel group members padding */
 div[class^=list_][role=group] {
   padding-left: 8px;
 }
+
 /* Shrink hash symbol */
-a[data-list-item-id^='channels___'] > svg {
+a[data-list-item-id^='channels___']>svg {
   width: 16px ! important;
   height: 16px ! important;
   margin-right: 2px;
 }
+
 /* Hide invite button and edit channel button */
-div[class^=linkTop_] > div[class^=children_] {
+div[class^=linkTop_]>div[class^=children_] {
   display: none;
 }
 
@@ -218,16 +253,19 @@ a[href='https://support.discord.com'] {
 }
 
 /* Quick switcher size */
-div[class^=modal_] > div[class^=inner_] > div[class^=container_] {
+div[class^=modal_]>div[class^=inner_]>div[class^=container_] {
   max-width: 100vw;
 }
+
 div[class^=quickswitcher_] {
   max-width: 100vw;
 }
+
 /* Popup size */
 div[class^=modal_][class*='fullscreenOnMobile'] {
   max-width: 100vw;
 }
+
 @media (max-width: 485px) {
   div[class*='fullscreenOnMobile'] {
     position: fixed;
@@ -236,6 +274,9 @@ div[class^=modal_][class*='fullscreenOnMobile'] {
 
 /* Puzzle voice chat button */
 button#voice-chat-for-puzzle {
+  /* disable the special button now that most people are in person */
+  display: none;
+
   position: fixed;
   height: 32px;
   width: 32px;
@@ -247,16 +288,18 @@ button#voice-chat-for-puzzle {
 
   cursor: pointer;
   line-height: 0;
-  display: flex;
+  /* display: flex; */
   align-items: center;
   justify-content: center;
   border-radius: 4px;
   background: transparent;
   color: var(--interactive-normal);
 }
+
 button#voice-chat-for-puzzle:hover {
   background: var(--background-modifier-selected);
 }
+
 button#voice-chat-for-puzzle:hover::after {
   line-height: initial;
   content: attr(aria-label);
@@ -277,14 +320,17 @@ button#voice-chat-for-puzzle:hover::after {
   padding: 8px 21px;
   white-space: nowrap;
 }
+
 body[voice-state*=in-voice] button#voice-chat-for-puzzle {
   top: 89px;
 }
+
 body[voice-state*=puzzle-not-given] button#voice-chat-for-puzzle,
 body[voice-state*=in-puzzle-channel] button#voice-chat-for-puzzle {
   pointer-events: none;
   opacity: 0.2;
 }
+
 div[class^='nameTag_'] {
   margin-right: 36px;
 }
