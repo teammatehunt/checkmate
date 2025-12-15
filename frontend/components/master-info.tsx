@@ -48,8 +48,8 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
     rounds: [],
     is_meta: false,
     sheet: true,
-    text: true,
-    voice: true,
+    text: siteDiscordEnabled,
+    voice: siteDiscordEnabled && data.hunt.create_voice_channels_by_default,
     force: true,
   };
   const defaultFormRoundData = {
@@ -81,7 +81,7 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
     draft[e.target.getAttribute('name')] = value;
   });
 
-  const [formPuzzleData, dispatchFormPuzzleData] = useReducer(formDataReducer, {...defaultFormPuzzleData, text: siteDiscordEnabled, voice: siteDiscordEnabled});
+  const [formPuzzleData, dispatchFormPuzzleData] = useReducer(formDataReducer, defaultFormPuzzleData);
   const [formRoundData, dispatchFormRoundData] = useReducer(formDataReducer, defaultFormRoundData);
 
   const onFormPuzzleChange = (e) => dispatchFormPuzzleData({reduce: e});

@@ -63,6 +63,10 @@ class HuntConfig(SingletonModel):
         default=True,
         help_text="Whether to enable viewing Discord in Checkmate and creating channels",
     )
+    create_voice_channels_by_default = models.BooleanField(
+        default=False,
+        help_text="Create voice channels for new puzzles when scraping and default for manual puzzle creation.",
+    )
     role_colors = fields.HStoreField(
         default=dict, help_text="Discord role id to color mapping."
     )

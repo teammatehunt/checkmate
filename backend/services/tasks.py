@@ -200,21 +200,23 @@ def unsolve_puzzle(slug):
 @app.task
 def create_puzzle(
     *,
-    name,
-    link,
-    rounds=None,
-    is_meta=None,
-    is_placeholder=None,
-    sheet=True,
-    text=True,
-    voice=True,
-    notes="",
-    force=False,
-    discord_category_id=None,
+    name: str,
+    link: str,
+    rounds: list[str] | None = None,
+    is_meta: bool | None = None,
+    is_placeholder: bool | None = None,
+    sheet: bool = True,
+    text: bool = True,
+    voice: bool | None = None,
+    notes: str = "",
+    force: bool = False,
+    discord_category_id: int | None = None,
 ):
     name = name.strip()
     hunt_config = models.HuntConfig.get()
     hunt_root = hunt_config.root
+    if voice is None:
+        voice = hunt_config.create_voice_channels_by_default
     _canonical_link, relpath = canonical_link_pair(link, hunt_root)
     # Construct a regex for resolving the root optionally and stripping trailing slashes
     if relpath and hunt_root:

@@ -7,8 +7,10 @@ export interface HuntConfig {
   auto_assign_puzzles_to_meta: boolean;
   discord_server_id: number;
   enable_discord_channels: boolean;
+  create_voice_channels_by_default: boolean;
   role_colors: {[role_id: string]: string};
   tag_colors: {[tag: string]: string};
+  block_metas_on_feeders: boolean;
 }
 
 export interface SocialAccount {
