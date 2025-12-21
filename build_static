@@ -13,4 +13,4 @@ fi
 # collect static files
 /app/backend/manage.py collectstatic --noinput
 # build extension
-/app/build_scripts/build_extension "$@"
+/app/build_extension "$@"
