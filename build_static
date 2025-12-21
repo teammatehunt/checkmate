@@ -6,9 +6,9 @@ set -e
 yarn --cwd /app/frontend build
 # purge existing static volume
 if [ "$1" == "--keep" ]; then
-  shift
+	shift
 else
-  rm -rf /build/backend/*
+	rm -rf /build/backend/*
 fi
 # collect static files
 /app/backend/manage.py collectstatic --noinput
