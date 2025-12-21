@@ -19,17 +19,21 @@ from channels.routing import ChannelNameRouter, ProtocolTypeRouter, URLRouter
 import structure.routing
 import structure.consumers
 
-build = os.environ.get('BUILD_MODE', 'dev')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'checkmate.settings.{build}')
+build = os.environ.get("BUILD_MODE", "dev")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"checkmate.settings.{build}")
 
-application = ProtocolTypeRouter({
-    'http': django_asgi_app,
-    'websocket': AuthMiddlewareStack(
-        URLRouter(
-            structure.routing.websocket_urlpatterns,
-        )
-    ),
-    'channel': ChannelNameRouter({
-        structure.consumers.MASTER_CHANNEL_NAME: structure.consumers.BroadcastMasterConsumer.as_asgi(),
-    }),
-})
+application = ProtocolTypeRouter(
+    {
+        "http": django_asgi_app,
+        "websocket": AuthMiddlewareStack(
+            URLRouter(
+                structure.routing.websocket_urlpatterns,
+            )
+        ),
+        "channel": ChannelNameRouter(
+            {
+                structure.consumers.MASTER_CHANNEL_NAME: structure.consumers.BroadcastMasterConsumer.as_asgi(),
+            }
+        ),
+    }
+)

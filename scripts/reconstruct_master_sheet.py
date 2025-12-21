@@ -2,58 +2,70 @@
 import argparse
 import json
 
+
 def escape(s):
     return s.replace('"', '""')
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('path')
+    parser.add_argument("path")
     args = parser.parse_args()
 
     with open(args.path) as f:
         data = json.load(f)
 
-    for _round in data['rounds'].values():
-        if _round['hidden']:
+    for _round in data["rounds"].values():
+        if _round["hidden"]:
             continue
-        print(_round['name'])
-        for slug in _round['puzzles']:
-            puzzle = data['puzzles'][slug]
-            if puzzle['hidden']:
+        print(_round["name"])
+        for slug in _round["puzzles"]:
+            puzzle = data["puzzles"][slug]
+            if puzzle["hidden"]:
                 continue
-            if puzzle['is_meta']:
-                print('\t'.join([
-                    f'=HYPERLINK("{puzzle["sheet_link"]}", "META: {escape(puzzle["name"])}")',
-                    puzzle['answer'],
-                    puzzle['status'],
-                    puzzle['notes'].replace('\n', ' '),
-                ]))
-        for slug in _round['puzzles']:
-            puzzle = data['puzzles'][slug]
-            if puzzle['hidden']:
+            if puzzle["is_meta"]:
+                print(
+                    "\t".join(
+                        [
+                            f'=HYPERLINK("{puzzle["sheet_link"]}", "META: {escape(puzzle["name"])}")',
+                            puzzle["answer"],
+                            puzzle["status"],
+                            puzzle["notes"].replace("\n", " "),
+                        ]
+                    )
+                )
+        for slug in _round["puzzles"]:
+            puzzle = data["puzzles"][slug]
+            if puzzle["hidden"]:
                 continue
-            if not puzzle['is_meta']:
-                print('\t'.join([
-                    f'=HYPERLINK("{puzzle["sheet_link"]}", "{escape(puzzle["name"])}")',
-                    puzzle['answer'],
-                    puzzle['status'],
-                    puzzle['notes'].replace('\n', ' '),
-                ]))
+            if not puzzle["is_meta"]:
+                print(
+                    "\t".join(
+                        [
+                            f'=HYPERLINK("{puzzle["sheet_link"]}", "{escape(puzzle["name"])}")',
+                            puzzle["answer"],
+                            puzzle["status"],
+                            puzzle["notes"].replace("\n", " "),
+                        ]
+                    )
+                )
 
-
-    print('Unassigned')
-    for puzzle in data['puzzles'].values():
-        if puzzle['hidden']:
+    print("Unassigned")
+    for puzzle in data["puzzles"].values():
+        if puzzle["hidden"]:
             continue
-        if not puzzle['rounds']:
-            print('\t'.join([
-                f'=HYPERLINK("{puzzle["sheet_link"]}", "{escape(puzzle["name"])}")',
-                puzzle['answer'],
-                puzzle['status'],
-                puzzle['notes'].replace('\n', ' '),
-            ]))
+        if not puzzle["rounds"]:
+            print(
+                "\t".join(
+                    [
+                        f'=HYPERLINK("{puzzle["sheet_link"]}", "{escape(puzzle["name"])}")',
+                        puzzle["answer"],
+                        puzzle["status"],
+                        puzzle["notes"].replace("\n", " "),
+                    ]
+                )
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

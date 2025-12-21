@@ -5,40 +5,59 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('structure', '0001_initial'),
+        ("structure", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='botconfig',
-            name='afk_voice_channel_id',
-            field=models.BigIntegerField(blank=True, help_text='Discord channel to put people in when deleting channels.', null=True),
+            model_name="botconfig",
+            name="afk_voice_channel_id",
+            field=models.BigIntegerField(
+                blank=True,
+                help_text="Discord channel to put people in when deleting channels.",
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='botconfig',
-            name='alert_new_puzzle_id',
-            field=models.BigIntegerField(blank=True, help_text='Discord channel for new puzzle alerts.', null=True),
+            model_name="botconfig",
+            name="alert_new_puzzle_id",
+            field=models.BigIntegerField(
+                blank=True,
+                help_text="Discord channel for new puzzle alerts.",
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='botconfig',
-            name='alert_solved_puzzle_id',
-            field=models.BigIntegerField(blank=True, help_text='Discord channel for solved puzzle alerts.', null=True),
+            model_name="botconfig",
+            name="alert_solved_puzzle_id",
+            field=models.BigIntegerField(
+                blank=True,
+                help_text="Discord channel for solved puzzle alerts.",
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='huntconfig',
-            name='tag_colors',
-            field=django.contrib.postgres.fields.hstore.HStoreField(default=dict, help_text='Tag value to (CSS) color mapping.'),
+            model_name="huntconfig",
+            name="tag_colors",
+            field=django.contrib.postgres.fields.hstore.HStoreField(
+                default=dict, help_text="Tag value to (CSS) color mapping."
+            ),
         ),
         migrations.AlterField(
-            model_name='botconfig',
-            name='default_category_id',
-            field=models.BigIntegerField(blank=True, help_text='Discord category for puzzles to be placed if not in round category.', null=True),
+            model_name="botconfig",
+            name="default_category_id",
+            field=models.BigIntegerField(
+                blank=True,
+                help_text="Discord category for puzzles to be placed if not in round category.",
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='botconfig',
-            name='enable_scraping',
-            field=models.BooleanField(default=False, help_text='Enable auto scraping for new puzzles.'),
+            model_name="botconfig",
+            name="enable_scraping",
+            field=models.BooleanField(
+                default=False, help_text="Enable auto scraping for new puzzles."
+            ),
         ),
     ]

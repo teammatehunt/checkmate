@@ -3,20 +3,21 @@ import os
 from celery import Celery
 
 # set the default Django settings module for the 'celery' program.
-build = os.environ.get('BUILD_MODE', 'dev')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'checkmate.settings.{build}')
+build = os.environ.get("BUILD_MODE", "dev")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"checkmate.settings.{build}")
 
-app = Celery('checkmate')
+app = Celery("checkmate")
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
-app.config_from_object('django.conf:settings', namespace='CELERY')
+app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
 
+
 @app.task(bind=True)
 def debug_task(self):
-    print(f'Request: {self.request!r}')
+    print(f"Request: {self.request!r}")

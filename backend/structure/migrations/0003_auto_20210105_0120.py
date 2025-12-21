@@ -5,15 +5,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('structure', '0002_auto_20210102_2131'),
+        ("structure", "0002_auto_20210102_2131"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='round',
-            name='round_tags',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=500), blank=True, default=list, help_text='Tag categories that should be displayed / set for each puzzle in the round.', size=None),
+            model_name="round",
+            name="round_tags",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(max_length=500),
+                blank=True,
+                default=list,
+                help_text="Tag categories that should be displayed / set for each puzzle in the round.",
+                size=None,
+            ),
         ),
     ]

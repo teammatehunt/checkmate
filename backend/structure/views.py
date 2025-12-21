@@ -10,53 +10,59 @@ from rest_framework import renderers
 
 from . import api
 
+
 def render_app(request, page, props=None, **kwargs):
-    template_name = 'app.html'
-    context = kwargs.get('context', {})
-    context['page'] = page
+    template_name = "app.html"
+    context = kwargs.get("context", {})
+    context["page"] = page
     if props is not None:
-        context['props'] = props
-    kwargs['context'] = context
+        context["props"] = props
+    kwargs["context"] = context
     return render(request, template_name, **kwargs)
+
 
 @login_required
 def master(request):
-    page = 'main'
+    page = "main"
     data = api.data_everything_with_uid(request)
     props = {
-        'page': 'master',
-        'data': data,
+        "page": "master",
+        "data": data,
     }
     return render_app(request, page, props)
+
 
 @login_required
 def puzzle(request, slug):
     data = api.data_everything_with_uid(request)
-    if slug not in data['puzzles']:
-        return redirect('/')
-    page = 'main'
+    if slug not in data["puzzles"]:
+        return redirect("/")
+    page = "main"
     props = {
-        'page': 'puzzle',
-        'slug': slug,
-        'data': data,
+        "page": "puzzle",
+        "slug": slug,
+        "data": data,
     }
     return render_app(request, page, props)
 
+
 @login_required
 def getting_started(request):
-    page = 'gettingstarted'
+    page = "gettingstarted"
     return render_app(request, page)
+
 
 @login_required
 def google_sheets_owner(request):
-    page = 'googlesheetsowner'
+    page = "googlesheetsowner"
     props = api.google_sheets_owner_data(request)
     return render_app(request, page, props)
 
+
 @login_required
 def extension(request):
-    page = 'extension'
+    page = "extension"
     props = {
-        'extension_version': settings.EXTENSION_VERSION,
+        "extension_version": settings.EXTENSION_VERSION,
     }
     return render_app(request, page, props)
