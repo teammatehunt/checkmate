@@ -5,7 +5,7 @@ set -e
 # build js files
 yarn --cwd /app/frontend build
 # purge existing static volume
-if [ "$1" == "--keep" ] ; then
+if [ "$1" == "--keep" ]; then
   shift
 else
   rm -rf /build/backend/*
