@@ -99,7 +99,8 @@ To run in `dev` mode, run the following:
 
 ```sh
 ./scripts/initialize_dev
-docker compose exec app /app/backend/manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', password='admin')"
+# This will create an admin user with access to the Django admin panel.
+docker compose exec app /app/backend/manage.py createsuperuser --username admin # will prompt to pick a password
 ```
 
 Note that the checkmate-extension zip file is not created in dev mode but it
