@@ -4,26 +4,38 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('structure', '0009_botconfig_login_followup'),
+        ("structure", "0009_botconfig_login_followup"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='GoogleSheetOwner',
+            name="GoogleSheetOwner",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=500)),
-                ('email', models.CharField(max_length=500)),
-                ('uid', models.CharField(max_length=500)),
-                ('scopes', models.CharField(help_text='List of Google OAuth scopes', max_length=500)),
-                ('refresh_token', models.CharField(max_length=500)),
-                ('access_token', models.CharField(max_length=500)),
-                ('expires_at', models.DateTimeField()),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=500)),
+                ("email", models.CharField(max_length=500)),
+                ("uid", models.CharField(max_length=500)),
+                (
+                    "scopes",
+                    models.CharField(
+                        help_text="List of Google OAuth scopes", max_length=500
+                    ),
+                ),
+                ("refresh_token", models.CharField(max_length=500)),
+                ("access_token", models.CharField(max_length=500)),
+                ("expires_at", models.DateTimeField()),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]

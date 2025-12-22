@@ -12,9 +12,9 @@ class ThreadsafeManager:
 
     @classmethod
     def instance(cls):
-        '''
+        """
         Get a threadsafe instance.
-        '''
+        """
         if threading.current_thread() is threading.main_thread():
             if cls.__main_instance is None:
                 cls.__main_instance = cls(asyncio.get_event_loop())
@@ -22,19 +22,23 @@ class ThreadsafeManager:
         else:
             if cls.__thread_instance is None:
                 cls.__thread_instance = cls(asyncio.new_event_loop())
+
                 def f():
                     asyncio.set_event_loop(cls.__thread_instance.loop)
                     cls.__thread_instance.loop.run_forever()
+
                 cls.__thread = threading.Thread(target=f)
                 cls.__thread.start()
             return cls.__thread_instance
 
     @classmethod
     def _run_sync_threadsafe(cls, func, *args, **kwargs):
-        '''
+        """
         Helper function to run an async function as sync.
         Threadsafe at the cost of running its own event loop.
         This cannot be called from an async context.
-        '''
+        """
         mgr = cls.instance()
-        return asyncio.run_coroutine_threadsafe(func(mgr, *args, **kwargs), mgr.loop).result()
+        return asyncio.run_coroutine_threadsafe(
+            func(mgr, *args, **kwargs), mgr.loop
+        ).result()

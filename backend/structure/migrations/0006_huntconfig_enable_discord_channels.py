@@ -4,15 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('structure', '0005_auto_20210113_1947'),
+        ("structure", "0005_auto_20210113_1947"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='huntconfig',
-            name='enable_discord_channels',
-            field=models.BooleanField(default=True, help_text='Whether to enable viewing Discord in Checkmate and creating channels'),
+            model_name="huntconfig",
+            name="enable_discord_channels",
+            field=models.BooleanField(
+                default=True,
+                help_text="Whether to enable viewing Discord in Checkmate and creating channels",
+            ),
         ),
     ]

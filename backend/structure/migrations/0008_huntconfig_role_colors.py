@@ -5,15 +5,16 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('structure', '0007_puzzle_is_placeholder'),
+        ("structure", "0007_puzzle_is_placeholder"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='huntconfig',
-            name='role_colors',
-            field=django.contrib.postgres.fields.hstore.HStoreField(default=dict, help_text='Discord role id to color mapping.'),
+            model_name="huntconfig",
+            name="role_colors",
+            field=django.contrib.postgres.fields.hstore.HStoreField(
+                default=dict, help_text="Discord role id to color mapping."
+            ),
         ),
     ]

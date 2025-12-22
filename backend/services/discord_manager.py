@@ -14,6 +14,7 @@ from .threadsafe_manager import ThreadsafeManager
 
 logger = logging.getLogger(__name__)
 
+
 class StaticDiscordHttpClient(discord.http.HTTPClient):
     @property
     def session(self):
@@ -23,21 +24,21 @@ class StaticDiscordHttpClient(discord.http.HTTPClient):
 class DiscordManager(ThreadsafeManager):
     @staticmethod
     async def initiate_gateway():
-        '''
+        """
         Connect to gateway and then close. This is necessary before Discord
         will allow certain actions like posting messages.
-        '''
-        bot_token = settings.DISCORD_CREDENTIALS['bot_token']
+        """
+        bot_token = settings.DISCORD_CREDENTIALS["bot_token"]
         client = discord.Client()
         await client.start(bot_token)
         await client.close()
-        logger.warning('connected to discord')
+        logger.warning("connected to discord")
 
     def __init__(self, loop):
         super().__init__(loop)
 
-        self.server_id = settings.DISCORD_CREDENTIALS['server_id']
-        self.bot_token = settings.DISCORD_CREDENTIALS['bot_token']
+        self.server_id = settings.DISCORD_CREDENTIALS["server_id"]
+        self.bot_token = settings.DISCORD_CREDENTIALS["bot_token"]
 
         self.client = None
         self.__setup_done = False
@@ -64,11 +65,13 @@ class DiscordManager(ThreadsafeManager):
     async def __aexit__(self, *args, **kwargs):
         await self.close()
 
-    async def create_channels(self, slug, *, parent_id=None, text=True, voice=True, link=None):
+    async def create_channels(
+        self, slug, *, parent_id=None, text=True, voice=True, link=None
+    ):
         await self.setup()
         requests = {}
         if text:
-            requests['text'] = self.client.create_channel(
+            requests["text"] = self.client.create_channel(
                 self.server_id,
                 discord.enums.ChannelType.text.value,
                 name=slug,
@@ -76,7 +79,7 @@ class DiscordManager(ThreadsafeManager):
                 topic=link,
             )
         if voice:
-            requests['voice'] = self.client.create_channel(
+            requests["voice"] = self.client.create_channel(
                 self.server_id,
                 discord.enums.ChannelType.voice.value,
                 name=slug,
@@ -86,9 +89,9 @@ class DiscordManager(ThreadsafeManager):
         results = await asyncio.gather(*values, return_exceptions=True)
         exceptions = [result for result in results if isinstance(result, Exception)]
         if exceptions:
-            logger.error(f'Discord Errors: {repr(exceptions)}')
+            logger.error(f"Discord Errors: {repr(exceptions)}")
         mapping = {
-            key: result['id']
+            key: result["id"]
             for key, result in zip(keys, results)
             if not isinstance(result, Exception)
         }
@@ -104,9 +107,10 @@ class DiscordManager(ThreadsafeManager):
         )
         first_auto_category_position = min(
             [
-                channel['position'] for channel in channels if
-                channel['type'] == discord.enums.ChannelType.category.value and
-                int(channel['id']) in discord_category_ids
+                channel["position"]
+                for channel in channels
+                if channel["type"] == discord.enums.ChannelType.category.value
+                and int(channel["id"]) in discord_category_ids
             ],
             default=None,
         )
@@ -116,7 +120,7 @@ class DiscordManager(ThreadsafeManager):
             name=slug,
             position=first_auto_category_position,
         )
-        return result['id']
+        return result["id"]
 
     async def delete_channel(self, channel_id):
         await self.setup()
@@ -132,9 +136,11 @@ class DiscordManager(ThreadsafeManager):
         return member
 
     async def move_member(self, uid, channel_id):
-        'Raises discord.errors.HTTPException if the user is not connected to voice (or if uid or channel_id is invalid).'
+        "Raises discord.errors.HTTPException if the user is not connected to voice (or if uid or channel_id is invalid)."
         await self.setup()
-        return await self.client.edit_member(guild_id=self.server_id, user_id=uid, channel_id=channel_id)
+        return await self.client.edit_member(
+            guild_id=self.server_id, user_id=uid, channel_id=channel_id
+        )
 
     async def move_members_to_afk(self, channel_id):
         # TODO: Looks like this would entail having a full fledged discord

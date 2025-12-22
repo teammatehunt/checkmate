@@ -14,14 +14,15 @@ from services import scraper_examples
 
 logger = get_task_logger(__name__)
 
+
 class Session:
     __instance = None
 
     @classmethod
     def instance(cls):
-        '''
+        """
         Get a single instance per process.
-        '''
+        """
         if cls.__instance is None:
             cls.__instance = aiohttp.ClientSession()
         return cls.__instance
@@ -32,6 +33,7 @@ class Session:
             await cls.__instance.close()
             cls.__instance = None
 
+
 class Client:
     def __init__(self, bot_config):
         self.session = Session.instance()
@@ -40,10 +42,10 @@ class Client:
     async def login(self):
         login_page = self.bot_config.login_page
         headers = {}
-        csrftoken_name = 'csrfmiddlewaretoken'
+        csrftoken_name = "csrfmiddlewaretoken"
         csrftoken = None
         if login_page:
-            headers['Referer'] = login_page
+            headers["Referer"] = login_page
             async with self.session.get(
                 login_page,
                 allow_redirects=False,
@@ -52,14 +54,16 @@ class Client:
                     # Assume redirects mean we are already logged in
                     return
                 data = await resp.read()
-            soup = BeautifulSoup(data, 'html5lib')
+            soup = BeautifulSoup(data, "html5lib")
             # Django sites usually call the formfield CSRF token csrfmiddlewaretoken
-            csrftoken = (soup.find('input', {'name': csrftoken_name}) or {}).get('value')
+            csrftoken = (soup.find("input", {"name": csrftoken_name}) or {}).get(
+                "value"
+            )
         login_api = self.bot_config.login_api_endpoint
         if login_api:
             payload = {
-                'username': settings.SECRETS['LOGIN']['username'],
-                'password': settings.SECRETS['LOGIN']['password'],
+                "username": settings.SECRETS["LOGIN"]["username"],
+                "password": settings.SECRETS["LOGIN"]["password"],
             }
             if csrftoken is not None:
                 payload[csrftoken_name] = csrftoken
@@ -93,24 +97,27 @@ class Client:
         await self.login()
         data = await self.try_fetch()
         if data is None:
-            raise RuntimeError('Could not fetch puzzles page')
+            raise RuntimeError("Could not fetch puzzles page")
         return data
 
+
 NOT_CONFIGURED = lambda: None
+
+
 async def fetch_site_data():
-    '''This function should return a dict of
+    """This function should return a dict of
     {
         'rounds': Round[],
         'puzzles': Puzzle[],
     }
-    '''
+    """
     bot_config = models.BotConfig.get()
     if not bot_config.puzzles_page:
-        logger.warning('Puzzle page not configured')
+        logger.warning("Puzzle page not configured")
         return NOT_CONFIGURED
     client = Client(bot_config)
     data = await client.fetch()
-    '''
+    """
     json_data = None
     try:
         json_data = json.loads(data)
@@ -118,43 +125,47 @@ async def fetch_site_data():
         pass
     if json_data is not None:
         return parse_json(json_data)
-    '''
+    """
     soup = None
     try:
-        soup = BeautifulSoup(data, 'html5lib')
+        soup = BeautifulSoup(data, "html5lib")
     except:
         pass
     if soup is not None:
         # return parse_html(soup)
         return await async_parse_html(client, soup)
-    raise RuntimeError('Unable to parse response')
+    raise RuntimeError("Unable to parse response")
+
 
 # These parsers will likely need to be edited on site as the puzzle page format becomes known.
 # Return
 {
-    'rounds': [
+    "rounds": [
         {
-            'name': '',
-            'link': '',
+            "name": "",
+            "link": "",
         },
     ],
-    'puzzles': [
+    "puzzles": [
         {
-            'name': '',
-            'link': '',
-            'round_names': [], # optional
-            'is_meta': False, # optional
-            'is_solved': None, # optional
-            'answer': None, # optional
+            "name": "",
+            "link": "",
+            "round_names": [],  # optional
+            "is_meta": False,  # optional
+            "is_solved": None,  # optional
+            "answer": None,  # optional
         },
     ],
 }
 
+
 def parse_json(data):
     return scraper_examples.parse_json_mh23(data)
 
+
 def parse_html(soup: BeautifulSoup):
     return scraper_examples.parse_html_mh25(soup)
+
 
 async def async_parse_html(client: Client, soup: BeautifulSoup):
     return await scraper_examples.parse_html_mh25(client, soup)

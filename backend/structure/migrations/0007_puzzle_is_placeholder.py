@@ -4,15 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('structure', '0006_huntconfig_enable_discord_channels'),
+        ("structure", "0006_huntconfig_enable_discord_channels"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='puzzle',
-            name='is_placeholder',
-            field=models.BooleanField(default=False, help_text='Used as a placeholder for information before the puzzle is released.'),
+            model_name="puzzle",
+            name="is_placeholder",
+            field=models.BooleanField(
+                default=False,
+                help_text="Used as a placeholder for information before the puzzle is released.",
+            ),
         ),
     ]

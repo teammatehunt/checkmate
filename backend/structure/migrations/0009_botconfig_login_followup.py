@@ -4,20 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('structure', '0008_huntconfig_role_colors'),
+        ("structure", "0008_huntconfig_role_colors"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='botconfig',
-            name='login_followup_endpoint',
-            field=models.CharField(blank=True, default='', help_text='Secondary login endpoint (used by scraper, not needed in most cases). GET request.', max_length=500),
+            model_name="botconfig",
+            name="login_followup_endpoint",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="Secondary login endpoint (used by scraper, not needed in most cases). GET request.",
+                max_length=500,
+            ),
         ),
         migrations.AlterField(
-            model_name='botconfig',
-            name='login_api_endpoint',
-            field=models.CharField(blank=True, default='', help_text='Login endpoint (used by scraper). POST request.', max_length=500),
+            model_name="botconfig",
+            name="login_api_endpoint",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="Login endpoint (used by scraper). POST request.",
+                max_length=500,
+            ),
         ),
     ]

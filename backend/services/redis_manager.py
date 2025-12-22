@@ -6,6 +6,7 @@ import redis
 
 logger = logging.getLogger(__name__)
 
+
 class RedisManager(redis.Redis):
     class RLock(redis.lock.Lock):
         def __init__(self, rmgr, redis, name, *args, **kwargs):
@@ -35,9 +36,9 @@ class RedisManager(redis.Redis):
 
     @classmethod
     def instance(cls):
-        '''
+        """
         Get a single instance per process.
-        '''
+        """
         if cls.__instance is None:
             cls.__instance = cls()
         return cls.__instance
@@ -60,4 +61,6 @@ class RedisManager(redis.Redis):
             del self._semaphores[name]
 
     def reentrant_lock(self, *args, **kwargs):
-        return self.lock(*args, **kwargs, lock_class=functools.partial(RedisManager.RLock, self))
+        return self.lock(
+            *args, **kwargs, lock_class=functools.partial(RedisManager.RLock, self)
+        )
