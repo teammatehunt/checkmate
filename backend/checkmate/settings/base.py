@@ -56,7 +56,9 @@ SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-ORIGIN = os.environ.get("SERVER_ORIGIN", "https://localhost")
+CHECKMATE_HOSTNAME = os.environ.get("CHECKMATE_HOSTNAME", "localhost")
+CHECKMATE_BIND_PORT_HTTPS = os.environ.get("CHECKMATE_BIND_PORT_HTTPS", "443")
+ORIGIN = f"https://{CHECKMATE_HOSTNAME}:{CHECKMATE_BIND_PORT_HTTPS}"
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
 REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 REDIS_PORT = 6379

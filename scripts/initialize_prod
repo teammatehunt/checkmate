@@ -3,15 +3,28 @@ set -e
 REAL_SOURCE="$(perl -e "use Cwd 'abs_path'; print abs_path('${BASH_SOURCE}')")"
 cd "$(dirname "$(dirname "${REAL_SOURCE}")")"
 
+DOCKER_COMPOSE_COMMAND=(
+  command
+  docker compose
+  -f docker-compose.yml
+)
 if [ "$1" = "--localhost" ]; then
-  docker-compose() {
-    command docker compose -f docker-compose.yml -f docker-compose.prod.localhost.yml "$@"
-  }
+  DOCKER_COMPOSE_COMMAND+=(-f docker-compose.prod.localhost.yml)
 else
-  docker-compose() {
-    command docker compose -f docker-compose.yml -f docker-compose.prod.yml "$@"
-  }
+  DOCKER_COMPOSE_COMMAND+=(-f docker-compose.prod.yml)
 fi
+DOCKER_COMPOSE_COMMAND+=(
+  --env-file prod.default.env
+)
+if [ -f prod.override.env ]; then
+  DOCKER_COMPOSE_COMMAND+=(
+    --env-file prod.override.env
+  )
+fi
+
+docker-compose() {
+  "${DOCKER_COMPOSE_COMMAND[@]}" "$@"
+}
 
 docker-compose build
 mkdir -p frontend/node_modules

@@ -1,14 +1,15 @@
 const PARENT_REGEX = [
   '.*://localhost([:/].*)?',
-  '.*://checkmate.teammatehunt.com(/.*)?',
+  '.*://checkmate\.teammatehunt\.com(/.*)?',
+  '.*://.*\.checkmate\.teammatehunt\.com(/.*)?',
 ].join('|');
 const SUBFRAME_FILTER = {
   urls: ['<all_urls>'],
   types: ['sub_frame', 'object'],
 };
 
-const DISCORD_REGEX = '.*://(.*\.)?discord.com(/.*)?'
-const DRIVE_REGEX = '.*://docs.google.com(/.*)?'
+const DISCORD_REGEX = '.*://(.*\.)?discord\.com(/.*)?'
+const DRIVE_REGEX = '.*://docs\.google\.com(/.*)?'
 
 const STRIPPED_HEADERS = [
   'content-security-policy',

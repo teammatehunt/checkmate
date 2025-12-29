@@ -1,4 +1,5 @@
 /SECRETS.yaml
+/prod.override.env
 
 *.py[cdo]
 

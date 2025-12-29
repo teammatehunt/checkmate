@@ -19,7 +19,8 @@
     {
       "matches": [
         "*://localhost/*",
-        "*://checkmate.teammatehunt.com/*"
+        "*://checkmate.teammatehunt.com/*",
+        "*://*.checkmate.teammatehunt.com/*"
       ],
       "js": [
         "rootframe.js",

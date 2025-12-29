@@ -1,6 +1,7 @@
 # Introduction
 
-Checkmate is a website constructed by teammate to organize puzzles during Mystery Hunt.
+Checkmate is a website constructed by teammate to organize puzzles during
+Mystery Hunt.
 
 To start a server or to develop, you will need docker.
 
@@ -8,7 +9,11 @@ You will also need credentials in Discord and in Google Drive.
 
 # Setup credentials
 
-Copy `SECRETS.template.yaml` to `SECRETS.yaml`. You will need to populate its values.
+Copy `SECRETS.template.yaml` to `SECRETS.yaml`. You will need to populate its
+values.
+
+To override values in `prod.default.env`, copy `prod.override.template.env` to
+`prod.override.env` and update its values.
 
 ## Google Drive credentials
 

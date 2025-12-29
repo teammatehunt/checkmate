@@ -1,10 +1,10 @@
 services:
   caddy:
     environment:
-      - SERVER_HOSTNAME=checkmate.teammatehunt.com
+      - 'CHECKMATE_HOSTNAME=${CHECKMATE_HOSTNAME?}'
     ports:
-      - '80:80'
-      - '443:443'
+      - '${CHECKMATE_BIND_PORT_HTTP?}:80'
+      - '${CHECKMATE_BIND_PORT_HTTPS?}:443'
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
       - build_prod:/srv:ro
@@ -14,7 +14,8 @@ services:
     restart: unless-stopped
     environment:
       - BUILD_MODE=prod
-      - SERVER_ORIGIN=https://checkmate.teammatehunt.com
+      - 'CHECKMATE_HOSTNAME=${CHECKMATE_HOSTNAME?}'
+      - 'CHECKMATE_BIND_PORT_HTTPS=${CHECKMATE_BIND_PORT_HTTPS?}'
     volumes:
       - build_prod:/build/backend
       - log_prod:/log

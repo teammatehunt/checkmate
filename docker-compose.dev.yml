@@ -1,7 +1,7 @@
 services:
   caddy:
     environment:
-      - SERVER_HOSTNAME=localhost
+      - CHECKMATE_HOSTNAME=localhost
     ports:
       - '8080:80'
       - '8081:443'
@@ -12,7 +12,8 @@ services:
   app:
     environment:
       - BUILD_MODE=dev
-      - SERVER_ORIGIN=https://localhost:8081
+      - CHECKMATE_HOSTNAME=localhost
+      - CHECKMATE_BIND_PORT_HTTPS=8081
       - ASGI_NUM_PROCS=2
       - CELERY_NUM_PROCS=1
     volumes:

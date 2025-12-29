@@ -1,6 +1,6 @@
 # vim: filetype=caddyfile
 
-{$SERVER_HOSTNAME} {
+{$CHECKMATE_HOSTNAME} {
   log {
     output file /log/caddy.log {
       roll_size 1MiB
