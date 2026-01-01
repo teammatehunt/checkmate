@@ -1,8 +1,9 @@
 import asyncio
 from collections import defaultdict
+import dataclasses
 import datetime
-import itertools
 import re
+import traceback
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 from autoslug.settings import slugify
@@ -17,8 +18,11 @@ from services.celery import app
 from services.discord_manager import DiscordManager
 from services.google_manager import GoogleManager
 from services import scraper
-from structure import api, models
-import structure.consumers  # for activating update hooks
+from services import scraper_types
+from services import subprocess_tasks as _  # register subprocess tasks
+from structure import api
+from structure import models
+from structure import consumers as _  # for activating update hooks
 
 logger = get_task_logger(__name__)
 
@@ -473,42 +477,67 @@ def create_round(
     return round_dict
 
 
+@dataclasses.dataclass
+class NewPuzzlesData:
+    rounds_new: list[scraper_types.Round] = dataclasses.field(default_factory=list)
+    rounds_unmodified: list[scraper_types.Round] = dataclasses.field(
+        default_factory=list
+    )
+    rounds_updated: list[scraper_types.Round] = dataclasses.field(default_factory=list)
+    placeholder_metas_new: list[str] = dataclasses.field(default_factory=list)
+    placeholder_metas_updated: list[str] = dataclasses.field(default_factory=list)
+    puzzles_new: list[scraper_types.Puzzle] = dataclasses.field(default_factory=list)
+    puzzles_unmodified: list[scraper_types.Puzzle] = dataclasses.field(
+        default_factory=list
+    )
+    puzzles_updated: list[scraper_types.Puzzle] = dataclasses.field(
+        default_factory=list
+    )
+
+
 @app.task
-def auto_create_new_puzzles(dry_run=True, manual=True):
+def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
+    """
+    Run the auto scraper to create new puzzles.
+
+    Raises:
+      RuntimeError: If the puzzles page is not configured or if no data is fetched.
+      Exception: If the scraper has an error.
+    """
     bot_config = models.BotConfig.get()
     enable_scraping = models.BotConfig.get().enable_scraping
     if not manual and not bot_config.enable_scraping:
         return
-    site_data = asyncio.get_event_loop().run_until_complete(scraper.fetch_site_data())
-    if site_data is scraper.NOT_CONFIGURED:
-        logger.error(f"Site data not configured for autocreation task")
-        return
-    if not site_data:
-        logger.error(f"No data was parsed from autocreation task")
-        return
-    site_rounds = site_data.get("rounds", [])
-    site_puzzles = site_data.get("puzzles", [])
-    if not site_rounds and not site_puzzles:
-        return
+
+    # This will raise on error.
+    scraped_hunt = asyncio.get_event_loop().run_until_complete(
+        scraper.fetch_site_data()
+    )
+
+    scraped_rounds = scraped_hunt.rounds
+    scraped_puzzles = scraped_hunt.puzzles
+    if not scraped_rounds and not scraped_puzzles:
+        raise RuntimeError("No data was parsed from autocreation task")
+
     data = api.data_everything()
     hunt_root = data["hunt"]["root"]
     enable_discord_channels = data["hunt"]["enable_discord_channels"]
     now = timezone.now()
-    new_data = defaultdict(list)
+    new_puzzles_data = NewPuzzlesData()
 
     puzzles_page = bot_config.puzzles_page
     if not puzzles_page.startswith(hunt_root) or "/" in puzzles_page[
         len(hunt_root) :
     ].lstrip("/"):
         # links may not be relative, so convert
-        for site_round in site_rounds:
-            link = site_round.get("link")
-            if link is not None and "://" not in link and not link.startswith("/"):
-                site_round["link"] = urljoin(puzzles_page, link)
-        for site_puzzle in site_puzzles:
-            link = site_puzzle.get("link")
-            if link is not None and "://" not in link and not link.startswith("/"):
-                site_puzzle["link"] = urljoin(puzzles_page, link)
+        for scraped_round in scraped_rounds:
+            link = scraped_round.link
+            if link and "://" not in link and not link.startswith("/"):
+                scraped_round.link = urljoin(puzzles_page, link)
+        for scraped_puzzle in scraped_puzzles:
+            link = scraped_puzzle.link
+            if link and "://" not in link and not link.startswith("/"):
+                scraped_puzzle.link = urljoin(puzzles_page, link)
 
     reduced_round_names_to_slugs = {
         reduced_name(_round["name"]): slug
@@ -558,31 +587,31 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
             placeholder_metas[round_slug] = puzzles[0]
 
     fetched_metas_by_round = defaultdict(list)
-    for site_puzzle in site_puzzles:
-        if site_puzzle.get("is_meta"):
-            round_names = site_puzzle.get("round_names", [])
+    for scraped_puzzle in scraped_puzzles:
+        if scraped_puzzle.is_meta:
+            round_names = scraped_puzzle.round_names or []
             for round_name in round_names:
-                fetched_metas_by_round[round_name].append(site_puzzle)
+                fetched_metas_by_round[round_name].append(scraped_puzzle)
 
-    discord_manager = None
-    for site_round in site_rounds:
-        if reduced_name(site_round["name"]) in reduced_round_names_to_slugs:
+    for scraped_round in scraped_rounds:
+        round_name = scraped_round.name
+        if reduced_name(scraped_round.name) in reduced_round_names_to_slugs:
+            new_puzzles_data.rounds_unmodified.append(scraped_round)
             continue
         if (
-            site_round.get("link")
-            and canonical_link(site_round["link"], hunt_root)
+            scraped_round.link
+            and canonical_link(scraped_round.link, hunt_root)
             in canonical_round_links_to_slugs
         ):
+            new_puzzles_data.rounds_unmodified.append(scraped_round)
             continue
+        create_placeholder = not fetched_metas_by_round[round_name]
         # create round
         if dry_run:
-            round_name = site_round["name"]
             round_slug = slugify(round_name)
         else:
-            round_name = site_round["name"]
-            create_placeholder = not fetched_metas_by_round[round_name]
             round_dict = create_round(
-                **site_round,
+                **scraped_round.as_kwargs(),
                 enable_discord_channels=enable_discord_channels,
                 create_placeholder=create_placeholder,
             )
@@ -590,91 +619,102 @@ def auto_create_new_puzzles(dry_run=True, manual=True):
                 "discord_category_id"
             ]
             round_slug = round_dict["slug"]
-            if create_placeholder:
-                new_data["placeholder-metas"].append(round_slug)
-        new_data["rounds"].append(site_round)
+        if create_placeholder:
+            new_puzzles_data.placeholder_metas_new.append(round_slug)
+        new_puzzles_data.rounds_new.append(scraped_round)
         reduced_round_names_to_slugs[reduced_name(round_name)] = round_slug
-    for site_puzzle in site_puzzles:
+    for scraped_puzzle in scraped_puzzles:
         # new puzzles are setup asynchronously
-        round_names = site_puzzle.pop("round_names", None)
-        is_solved = site_puzzle.pop("is_solved", None)
-        answer = site_puzzle.pop("answer", None)
-        link = site_puzzle.get("link")
+        round_names = scraped_puzzle.round_names
+        is_solved = scraped_puzzle.is_solved
+        answer = scraped_puzzle.answer
+        link = scraped_puzzle.link
+        puzzle_rounds = None
         if round_names is not None:
-            site_puzzle["rounds"] = [
+            puzzle_rounds = [
                 reduced_round_names_to_slugs[reduced_name(name)] for name in round_names
             ]
-        link = site_puzzle.get("link")
         if link is None:
             # MH25 locked puzzles
             if not models.LockedPuzzle.objects.filter(
-                name=site_puzzle["name"]
+                name=scraped_puzzle.name
             ).exists():
                 if not dry_run:
                     create_locked_puzzle(
-                        site_puzzle["name"], site_puzzle.get("notes"), round_names
+                        name=scraped_puzzle.name,
+                        notes=scraped_puzzle.notes,
+                        round_names=puzzle_rounds,
                     )
             continue
         slug = canonical_puzzle_links_to_slugs.get(
-            canonical_link(site_puzzle["link"], hunt_root)
+            canonical_link(scraped_puzzle.link, hunt_root)
         )
         if slug is None:
             # create puzzle
             placedholder_puzzle = None
-            if site_puzzle.get("is_meta"):
-                site_puzzle_rounds = site_puzzle.get("rounds")
-                if (
-                    isinstance(site_puzzle_rounds, list)
-                    and len(site_puzzle_rounds) == 1
-                ):
-                    placedholder_puzzle = placeholder_metas.get(site_puzzle_rounds[0])
+            if scraped_puzzle.is_meta:
+                if isinstance(puzzle_rounds, list) and len(puzzle_rounds) == 1:
+                    placedholder_puzzle = placeholder_metas.get(puzzle_rounds[0])
             if placedholder_puzzle:
-                slug = placedholder_puzzle["slug"]
+                slug = placedholder_puzzle.slug
                 if not dry_run:
                     puzzle_obj = models.Puzzle.objects.filter(pk=slug).update(
-                        name=site_puzzle["name"],
-                        link=site_puzzle["link"],
-                        original_link=site_puzzle["link"],
+                        name=scraped_puzzle.name,
+                        link=scraped_puzzle.link,
+                        original_link=scraped_puzzle.link,
                         is_placeholder=False,
                     )
                     post_update_placeholder_puzzle.delay(slug)
-                new_data["placeholder-metas-updated"].append(site_round)
+                new_puzzles_data.placeholder_metas_updated.append(slug)
             else:
                 discord_category_id = None
-                if site_puzzle.get("rounds"):
-                    first_round = site_puzzle["rounds"][0]
+                if puzzle_rounds:
+                    first_round = puzzle_rounds[0]
                     discord_category_id = round_slugs_to_discord_category_ids.get(
                         first_round
                     )
                 if not dry_run:
                     create_puzzle.delay(
-                        discord_category_id=discord_category_id, **site_puzzle
+                        **scraped_puzzle.as_kwargs(),
+                        rounds=puzzle_rounds,
+                        discord_category_id=discord_category_id,
                     )
-            new_data["puzzles"].append(site_puzzle)
+            new_puzzles_data.puzzles_new.append(scraped_puzzle)
         else:
             # check for updated solved / answer status
             puzzle = data["puzzles"][slug]
             updates = {}
-            if is_solved and not puzzle["solved"]:
+            if is_solved and not puzzle.solved:
                 updates["solved"] = now
-            if answer is not None and answer != puzzle["answer"]:
+            if answer and answer != puzzle.answer:
                 updates["answer"] = answer
             # MH25
-            if link is not None and puzzle.get("link") is None:
+            if link is not None and puzzle.link is None:
                 updates["link"] = link
-            if updates and not dry_run:
-                puzzle_obj = models.Puzzle.objects.get(pk=slug)
-                for key, value in updates.items():
-                    setattr(puzzle_obj, key, value)
-                puzzle_obj.save(update_fields=updates.keys())
-                if updates.get("solved") is not None:
-                    post_autodetected_solve_puzzle.delay(slug)
-    if new_data or manual:
+            if updates:
+                if not dry_run:
+                    puzzle_obj = models.Puzzle.objects.get(pk=slug)
+                    for key, value in updates.items():
+                        setattr(puzzle_obj, key, value)
+                    puzzle_obj.save(update_fields=updates.keys())
+                    if updates.get("solved") is not None:
+                        post_autodetected_solve_puzzle.delay(slug)
+                new_puzzles_data.puzzles_updated.append(scraped_puzzle)
+            else:
+                new_puzzles_data.puzzles_unmodified.append(scraped_puzzle)
+    if any(
+        (
+            new_puzzles_data.rounds_new,
+            new_puzzles_data.placeholder_metas_new,
+            new_puzzles_data.puzzles_new,
+            manual,
+        )
+    ):
         logger.warning(
             {
-                "new_data": new_data,
+                "data": new_puzzles_data,
                 "manual": manual,
                 "dry_run": dry_run,
             }
         )
-    return new_data
+    return new_puzzles_data

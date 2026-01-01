@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/", include(rest_router.urls)),
     path("api/everything", api.everything),
     path("api/discord_voice_move", api.discord_voice_move),
+    path("api/scraper", api.scraper_view),
     path("", views.master),
     path("puzzles/", lambda req: redirect("/")),
     path("puzzles/<slug:slug>", views.puzzle),

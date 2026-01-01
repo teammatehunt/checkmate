@@ -173,8 +173,25 @@ and
 [backend/services/scraper_examples.py](./backend/services/scraper_examples.py).
 
 In [backend/services/scraper.py](./backend/services/scraper.py), you will need
-to make `async_parse_html` parse the all puzzles page and return a dict of
+to make `async_parse` parse the all puzzles page and return a dict of
 rounds and puzzles. See that file for more info.
+
+### Debugging
+
+As you update the scraper, you can visit `/api/scraper` to check the current
+results. It should show the rounds and puzzles it was able to parse / would be
+created, or the traceback if there was an error.
+
+It's recommended to try this out locally at https://localhost:8081/api/scraper.
+Although the Django server does not normally autoreload on edits, the
+`/api/scraper` endpoint is set up to run the scraper function in a new process
+so that it picks up local python changes. Thus you can make changes to
+[scraper_examples.py](./backend/services/scraper_examples.py) and reload the
+API page to test it until it works.
+
+### Debugging Celery
+
+Hopefully this section should not be needed. Prefer to debug by visiting `/api/scraper`.
 
 To test autocreating puzzles, use this command:
 

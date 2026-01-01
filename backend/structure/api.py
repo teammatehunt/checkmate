@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import inspect
 import logging
@@ -398,6 +399,21 @@ def data_everything():
 @decorators.api_view()
 def everything(request):
     data = data_everything()
+    return response.Response(data)
+
+
+def scraper_data():
+    """For debugging the auto scraper."""
+    from services import subprocess_tasks
+
+    data = subprocess_tasks.subprocess_create_new_puzzles()
+    return dataclasses.asdict(data)
+
+
+@decorators.api_view()
+def scraper_view(request):
+    """For debugging the auto scraper."""
+    data = scraper_data()
     return response.Response(data)
 
 
