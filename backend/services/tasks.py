@@ -627,6 +627,12 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
         # new puzzles are setup asynchronously
         round_names = scraped_puzzle.round_names
         is_solved = scraped_puzzle.is_solved
+        is_locked = (
+            scraped_puzzle.link is None
+            if scraped_puzzle.is_locked is None
+            else scraped_puzzle.is_locked
+        )
+        is_explicitly_unlocked = scraped_puzzle.is_locked is False
         answer = scraped_puzzle.answer
         link = scraped_puzzle.link
         puzzle_rounds = None
@@ -634,7 +640,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
             puzzle_rounds = [
                 reduced_round_names_to_slugs[reduced_name(name)] for name in round_names
             ]
-        if link is None:
+        if is_locked:
             # MH25 locked puzzles
             if not models.LockedPuzzle.objects.filter(
                 name=scraped_puzzle.name
@@ -691,6 +697,8 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
             # MH25
             if link is not None and puzzle.link is None:
                 updates["link"] = link
+            if is_explicitly_unlocked and puzzle.is_locked:
+                updates["status"] = models.Puzzle.NEW_STATUS
             if updates:
                 if not dry_run:
                     puzzle_obj = models.Puzzle.objects.get(pk=slug)

@@ -22,6 +22,7 @@ import 'style/master-info.css';
 interface MasterInfoProps {
   data: Model.Data;
   hideSolved: LocalStorageObject<boolean>;
+  hideLocked: LocalStorageObject<boolean>;
   hideFinishedRounds: LocalStorageObject<boolean>;
   editable: LocalStorageObject<boolean>;
   sortNewRoundsFirst: LocalStorageObject<boolean>;
@@ -34,6 +35,7 @@ interface MasterInfoProps {
 const MasterInfo : React.FC<MasterInfoProps> = ({
   data,
   hideSolved,
+  hideLocked,
   hideFinishedRounds,
   editable,
   sortNewRoundsFirst,
@@ -106,6 +108,8 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
   };
 
   const transitionTime = 100;
+
+  const displayHideLocked = Object.values(data.puzzles).some((puzzle: Model.Puzzle) => puzzle?.hidden === false && Model.isLocked(puzzle));
 
   return (
     <>
@@ -242,6 +246,14 @@ const MasterInfo : React.FC<MasterInfoProps> = ({
             <span>Hide solved puzzles</span>
           </label>
         </div>
+        {displayHideLocked &&
+        <div>
+          <label>
+            <input type='checkbox' onChange={(e) => hideLocked.set(e.target.checked)} checked={hideLocked.value}/>
+            <span>Hide locked puzzles</span>
+          </label>
+        </div>
+        }
         <div>
           <label>
             <input type='checkbox' onChange={(e) => hideFinishedRounds.set(e.target.checked)} checked={hideFinishedRounds.value}/>

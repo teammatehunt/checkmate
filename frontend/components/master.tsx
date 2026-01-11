@@ -410,6 +410,7 @@ interface MasterProps {
   colors: {[value: string]: string};
   activities: {[puzzle: string]: Activity[]};
   hideSolved: boolean;
+  hideLocked: boolean;
   hideFinishedRounds: boolean;
   editable: boolean;
   sortNewRoundsFirst: boolean;
@@ -424,6 +425,7 @@ const Master : React.FC<MasterProps> = ({
   colors,
   activities,
   hideSolved,
+  hideLocked,
   hideFinishedRounds,
   editable,
   sortNewRoundsFirst,
@@ -476,7 +478,7 @@ const Master : React.FC<MasterProps> = ({
           isFinished: isFinished,
         },
       },
-      ...orderBy((hideFinishedRounds && isFinished ? [] : round.puzzles).map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle))), ['is_meta'], ['desc']).map(puzzle => (
+      ...orderBy((hideFinishedRounds && isFinished ? [] : round.puzzles).map(_slug => data.puzzles[_slug]).filter(puzzle => puzzle?.hidden === false && (!hideSolved || !Model.isSolved(puzzle)) && (!hideLocked || !Model.isLocked(puzzle))), ['is_meta'], ['desc']).map(puzzle => (
         {
           key: `${round.slug}--${puzzle.slug}`,
           Component: Puzzle,

@@ -273,12 +273,15 @@ class Puzzle(Entity):
     # should match statuses in `colors.tsx` in the frontend
     SOLVED_STATUSES = set(["solved", "backsolved", "bought"])
     BLOCKED_STATUS = "blocked"
+    LOCKED_STATUS = "locked"
+    NEW_STATUS = "new"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.original_is_meta = self.is_meta
         self.original_solved = self.solved
         self.original_is_solved = self.is_solved()
+        self.original_is_locked = self.is_locked()
 
     @staticmethod
     def get_link(slug):
@@ -289,6 +292,12 @@ class Puzzle(Entity):
 
     def is_blocked(self):
         return self.status == self.BLOCKED_STATUS
+
+    def is_locked(self):
+        return self.status == self.LOCKED_STATUS
+
+    def is_new(self):
+        return self.status == self.NEW_STATUS
 
     def save(self, *args, **kwargs):
         feeder_ids = set(self.feeders.through.objects.filter(meta_id=self.pk))

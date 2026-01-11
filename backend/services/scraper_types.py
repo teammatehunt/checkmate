@@ -44,6 +44,7 @@ class Puzzle(AsKwargs):
     round_names: SkipInKwargs[list[str] | None] = None
     is_meta: bool | None = None
     is_solved: SkipInKwargs[bool | None] = None
+    is_locked: SkipInKwargs[bool | None] = None
     answer: SkipInKwargs[str] = ""
     notes: str = ""
 

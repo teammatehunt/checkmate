@@ -8,6 +8,10 @@ export const blockedStatuses = [
   'blocked',
 ];
 
+export const lockedStatuses = [
+  'locked',
+];
+
 export const statuses = {
   new: 'whitesmoke',
   working: 'lightgray',
@@ -20,6 +24,7 @@ export const statuses = {
   backsolved: 'lime',
   bought: 'lime',
   blocked: '^gray',
+  locked: '^gray',
 };
 
 

@@ -1,6 +1,6 @@
 import { produce, Draft } from 'immer';
 
-import { blockedStatuses, solvedStatuses } from 'utils/colors';
+import { blockedStatuses, lockedStatuses, solvedStatuses } from 'utils/colors';
 
 export interface HuntConfig {
   root: string;
@@ -76,6 +76,7 @@ export interface Round extends Entity {
 export interface Puzzle extends Entity {
   solved: string; // timestamp
   solved_by: number; // User.id
+  unlocked: string; // timestamp
   is_meta: boolean;
   is_placeholder: boolean;
 
@@ -88,6 +89,7 @@ export interface Puzzle extends Entity {
 
 export const isSolved = (puzzle) => solvedStatuses.includes(puzzle?.status);
 export const isBlocked = (puzzle) => blockedStatuses.includes(puzzle?.status);
+export const isLocked = (puzzle) => lockedStatuses.includes(puzzle?.status);
 
 
 export interface Users {
