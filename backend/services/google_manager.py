@@ -11,6 +11,7 @@ logger = get_task_logger(__name__)
 
 scopes = [
     "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/spreadsheets",
 ]
 
 
@@ -89,10 +90,48 @@ class GoogleManager(ThreadsafeManager):
             logger.error(f"Sheets Owner Error: {repr(e)}")
             sheet_file = await self.client.as_service_account(copy_request)
         sheet_id = sheet_file["id"]
+        await self.allow_import_scripts(sheet_id, user_creds=updated_user_creds)
         return {
             "sheet_id": sheet_id,
             "updated_user_creds": updated_user_creds,
         }
+
+    async def allow_import_scripts(self, sheet_id, user_creds=None):
+        await self.setup()
+        # This property allows IMPORTHTML, IMPORTDATA, IMPORTFEED, IMPORTXML
+        # See: https://medium.com/google-cloud/allowing-access-by-importhtml-importdata-importfeed-importxml-and-importrange-on-google-3f4f5d7e6b1e
+        request = self.sheets.spreadsheets.batchUpdate(
+            spreadsheetId=sheet_id,
+            json={
+                "requests": [
+                    {
+                        "updateSpreadsheetProperties": {
+                            "properties": {
+                                "importFunctionsExternalUrlAccessAllowed": True
+                            },
+                            "fields": "importFunctionsExternalUrlAccessAllowed",
+                        }
+                    }
+                ]
+            },
+        )
+        if user_creds:
+            try:
+                await self.client.as_user(request, user_creds=user_creds)
+                return
+            except Exception:
+                logger.error(
+                    "Failed to allow import scripts with user credentials for sheet {sheet_id}",
+                    sheet_id=sheet_id,
+                )
+        try:
+            await self.client.as_service_account(request)
+            return
+        except Exception:
+            logger.error(
+                "Failed to allow import scripts with service account credentials for sheet {sheet_id}",
+                sheet_id=sheet_id,
+            )
 
     async def add_links(self, sheet_id, checkmate_link=None, puzzle_link=None):
         if not checkmate_link or not puzzle_link:
