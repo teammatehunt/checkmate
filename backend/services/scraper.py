@@ -60,4 +60,5 @@ def parse_html(soup: BeautifulSoup) -> scraper_types.Hunt:
 
 
 async def async_parse(client: scraper_types.Client, url: str) -> scraper_types.Hunt:
-    return await scraper_examples.parse_html_mh22(client, url)
+    await client.login()
+    return await scraper_examples.parse_html_mh26(client, url)

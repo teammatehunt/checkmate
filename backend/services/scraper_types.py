@@ -48,6 +48,12 @@ class Puzzle(AsKwargs):
     answer: SkipInKwargs[str] = ""
     notes: str = ""
 
+    def as_kwargs(self):
+        kwargs = super().as_kwargs()
+        if self.is_locked:
+            kwargs["status"] = "locked"  # models.Puzzle.LOCKED_STATUS
+        return kwargs
+
 
 @dataclasses.dataclass(kw_only=True)
 class Hunt:

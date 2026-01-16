@@ -407,7 +407,7 @@ def scraper_data():
     from services import subprocess_tasks
 
     data = subprocess_tasks.subprocess_create_new_puzzles()
-    return dataclasses.asdict(data)
+    return data
 
 
 @decorators.api_view()

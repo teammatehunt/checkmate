@@ -213,6 +213,7 @@ def create_puzzle(
     text: bool = True,
     voice: bool | None = None,
     notes: str = "",
+    status: str = "",
     force: bool = False,
     discord_category_id: int | None = None,
 ):
@@ -250,6 +251,8 @@ def create_puzzle(
             puzzle_kwargs["is_placeholder"] = is_placeholder
         if notes:
             puzzle_kwargs["notes"] = notes
+        if status:
+            puzzle_kwargs["status"] = status
         puzzle = models.Puzzle(**puzzle_kwargs)
         puzzle.save()
     if rounds:
@@ -496,7 +499,7 @@ class NewPuzzlesData:
 
 
 @app.task
-def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
+def auto_create_new_puzzles(dry_run=True, manual=True) -> dict | None:
     """
     Run the auto scraper to create new puzzles.
 
@@ -640,7 +643,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
             puzzle_rounds = [
                 reduced_round_names_to_slugs[reduced_name(name)] for name in round_names
             ]
-        if is_locked:
+        if link is None:
             # MH25 locked puzzles
             if not models.LockedPuzzle.objects.filter(
                 name=scraped_puzzle.name
@@ -662,7 +665,7 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
                 if isinstance(puzzle_rounds, list) and len(puzzle_rounds) == 1:
                     placedholder_puzzle = placeholder_metas.get(puzzle_rounds[0])
             if placedholder_puzzle:
-                slug = placedholder_puzzle.slug
+                slug = placedholder_puzzle["slug"]
                 if not dry_run:
                     puzzle_obj = models.Puzzle.objects.filter(pk=slug).update(
                         name=scraped_puzzle.name,
@@ -690,14 +693,17 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
             # check for updated solved / answer status
             puzzle = data["puzzles"][slug]
             updates = {}
-            if is_solved and not puzzle.solved:
+            if is_solved and not puzzle["solved"]:
                 updates["solved"] = now
-            if answer and answer != puzzle.answer:
+            if answer and answer != puzzle["answer"]:
                 updates["answer"] = answer
             # MH25
-            if link is not None and puzzle.link is None:
+            if link is not None and puzzle["link"] is None:
                 updates["link"] = link
-            if is_explicitly_unlocked and puzzle.is_locked:
+            if (
+                is_explicitly_unlocked
+                and puzzle["status"] == models.Puzzle.LOCKED_STATUS
+            ):
                 updates["status"] = models.Puzzle.NEW_STATUS
             if updates:
                 if not dry_run:
@@ -725,4 +731,4 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesData | None:
                 "dry_run": dry_run,
             }
         )
-    return new_puzzles_data
+    return dataclasses.asdict(new_puzzles_data)

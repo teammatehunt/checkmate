@@ -37,7 +37,7 @@ def try_create_new_puzzles(queue: billiard.Queue, **kwargs):
 
 
 @app.task
-def subprocess_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesResult:
+def subprocess_create_new_puzzles(dry_run=True, manual=True) -> dict:
     """Calls try_create_new_puzzles in a new process to reload imports."""
     ctx = billiard.get_context("spawn")
     queue: billiard.Queue[NewPuzzlesResult] = ctx.Queue()
@@ -51,4 +51,4 @@ def subprocess_create_new_puzzles(dry_run=True, manual=True) -> NewPuzzlesResult
     )
     proc.start()
     proc.join()
-    return queue.get(block=False)
+    return dataclasses.asdict(queue.get(block=False))

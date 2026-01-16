@@ -1,3 +1,5 @@
+import json
+import re
 import typing
 from urllib.parse import urljoin
 
@@ -435,4 +437,92 @@ async def parse_html_mh25(client: scraper_types.Client, url: str) -> Hunt:
                             puzzle.notes = td.get_text(strip=True, separator=" ")
                 if puzzle and puzzle.name:
                     hunt.puzzles.append(puzzle)
+    return hunt
+
+
+async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
+    data = await client.try_fetch(url)
+    soup = bs4.BeautifulSoup(data, "html5lib")
+    hunt = Hunt()
+
+    script = soup.find(
+        "script", string=lambda t: t and "window.initialAllPuzzlesState" in t
+    )
+
+    if not script:
+        raise ValueError("No script found")
+
+    content = script.decode_contents()
+
+    p_match = re.search(r"window\.initialAllPuzzlesState\s*=\s*(\{.*?\});", content)
+    if not p_match:
+        raise ValueError("No puzzles match found")
+
+    p_state = json.loads(p_match.group(1))
+
+    t_match = re.search(r"window\.initialTeamState\s*=\s*(\{.*?\});", content)
+    t_state = json.loads(t_match.group(1)) if t_match else {}
+    t_puzzles = t_state.get("puzzles", {})
+    t_rounds = t_state.get("rounds", {})
+
+    p_rounds = {r["slug"]: r for r in p_state.get("rounds", [])}
+    all_round_slugs = sorted(list(set(p_rounds.keys()) | set(t_rounds.keys())))
+
+    for r_slug in all_round_slugs:
+        p_r = p_rounds.get(r_slug, {})
+        t_r = t_rounds.get(r_slug, {})
+
+        r_name = p_r.get("title") or t_r.get("title") or r_slug
+        hunt.rounds.append(Round(name=r_name, link=urljoin(url, f"/rounds/{r_slug}")))
+
+        seen_p_slugs = set()
+        # Prefer puzzles from TeamState slots if available as they include "tasks"
+        slots = t_r.get("slots", {})
+        for slot in slots.values():
+            p_slug = slot.get("slug")
+            if not p_slug:
+                continue
+            seen_p_slugs.add(p_slug)
+
+            p_info = next(
+                (p for p in p_r.get("puzzles", []) if p.get("slug") == p_slug), {}
+            )
+            tp = t_puzzles.get(p_slug, {})
+
+            hunt.puzzles.append(
+                Puzzle(
+                    name=p_info.get("title") or tp.get("title") or p_slug,
+                    link=urljoin(url, f"/puzzles/{p_slug}"),
+                    round_names=[r_name],
+                    is_solved=tp.get("solved", False),
+                    answer=tp.get("answer") or "",
+                    is_meta=tp.get("is_meta", False) or p_info.get("is_meta", False),
+                    is_locked=tp.get("locked") == "unlockable"
+                    or p_info.get("state") == "unlockable",
+                    notes=p_info.get("desc") or "",
+                )
+            )
+
+        # Add remaining puzzles from AllPuzzlesState
+        for p_info in p_r.get("puzzles", []):
+            p_slug = p_info.get("slug")
+            if not p_slug or p_slug in seen_p_slugs:
+                continue
+            seen_p_slugs.add(p_slug)
+
+            tp = t_puzzles.get(p_slug, {})
+            hunt.puzzles.append(
+                Puzzle(
+                    name=p_info.get("title") or tp.get("name") or p_slug,
+                    link=urljoin(url, f"/puzzles/{p_slug}"),
+                    round_names=[r_name],
+                    is_solved=tp.get("solved", False),
+                    answer=tp.get("answer") or "",
+                    is_meta=p_info.get("is_meta", False) or tp.get("is_meta", False),
+                    is_locked=p_info.get("state") == "unlockable"
+                    or tp.get("locked") == "unlockable",
+                    notes=p_info.get("desc") or "",
+                )
+            )
+
     return hunt
